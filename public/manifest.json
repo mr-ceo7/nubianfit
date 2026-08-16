@@ -1,0 +1,49 @@
+{
+  "short_name": "NubianFit",
+  "name": "NubianFit Coach & Athlete OS",
+  "description": "Professional Fitness Coaching & Athlete Management Platform with periodized programming, live workout logging, metric tracking, and instant athlete messenger.",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#020617",
+  "background_color": "#020617",
+  "categories": ["fitness", "sports", "productivity", "health"],
+  "shortcuts": [
+    {
+      "name": "Live Workout Logger",
+      "short_name": "Log Workout",
+      "description": "Record sets, reps, load, and rest timers",
+      "url": "/?tab=programs",
+      "icons": [{ "src": "/icon.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Athlete Roster",
+      "short_name": "Athletes",
+      "description": "View client profiles, goals, and compliance",
+      "url": "/?tab=clients",
+      "icons": [{ "src": "/icon.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Coach Messenger",
+      "short_name": "Messenger",
+      "description": "1-on-1 direct athlete communication",
+      "url": "/?tab=messenger",
+      "icons": [{ "src": "/icon.svg", "sizes": "192x192" }]
+    }
+  ]
+}

@@ -1,0 +1,1301 @@
+import { 
+  Client, 
+  Exercise, 
+  TrainingProgram, 
+  ScheduledWorkout, 
+  MetricEntry, 
+  PersonalRecord, 
+  ProgressPhoto, 
+  ChatMessage, 
+  ActivityFeedItem,
+  HabitItem,
+  ClientDailyHabitLog
+} from '../types';
+
+export const INITIAL_CLIENTS: Client[] = [
+  {
+    id: 'client-1',
+    name: 'Marcus Vance',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+    email: 'marcus.vance@example.com',
+    phone: '+1 (555) 234-5678',
+    age: 28,
+    gender: 'Male',
+    status: 'Active',
+    goal: 'Hypertrophy',
+    experienceLevel: 'Intermediate',
+    startDate: '2026-04-10',
+    currentProgramId: 'prog-1',
+    currentProgramName: '8-Week Athletic Hypertrophy Protocol',
+    complianceRate: 94,
+    workoutsCompleted: 42,
+    totalWorkoutsAssigned: 45,
+    lastActive: 'Today at 09:30 AM',
+    startingWeightKg: 84.5,
+    currentWeightKg: 81.2,
+    targetWeightKg: 80.0,
+    heightCm: 182,
+    bodyFatPercentage: 13.8,
+    targetBodyFat: 11.0,
+    injuriesAndHealth: ['Mild right shoulder impingement on deep bench', 'Tight hips from desk work'],
+    medicalAlerts: 'Avoid heavy barbell bench below 90 deg elbow bend; use neutral grip dumbbells or floor press.',
+    customCoachNotes: [
+      'Focusing on posterior chain engagement and explosive concentric phases.',
+      'Responding exceptionally well to 4-day upper/lower split. Recovery sleep averaging 7.8 hrs.',
+      'Adjusted calories to 2,650 kcal with 190g protein.'
+    ],
+    onboardingSurvey: {
+      gymAccess: 'Full Commercial Gym (Barbells, Cables, Dumbbells to 50kg, Hack Squat)',
+      weeklyAvailabilityDays: 4,
+      dietaryRestrictions: 'High protein, non-dairy preferred',
+      sleepAvgHours: 7.8,
+      stressLevel: 'Moderate',
+      favoriteExercises: 'Barbell Romanian Deadlift, Incline Dumbbell Press, Weighted Pull-ups',
+      leastFavoriteExercises: 'Bulgarian Split Squats, Walking Lunges'
+    }
+  },
+  {
+    id: 'client-2',
+    name: 'Elena Rostova',
+    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80',
+    email: 'elena.rostova@example.com',
+    phone: '+1 (555) 876-5432',
+    age: 32,
+    gender: 'Female',
+    status: 'Active',
+    goal: 'Fat Loss',
+    experienceLevel: 'Intermediate',
+    startDate: '2026-05-15',
+    currentProgramId: 'prog-2',
+    currentProgramName: '12-Week Lean Body Recomposition',
+    complianceRate: 98,
+    workoutsCompleted: 36,
+    totalWorkoutsAssigned: 37,
+    lastActive: 'Today at 11:15 AM',
+    startingWeightKg: 68.0,
+    currentWeightKg: 62.4,
+    targetWeightKg: 60.0,
+    heightCm: 168,
+    bodyFatPercentage: 21.2,
+    targetBodyFat: 18.0,
+    injuriesAndHealth: ['History of minor patellar tendonitis (left knee)'],
+    medicalAlerts: 'Warm up VMO with Spanish squats and backward sled drags.',
+    customCoachNotes: [
+      'Amazing discipline with step counts (averaging 12,500 daily).',
+      'Increased barbell hip thrust to 120kg for sets of 8 clean reps.',
+      'Check-in due this Friday with updated waist measurements.'
+    ],
+    onboardingSurvey: {
+      gymAccess: 'Commercial Gym & Home Dumbbell Set',
+      weeklyAvailabilityDays: 4,
+      dietaryRestrictions: 'Pescatarian, tracks with MyFitnessPal',
+      sleepAvgHours: 7.2,
+      stressLevel: 'Low',
+      favoriteExercises: 'Barbell Hip Thrust, Seated Cable Row, Romanian Deadlift',
+      leastFavoriteExercises: 'Burpees, Assault Bike intervals'
+    }
+  },
+  {
+    id: 'client-3',
+    name: 'Damon Jackson',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+    email: 'damon.j@example.com',
+    phone: '+1 (555) 345-6789',
+    age: 26,
+    gender: 'Male',
+    status: 'Needs Check-in',
+    goal: 'Strength & Power',
+    experienceLevel: 'Advanced',
+    startDate: '2026-03-01',
+    currentProgramId: 'prog-3',
+    currentProgramName: '6-Week Peak Strength & Power Phase',
+    complianceRate: 88,
+    workoutsCompleted: 52,
+    totalWorkoutsAssigned: 59,
+    lastActive: 'Yesterday at 06:45 PM',
+    startingWeightKg: 90.0,
+    currentWeightKg: 92.5,
+    targetWeightKg: 93.0,
+    heightCm: 185,
+    bodyFatPercentage: 14.5,
+    targetBodyFat: 13.0,
+    injuriesAndHealth: ['None reported, healthy joint mobility'],
+    medicalAlerts: 'Cleared for high-intensity powerlifting and plyometrics.',
+    customCoachNotes: [
+      'Hit a new Deadlift PR of 220kg x 3 reps! Form was tight.',
+      'Missed Wednesday session due to travel, scheduled make-up for Saturday.',
+      'Needs review on weekly check-in video regarding squat bar path.'
+    ],
+    onboardingSurvey: {
+      gymAccess: 'Strength & Conditioning Facility with Olympic platforms and calibrated plates',
+      weeklyAvailabilityDays: 5,
+      dietaryRestrictions: 'None, high calorie requirement (3,400 kcal)',
+      sleepAvgHours: 8.1,
+      stressLevel: 'Moderate',
+      favoriteExercises: 'Conventional Deadlift, Low Bar Squat, Strict Overhead Press',
+      leastFavoriteExercises: 'Long duration steady-state cardio'
+    }
+  },
+  {
+    id: 'client-4',
+    name: 'Chloe Bennett',
+    avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80',
+    email: 'chloe.bennett@example.com',
+    phone: '+1 (555) 901-2345',
+    age: 35,
+    gender: 'Female',
+    status: 'Active',
+    goal: 'Rehabilitation',
+    experienceLevel: 'Beginner',
+    startDate: '2026-06-01',
+    currentProgramId: 'prog-2',
+    currentProgramName: '12-Week Lean Body Recomposition',
+    complianceRate: 91,
+    workoutsCompleted: 24,
+    totalWorkoutsAssigned: 26,
+    lastActive: '2 days ago',
+    startingWeightKg: 74.0,
+    currentWeightKg: 70.8,
+    targetWeightKg: 65.0,
+    heightCm: 165,
+    bodyFatPercentage: 26.5,
+    targetBodyFat: 22.0,
+    injuriesAndHealth: ['L4/L5 lumbar disc strain 6 months ago (rehabilitating)'],
+    medicalAlerts: 'No heavy spinal loading. Substitute back squat with Goblet Squat and Belt Squat.',
+    customCoachNotes: [
+      'Core stiffness protocol (McGill Big 3) performed prior to every workout.',
+      'Zero back pain reported in the last 4 weeks. Mobility improving steadily.'
+    ],
+    onboardingSurvey: {
+      gymAccess: 'Boutique Studio & Resistance bands at home',
+      weeklyAvailabilityDays: 3,
+      dietaryRestrictions: 'Gluten-free',
+      sleepAvgHours: 6.9,
+      stressLevel: 'High (work deadlines)',
+      favoriteExercises: 'Lat Pulldowns, Glute Bridges, Farmer Walks',
+      leastFavoriteExercises: 'Conventional Barbell Deadlifts'
+    }
+  },
+  {
+    id: 'client-5',
+    name: 'Jordan Hayes',
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+    email: 'jordan.hayes@example.com',
+    phone: '+1 (555) 432-1098',
+    age: 24,
+    gender: 'Male',
+    status: 'Onboarding',
+    goal: 'Athletic Conditioning',
+    experienceLevel: 'Intermediate',
+    startDate: '2026-08-10',
+    currentProgramId: 'prog-1',
+    currentProgramName: '8-Week Athletic Hypertrophy Protocol',
+    complianceRate: 100,
+    workoutsCompleted: 4,
+    totalWorkoutsAssigned: 4,
+    lastActive: '3 hours ago',
+    startingWeightKg: 78.0,
+    currentWeightKg: 78.0,
+    targetWeightKg: 82.0,
+    heightCm: 179,
+    bodyFatPercentage: 12.0,
+    targetBodyFat: 11.5,
+    injuriesAndHealth: ['None'],
+    medicalAlerts: 'All-clear for full training programming.',
+    customCoachNotes: [
+      'Just finished Day 2 of onboarding. Excellent form and enthusiasm.',
+      'Setting baseline 5RM tests for squat, bench, and chin-up this week.'
+    ],
+    onboardingSurvey: {
+      gymAccess: 'University Athletic Gym',
+      weeklyAvailabilityDays: 4,
+      dietaryRestrictions: 'None',
+      sleepAvgHours: 8.0,
+      stressLevel: 'Low',
+      favoriteExercises: 'Hang Cleans, Trap Bar Deadlift, Pull-ups',
+      leastFavoriteExercises: 'Leg Press'
+    }
+  },
+  {
+    id: 'client-6',
+    name: 'Sophia Patel',
+    avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80',
+    email: 'sophia.patel@example.com',
+    phone: '+1 (555) 678-9012',
+    age: 29,
+    gender: 'Female',
+    status: 'Inactive',
+    goal: 'Endurance',
+    experienceLevel: 'Beginner',
+    startDate: '2026-02-10',
+    currentProgramId: undefined,
+    currentProgramName: 'Paused (Vacation / Relocating)',
+    complianceRate: 72,
+    workoutsCompleted: 28,
+    totalWorkoutsAssigned: 39,
+    lastActive: '2 weeks ago',
+    startingWeightKg: 63.0,
+    currentWeightKg: 61.5,
+    targetWeightKg: 58.0,
+    heightCm: 162,
+    bodyFatPercentage: 24.0,
+    targetBodyFat: 20.0,
+    injuriesAndHealth: ['Shin splints from rapid running ramp-up'],
+    medicalAlerts: 'Low-impact cardio (Rowing & Cycling) recommended until cleared.',
+    customCoachNotes: [
+      'Relocating to Chicago; requested 2-week pause. Will reactivate on Sept 1st.'
+    ],
+    onboardingSurvey: {
+      gymAccess: 'Local Gym & Outdoor Running Trails',
+      weeklyAvailabilityDays: 3,
+      dietaryRestrictions: 'Vegetarian',
+      sleepAvgHours: 7.0,
+      stressLevel: 'Moderate',
+      favoriteExercises: 'Kettlebell Swings, Cable Woodchoppers, Planks',
+      leastFavoriteExercises: 'Overhead Barbell Squats'
+    }
+  }
+];
+
+export const INITIAL_EXERCISES: Exercise[] = [
+  {
+    id: 'ex-1',
+    name: 'Barbell Back Squat (High Bar)',
+    primaryMuscle: 'Quads',
+    secondaryMuscles: ['Glutes', 'Hamstrings', 'Core'],
+    equipment: 'Barbell',
+    difficulty: 'Intermediate',
+    category: 'Strength',
+    description: 'The king of lower body exercises. Builds massive quad hypertrophy, glute power, and spinal erector density.',
+    instructions: [
+      'Step under bar resting across upper traps, brace core with Valsalva maneuver.',
+      'Unrack with feet hip-width, toes angled slightly outward 15-30 degrees.',
+      'Initiate by breaking at hips and knees simultaneously, descending under control.',
+      'Reach parallel or full depth while maintaining upright chest and neutral spine.',
+      'Drive through mid-foot explosively back to standing.'
+    ],
+    formCues: ['Chest tall', 'Knees tracking over toes', 'Brace 360 degrees into lifting belt', 'Drive floor away'],
+    thumbnailUrl: 'https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=400&auto=format&fit=crop&q=80'
+  },
+  {
+    id: 'ex-2',
+    name: 'Flat Barbell Bench Press',
+    primaryMuscle: 'Chest',
+    secondaryMuscles: ['Triceps', 'Shoulders'],
+    equipment: 'Barbell',
+    difficulty: 'Intermediate',
+    category: 'Strength',
+    description: 'Primary compound horizontal push movement developing pectoral mass, triceps lockout strength, and shoulder stability.',
+    instructions: [
+      'Lie on bench with eyes directly under racked bar. Retract and depress scapulae.',
+      'Grip bar slightly wider than shoulder width. Plant heels firmly on floor.',
+      'Unrack bar to full extension over sternum. Pull bar down with lats in slight J-curve.',
+      'Touch lower-mid sternum softly without bouncing, then drive bar up and slightly back.'
+    ],
+    formCues: ['Shoulder blades pinched in back pocket', 'Tuck elbows ~45-75 degrees', 'Drive with leg drive'],
+    thumbnailUrl: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=400&auto=format&fit=crop&q=80'
+  },
+  {
+    id: 'ex-3',
+    name: 'Conventional Barbell Deadlift',
+    primaryMuscle: 'Back',
+    secondaryMuscles: ['Hamstrings', 'Glutes', 'Core', 'Full Body'],
+    equipment: 'Barbell',
+    difficulty: 'Advanced',
+    category: 'Strength',
+    description: 'Total posterior chain builder pulling maximal load from dead stop on the floor.',
+    instructions: [
+      'Stand with mid-foot directly under the bar (1 inch from shins). Feet hip-width.',
+      'Hinge hips back, reach down and grip bar double overhand or mixed grip.',
+      'Bring shins forward to touch bar, pull chest tall to take slack out of the bar.',
+      'Drive through the floor, extending knees and hips simultaneously until standing upright.'
+    ],
+    formCues: ['Pull slack out until "click"', 'Lats engaged like protecting armpits', 'Push the floor down'],
+    thumbnailUrl: 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=400&auto=format&fit=crop&q=80'
+  },
+  {
+    id: 'ex-4',
+    name: 'Incline Dumbbell Press (30° Angle)',
+    primaryMuscle: 'Chest',
+    secondaryMuscles: ['Shoulders', 'Triceps'],
+    equipment: 'Dumbbell',
+    difficulty: 'Intermediate',
+    category: 'Hypertrophy',
+    description: 'Targeted upper pectoral (clavicular head) developer with superior shoulder range of motion.',
+    instructions: [
+      'Set bench to 30-degree incline. Kick dumbbells up to starting position over upper chest.',
+      'Lower weights under control until thumbs align with outer chest, feeling deep stretch.',
+      'Press up in a slight arc toward center without clanging dumbbells at lockout.'
+    ],
+    formCues: ['Keep wrists stacked over elbows', 'Retract scapula into bench', 'Control 3-second descent'],
+    thumbnailUrl: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=400&auto=format&fit=crop&q=80'
+  },
+  {
+    id: 'ex-5',
+    name: 'Barbell Romanian Deadlift (RDL)',
+    primaryMuscle: 'Hamstrings',
+    secondaryMuscles: ['Glutes', 'Back', 'Core'],
+    equipment: 'Barbell',
+    difficulty: 'Intermediate',
+    category: 'Hypertrophy',
+    description: 'Unmatched eccentric hamstring and glute builder utilizing a pure hip hinge mechanics.',
+    instructions: [
+      'Unrack barbell from rack at hip height with overhand grip.',
+      'Unlock knees slightly (soft bend) and push hips backward toward back wall.',
+      'Slide barbell down close to thighs/shins until reaching maximal hamstring tension.',
+      'Squeeze glutes and drive hips forward to return to standing lockout.'
+    ],
+    formCues: ['Imagine closing a car door with hips', 'Keep bar glued to thighs', 'Spine neutral throughout'],
+    thumbnailUrl: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&auto=format&fit=crop&q=80'
+  },
+  {
+    id: 'ex-6',
+    name: 'Standing Overhead Barbell Press (OHP)',
+    primaryMuscle: 'Shoulders',
+    secondaryMuscles: ['Triceps', 'Core', 'Chest'],
+    equipment: 'Barbell',
+    difficulty: 'Intermediate',
+    category: 'Strength',
+    description: 'Strict vertical press demanding full-body stabilization, core bracing, and shoulder powerhouse strength.',
+    instructions: [
+      'Rest bar on front deltoids with grip slightly outside shoulders, elbows pointing forward.',
+      'Squeeze glutes and quads tight. Tilt head slightly back to clear chin.',
+      'Press bar vertically in straight path, bringing head back through under bar at lockout.'
+    ],
+    formCues: ['Glutes squeezed like cracking a walnut', 'Punch ceiling at lockout', 'No backward hyperextension'],
+    thumbnailUrl: 'https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?w=400&auto=format&fit=crop&q=80'
+  },
+  {
+    id: 'ex-7',
+    name: 'Chest-Supported Neutral Dumbbell Row',
+    primaryMuscle: 'Back',
+    secondaryMuscles: ['Biceps', 'Shoulders'],
+    equipment: 'Dumbbell',
+    difficulty: 'Beginner',
+    category: 'Hypertrophy',
+    description: 'Zero lower back fatigue mid-back and lat isolation movement for massive back thickness.',
+    instructions: [
+      'Set incline bench to 30-45 degrees. Lie face down with chest supported firmly.',
+      'Hold dumbbells with neutral grip, arms fully extended and lats stretched.',
+      'Drive elbows up and back toward hips, squeezing shoulder blades together for 1-second pause.',
+      'Lower weights smoothly to full extension.'
+    ],
+    formCues: ['Pull with elbows, not hands', 'Pause and squeeze lats at peak', 'Keep chest glued to pad'],
+    thumbnailUrl: 'https://images.unsplash.com/photo-1605296867304-46d5465a13f1?w=400&auto=format&fit=crop&q=80'
+  },
+  {
+    id: 'ex-8',
+    name: 'Bulgarian Split Squat',
+    primaryMuscle: 'Quads',
+    secondaryMuscles: ['Glutes', 'Hamstrings', 'Calves'],
+    equipment: 'Dumbbell',
+    difficulty: 'Intermediate',
+    category: 'Hypertrophy',
+    description: 'Brutal unilateral quad and glute builder that corrects left-right imbalances and improves hip stability.',
+    instructions: [
+      'Stand lunge-length in front of bench. Place rear foot laces down on bench.',
+      'Hold dumbbells at sides with tall posture.',
+      'Lower hips straight down until rear knee almost touches floor (front knee ~90°).',
+      'Drive through front heel and mid-foot to stand back up.'
+    ],
+    formCues: ['Slight forward torso lean for glutes', 'Keep front knee stacked', 'Weight 85% on front leg'],
+    thumbnailUrl: 'https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=400&auto=format&fit=crop&q=80'
+  },
+  {
+    id: 'ex-9',
+    name: 'Barbell Hip Thrust',
+    primaryMuscle: 'Glutes',
+    secondaryMuscles: ['Hamstrings', 'Core'],
+    equipment: 'Barbell',
+    difficulty: 'Intermediate',
+    category: 'Hypertrophy',
+    description: 'The supreme glute hypertrophy and horizontal hip extension exercise.',
+    instructions: [
+      'Sit on floor with upper back against bench edge (just below scapulae).',
+      'Roll padded barbell over hips. Feet flat on floor, shoulder-width apart.',
+      'Drive through heels to extend hips until thighs and torso form straight line.',
+      'Hold peak contraction for 1 full second with chin tucked, then lower under control.'
+    ],
+    formCues: ['Tuck chin to chest (ribs down)', 'Drive knees out slightly against band', 'Full lockout at top'],
+    thumbnailUrl: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=400&auto=format&fit=crop&q=80'
+  },
+  {
+    id: 'ex-10',
+    name: 'Weighted Pull-Up (Neutral / Pronated Grip)',
+    primaryMuscle: 'Back',
+    secondaryMuscles: ['Biceps', 'Core', 'Shoulders'],
+    equipment: 'Bodyweight',
+    difficulty: 'Advanced',
+    category: 'Strength',
+    description: 'Gold standard vertical pulling test of relative strength and wide V-taper lat width.',
+    instructions: [
+      'Grip pull-up bar slightly wider than shoulders (or use neutral handles). Attach weight belt if added.',
+      'Start from a dead hang with lats engaged.',
+      'Drive elbows down toward waist, pulling chest up to bar.',
+      'Pause briefly with chin clearly above bar, then lower with full control for 3 seconds.'
+    ],
+    formCues: ['Lead with the chest', 'No swinging or kipping', 'Control the full stretch at bottom'],
+    thumbnailUrl: 'https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?w=400&auto=format&fit=crop&q=80'
+  },
+  {
+    id: 'ex-11',
+    name: 'Cable Lateral Raise (Behind Body)',
+    primaryMuscle: 'Shoulders',
+    secondaryMuscles: ['Triceps'],
+    equipment: 'Cable',
+    difficulty: 'Beginner',
+    category: 'Hypertrophy',
+    description: 'Continuous tension side delt isolation providing incredible shoulder cap width.',
+    instructions: [
+      'Set cable pulley at wrist/hip height. Stand tall holding single handle with opposite arm.',
+      'Raise arm out to the side in the scapular plane (slight 15° forward angle).',
+      'Reach shoulder height, pause for half-second, and lower under 3-second tension.'
+    ],
+    formCues: ['Lead with elbow', 'Pour the pitcher slightly at peak', 'Smooth tempo without momentum'],
+    thumbnailUrl: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=400&auto=format&fit=crop&q=80'
+  },
+  {
+    id: 'ex-12',
+    name: 'Incline Dumbbell Bicep Curl (Supinating)',
+    primaryMuscle: 'Biceps',
+    secondaryMuscles: ['Core'],
+    equipment: 'Dumbbell',
+    difficulty: 'Beginner',
+    category: 'Hypertrophy',
+    description: 'Places the long head of the bicep in a deep passive stretch for peaked arm development.',
+    instructions: [
+      'Sit back on 45-60 degree incline bench with dumbbells hanging at arm length.',
+      'Curl dumbbells upward while supinating (rotating palms outward) as you ascend.',
+      'Squeeze biceps hard at top without swinging elbows forward, then lower to full dead stretch.'
+    ],
+    formCues: ['Keep elbows pinned back', 'Full supination pinky up', 'Feel deep stretch in bottom 2 inches'],
+    thumbnailUrl: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=400&auto=format&fit=crop&q=80'
+  },
+  {
+    id: 'ex-13',
+    name: 'Dual Cable Overhead Triceps Extension',
+    primaryMuscle: 'Triceps',
+    secondaryMuscles: ['Core'],
+    equipment: 'Cable',
+    difficulty: 'Beginner',
+    category: 'Hypertrophy',
+    description: 'Loads the triceps long head at maximal muscle stretch behind the head.',
+    instructions: [
+      'Attach rope or dual handles to high/mid cable. Turn away and lean forward at 45 degrees.',
+      'Keep upper arms stationary near ears. Extend forearms forward until triceps fully lock out.',
+      'Return weight under control behind neck feeling the triceps stretch.'
+    ],
+    formCues: ['Flare hands apart at extension', 'Keep elbows fixed in space', 'Brace core with split stance'],
+    thumbnailUrl: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=400&auto=format&fit=crop&q=80'
+  },
+  {
+    id: 'ex-14',
+    name: 'Hanging Leg Raise (Toes to Bar)',
+    primaryMuscle: 'Core',
+    secondaryMuscles: ['Glutes', 'Back'],
+    equipment: 'Bodyweight',
+    difficulty: 'Advanced',
+    category: 'Hypertrophy',
+    description: 'Advanced anterior core and rectus abdominis movement emphasizing posterior pelvic tilt.',
+    instructions: [
+      'Hang from pull-up bar with overhand grip and active shoulders.',
+      'Without swinging, roll pelvis backward and raise toes up to touch the bar between hands.',
+      'Lower legs under strict 3-second control without arching lower back.'
+    ],
+    formCues: ['Initiate with pelvic curl', 'Avoid using hip flexor momentum', 'Exhale hard as toes reach top'],
+    thumbnailUrl: 'https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?w=400&auto=format&fit=crop&q=80'
+  },
+  {
+    id: 'ex-15',
+    name: 'Kettlebell Russian Swing',
+    primaryMuscle: 'Glutes',
+    secondaryMuscles: ['Hamstrings', 'Back', 'Core', 'Full Body'],
+    equipment: 'Kettlebell',
+    difficulty: 'Intermediate',
+    category: 'Cardio',
+    description: 'Explosive hip hinge power exercise that incinerates calories while building posterior drive.',
+    instructions: [
+      'Stand with kettlebell 1 foot in front of feet. Hinge back, hike bell between legs like a football snap.',
+      'Snap hips forward explosively, standing tall to project bell forward to chest height.',
+      'Let bell float, then guide it back between hips in rhythmic hinge.'
+    ],
+    formCues: ['Power comes from glute snap, not arms', 'Pack the lats', 'Sharp exhale at hip lockout'],
+    thumbnailUrl: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=400&auto=format&fit=crop&q=80'
+  }
+];
+
+export const INITIAL_PROGRAMS: TrainingProgram[] = [
+  {
+    id: 'prog-1',
+    title: '8-Week Athletic Hypertrophy Protocol',
+    subtitle: 'Upper / Lower Split for Strength & Clean Muscle Gain',
+    description: 'A scientifically periodized 4-day training system balancing mechanical tension on compound main lifts with high-volume isolation work for functional athletic hypertrophy.',
+    difficulty: 'Intermediate',
+    goal: 'Hypertrophy',
+    durationWeeks: 8,
+    daysPerWeek: 4,
+    tags: ['Upper/Lower', 'Hypertrophy', 'Strength', 'Periodized'],
+    assignedClientCount: 2,
+    createdAt: '2026-03-15',
+    updatedAt: '2026-07-28',
+    days: [
+      {
+        id: 'day-1',
+        dayNumber: 1,
+        name: 'Day 1: Upper Body Power & Chest Focus',
+        focus: 'Chest, Shoulders & Heavy Upper Pull',
+        estimatedDurationMin: 65,
+        warmupNotes: 'Band pull-aparts 2x15, shoulder dislocates, incline push-up warmup sets.',
+        cooldownNotes: 'Doorway pectoral stretch 2x30s, cross-body shoulder stretch.',
+        exercises: [
+          {
+            id: 'we-101',
+            exerciseId: 'ex-2',
+            exerciseName: 'Flat Barbell Bench Press',
+            primaryMuscle: 'Chest',
+            equipment: 'Barbell',
+            tempo: '3-0-1-0',
+            coachNotes: 'Work up to top working set @ RPE 8. Maintain solid leg drive.',
+            sets: [
+              { id: 's-1', setNumber: 1, targetReps: '8', targetRpe: 7, targetWeightKg: 80, restSeconds: 150 },
+              { id: 's-2', setNumber: 2, targetReps: '6', targetRpe: 8, targetWeightKg: 87.5, restSeconds: 180 },
+              { id: 's-3', setNumber: 3, targetReps: '6', targetRpe: 8.5, targetWeightKg: 90, restSeconds: 180 },
+              { id: 's-4', setNumber: 4, targetReps: '8', targetRpe: 8, targetWeightKg: 82.5, restSeconds: 150 }
+            ]
+          },
+          {
+            id: 'we-102',
+            exerciseId: 'ex-10',
+            exerciseName: 'Weighted Pull-Up (Neutral / Pronated Grip)',
+            primaryMuscle: 'Back',
+            equipment: 'Bodyweight',
+            tempo: '3-1-1-0',
+            coachNotes: 'Full dead-hang stretch at bottom. Add 10kg plate if bodyweight > 10 reps.',
+            sets: [
+              { id: 's-5', setNumber: 1, targetReps: '6-8', targetRpe: 8, targetWeightKg: 10, restSeconds: 120 },
+              { id: 's-6', setNumber: 2, targetReps: '6-8', targetRpe: 8, targetWeightKg: 10, restSeconds: 120 },
+              { id: 's-7', setNumber: 3, targetReps: 'Max reps', targetRpe: 9, targetWeightKg: 0, restSeconds: 120 }
+            ]
+          },
+          {
+            id: 'we-103',
+            exerciseId: 'ex-4',
+            exerciseName: 'Incline Dumbbell Press (30° Angle)',
+            primaryMuscle: 'Chest',
+            equipment: 'Dumbbell',
+            tempo: '3-0-1-0',
+            coachNotes: 'Focus on upper clavicular stretch. Controlled 3-second descent.',
+            sets: [
+              { id: 's-8', setNumber: 1, targetReps: '10-12', targetRpe: 8, targetWeightKg: 30, restSeconds: 90 },
+              { id: 's-9', setNumber: 2, targetReps: '10-12', targetRpe: 8.5, targetWeightKg: 32, restSeconds: 90 },
+              { id: 's-10', setNumber: 3, targetReps: '10', targetRpe: 9, targetWeightKg: 32, restSeconds: 90 }
+            ]
+          },
+          {
+            id: 'we-104',
+            exerciseId: 'ex-11',
+            exerciseName: 'Cable Lateral Raise (Behind Body)',
+            primaryMuscle: 'Shoulders',
+            equipment: 'Cable',
+            tempo: '2-0-1-1',
+            coachNotes: 'Superset with triceps extension for efficient volume.',
+            isSupersetWithNext: true,
+            sets: [
+              { id: 's-11', setNumber: 1, targetReps: '15', targetRpe: 8.5, targetWeightKg: 9, restSeconds: 45 },
+              { id: 's-12', setNumber: 2, targetReps: '15', targetRpe: 9, targetWeightKg: 9, restSeconds: 45 },
+              { id: 's-13', setNumber: 3, targetReps: '15 + Drop', targetRpe: 9.5, targetWeightKg: 9, restSeconds: 90 }
+            ]
+          },
+          {
+            id: 'we-105',
+            exerciseId: 'ex-13',
+            exerciseName: 'Dual Cable Overhead Triceps Extension',
+            primaryMuscle: 'Triceps',
+            equipment: 'Cable',
+            tempo: '3-0-1-0',
+            coachNotes: 'Get deep stretch behind head.',
+            sets: [
+              { id: 's-14', setNumber: 1, targetReps: '12-15', targetRpe: 8.5, targetWeightKg: 18, restSeconds: 60 },
+              { id: 's-15', setNumber: 2, targetReps: '12-15', targetRpe: 9, targetWeightKg: 18, restSeconds: 60 },
+              { id: 's-16', setNumber: 3, targetReps: '12-15', targetRpe: 9.5, targetWeightKg: 18, restSeconds: 60 }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'day-2',
+        dayNumber: 2,
+        name: 'Day 2: Lower Body Power & Posterior Chain',
+        focus: 'Squat Strength, Glutes & Hamstring Tension',
+        estimatedDurationMin: 70,
+        warmupNotes: 'Couch stretch 90s/side, bodyweight walking lunges, ankle rocks against wall.',
+        cooldownNotes: 'Hamstring strap stretch, pigeon pose 60s/side.',
+        exercises: [
+          {
+            id: 'we-106',
+            exerciseId: 'ex-1',
+            exerciseName: 'Barbell Back Squat (High Bar)',
+            primaryMuscle: 'Quads',
+            equipment: 'Barbell',
+            tempo: '3-1-1-0',
+            coachNotes: 'Stay upright. Solid 1-second pause at bottom on warmups.',
+            sets: [
+              { id: 's-17', setNumber: 1, targetReps: '6', targetRpe: 7.5, targetWeightKg: 110, restSeconds: 180 },
+              { id: 's-18', setNumber: 2, targetReps: '6', targetRpe: 8, targetWeightKg: 115, restSeconds: 180 },
+              { id: 's-19', setNumber: 3, targetReps: '6', targetRpe: 8.5, targetWeightKg: 120, restSeconds: 180 }
+            ]
+          },
+          {
+            id: 'we-107',
+            exerciseId: 'ex-5',
+            exerciseName: 'Barbell Romanian Deadlift (RDL)',
+            primaryMuscle: 'Hamstrings',
+            equipment: 'Barbell',
+            tempo: '3-1-1-0',
+            coachNotes: 'Hinge deeply until stretch is unbearable. Neutral neck.',
+            sets: [
+              { id: 's-20', setNumber: 1, targetReps: '8-10', targetRpe: 8, targetWeightKg: 95, restSeconds: 120 },
+              { id: 's-21', setNumber: 2, targetReps: '8-10', targetRpe: 8, targetWeightKg: 100, restSeconds: 120 },
+              { id: 's-22', setNumber: 3, targetReps: '8', targetRpe: 8.5, targetWeightKg: 105, restSeconds: 120 }
+            ]
+          },
+          {
+            id: 'we-108',
+            exerciseId: 'ex-8',
+            exerciseName: 'Bulgarian Split Squat',
+            primaryMuscle: 'Quads',
+            equipment: 'Dumbbell',
+            tempo: '2-0-1-0',
+            coachNotes: 'Torso angled forward 15 degrees to load lead glute.',
+            sets: [
+              { id: 's-23', setNumber: 1, targetReps: '10/leg', targetRpe: 8, targetWeightKg: 20, restSeconds: 90 },
+              { id: 's-24', setNumber: 2, targetReps: '10/leg', targetRpe: 8.5, targetWeightKg: 22, restSeconds: 90 },
+              { id: 's-25', setNumber: 3, targetReps: '10/leg', targetRpe: 9, targetWeightKg: 24, restSeconds: 120 }
+            ]
+          },
+          {
+            id: 'we-109',
+            exerciseId: 'ex-14',
+            exerciseName: 'Hanging Leg Raise (Toes to Bar)',
+            primaryMuscle: 'Core',
+            equipment: 'Bodyweight',
+            tempo: '2-0-1-0',
+            coachNotes: 'Control the swing. Exhale as feet elevate.',
+            sets: [
+              { id: 's-26', setNumber: 1, targetReps: '12', targetRpe: 8, targetWeightKg: 0, restSeconds: 60 },
+              { id: 's-27', setNumber: 2, targetReps: '12', targetRpe: 8.5, targetWeightKg: 0, restSeconds: 60 },
+              { id: 's-28', setNumber: 3, targetReps: 'Max', targetRpe: 9.5, targetWeightKg: 0, restSeconds: 60 }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'day-3',
+        dayNumber: 3,
+        name: 'Day 3: Upper Body Hypertrophy & Arms',
+        focus: 'Lats, Shoulders, Biceps & Triceps Pump',
+        estimatedDurationMin: 60,
+        warmupNotes: 'Face pulls 2x20, wrist mobility, light cable rows.',
+        exercises: [
+          {
+            id: 'we-110',
+            exerciseId: 'ex-6',
+            exerciseName: 'Standing Overhead Barbell Press (OHP)',
+            primaryMuscle: 'Shoulders',
+            equipment: 'Barbell',
+            tempo: '2-1-1-0',
+            sets: [
+              { id: 's-29', setNumber: 1, targetReps: '8', targetRpe: 7.5, targetWeightKg: 50, restSeconds: 120 },
+              { id: 's-30', setNumber: 2, targetReps: '8', targetRpe: 8, targetWeightKg: 52.5, restSeconds: 120 },
+              { id: 's-31', setNumber: 3, targetReps: '8', targetRpe: 8.5, targetWeightKg: 55, restSeconds: 120 }
+            ]
+          },
+          {
+            id: 'we-111',
+            exerciseId: 'ex-7',
+            exerciseName: 'Chest-Supported Neutral Dumbbell Row',
+            primaryMuscle: 'Back',
+            equipment: 'Dumbbell',
+            tempo: '2-1-1-0',
+            sets: [
+              { id: 's-32', setNumber: 1, targetReps: '12', targetRpe: 8, targetWeightKg: 28, restSeconds: 90 },
+              { id: 's-33', setNumber: 2, targetReps: '12', targetRpe: 8.5, targetWeightKg: 30, restSeconds: 90 },
+              { id: 's-34', setNumber: 3, targetReps: '12', targetRpe: 9, targetWeightKg: 30, restSeconds: 90 }
+            ]
+          },
+          {
+            id: 'we-112',
+            exerciseId: 'ex-12',
+            exerciseName: 'Incline Dumbbell Bicep Curl (Supinating)',
+            primaryMuscle: 'Biceps',
+            equipment: 'Dumbbell',
+            tempo: '3-0-1-1',
+            sets: [
+              { id: 's-35', setNumber: 1, targetReps: '12', targetRpe: 8.5, targetWeightKg: 14, restSeconds: 60 },
+              { id: 's-36', setNumber: 2, targetReps: '12', targetRpe: 9, targetWeightKg: 14, restSeconds: 60 },
+              { id: 's-37', setNumber: 3, targetReps: '10 + Dropset', targetRpe: 9.5, targetWeightKg: 14, restSeconds: 60 }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'day-4',
+        dayNumber: 4,
+        name: 'Day 4: Lower Body Volume & Conditioning',
+        focus: 'Glute Hypertrophy, Deadlift Volume & Work Capacity',
+        estimatedDurationMin: 65,
+        warmupNotes: 'Glute bridges with band 2x15, bird-dogs 2x10/side.',
+        exercises: [
+          {
+            id: 'we-113',
+            exerciseId: 'ex-3',
+            exerciseName: 'Conventional Barbell Deadlift',
+            primaryMuscle: 'Back',
+            equipment: 'Barbell',
+            tempo: '2-1-1-0',
+            sets: [
+              { id: 's-38', setNumber: 1, targetReps: '5', targetRpe: 7.5, targetWeightKg: 140, restSeconds: 180 },
+              { id: 's-39', setNumber: 2, targetReps: '5', targetRpe: 8, targetWeightKg: 150, restSeconds: 180 },
+              { id: 's-40', setNumber: 3, targetReps: '5', targetRpe: 8.5, targetWeightKg: 155, restSeconds: 180 }
+            ]
+          },
+          {
+            id: 'we-114',
+            exerciseId: 'ex-9',
+            exerciseName: 'Barbell Hip Thrust',
+            primaryMuscle: 'Glutes',
+            equipment: 'Barbell',
+            tempo: '2-1-1-1',
+            sets: [
+              { id: 's-41', setNumber: 1, targetReps: '10', targetRpe: 8, targetWeightKg: 120, restSeconds: 90 },
+              { id: 's-42', setNumber: 2, targetReps: '10', targetRpe: 8.5, targetWeightKg: 130, restSeconds: 90 },
+              { id: 's-43', setNumber: 3, targetReps: '10', targetRpe: 9, targetWeightKg: 135, restSeconds: 90 }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'prog-2',
+    title: '12-Week Lean Body Recomposition',
+    subtitle: 'High Density Metabolic Resistance Training',
+    description: 'Designed for rapid body fat reduction while sculpting lean muscle mass using high density circuits, tempo control, and progressive compound overload.',
+    difficulty: 'Intermediate',
+    goal: 'Fat Loss',
+    durationWeeks: 12,
+    daysPerWeek: 4,
+    tags: ['Fat Loss', 'Recomp', 'High Density', 'Metabolic'],
+    assignedClientCount: 2,
+    createdAt: '2026-04-01',
+    updatedAt: '2026-08-05',
+    days: [
+      {
+        id: 'day-201',
+        dayNumber: 1,
+        name: 'Day 1: Full Body Circuit A (Lower Dominant)',
+        focus: 'Glutes, Quads & Upper Pull Circuit',
+        estimatedDurationMin: 55,
+        exercises: [
+          {
+            id: 'we-201',
+            exerciseId: 'ex-9',
+            exerciseName: 'Barbell Hip Thrust',
+            primaryMuscle: 'Glutes',
+            equipment: 'Barbell',
+            sets: [
+              { id: 's-201', setNumber: 1, targetReps: '12', targetRpe: 8, targetWeightKg: 90, restSeconds: 60 },
+              { id: 's-202', setNumber: 2, targetReps: '12', targetRpe: 8.5, targetWeightKg: 100, restSeconds: 60 },
+              { id: 's-203', setNumber: 3, targetReps: '12', targetRpe: 9, targetWeightKg: 105, restSeconds: 90 }
+            ]
+          },
+          {
+            id: 'we-202',
+            exerciseId: 'ex-7',
+            exerciseName: 'Chest-Supported Neutral Dumbbell Row',
+            primaryMuscle: 'Back',
+            equipment: 'Dumbbell',
+            sets: [
+              { id: 's-204', setNumber: 1, targetReps: '12', targetRpe: 8, targetWeightKg: 18, restSeconds: 45 },
+              { id: 's-205', setNumber: 2, targetReps: '12', targetRpe: 8.5, targetWeightKg: 20, restSeconds: 45 },
+              { id: 's-206', setNumber: 3, targetReps: '12', targetRpe: 9, targetWeightKg: 20, restSeconds: 60 }
+            ]
+          },
+          {
+            id: 'we-203',
+            exerciseId: 'ex-15',
+            exerciseName: 'Kettlebell Russian Swing',
+            primaryMuscle: 'Glutes',
+            equipment: 'Kettlebell',
+            sets: [
+              { id: 's-207', setNumber: 1, targetReps: '20', targetRpe: 8.5, targetWeightKg: 20, restSeconds: 45 },
+              { id: 's-208', setNumber: 2, targetReps: '20', targetRpe: 9, targetWeightKg: 24, restSeconds: 45 },
+              { id: 's-209', setNumber: 3, targetReps: '20', targetRpe: 9.5, targetWeightKg: 24, restSeconds: 60 }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'day-202',
+        dayNumber: 2,
+        name: 'Day 2: Full Body Circuit B (Upper Dominant)',
+        focus: 'Chest, Shoulders & High Rep Leg Burn',
+        estimatedDurationMin: 50,
+        exercises: [
+          {
+            id: 'we-204',
+            exerciseId: 'ex-4',
+            exerciseName: 'Incline Dumbbell Press (30° Angle)',
+            primaryMuscle: 'Chest',
+            equipment: 'Dumbbell',
+            sets: [
+              { id: 's-210', setNumber: 1, targetReps: '12', targetRpe: 8, targetWeightKg: 20, restSeconds: 60 },
+              { id: 's-211', setNumber: 2, targetReps: '12', targetRpe: 8.5, targetWeightKg: 22, restSeconds: 60 }
+            ]
+          },
+          {
+            id: 'we-205',
+            exerciseId: 'ex-8',
+            exerciseName: 'Bulgarian Split Squat',
+            primaryMuscle: 'Quads',
+            equipment: 'Dumbbell',
+            sets: [
+              { id: 's-212', setNumber: 1, targetReps: '12/leg', targetRpe: 8.5, targetWeightKg: 14, restSeconds: 60 },
+              { id: 's-213', setNumber: 2, targetReps: '12/leg', targetRpe: 9, targetWeightKg: 14, restSeconds: 60 }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'prog-3',
+    title: '6-Week Peak Strength & Power Phase',
+    subtitle: 'RPE-Based Heavy Triples & Singles',
+    description: 'High intensity, low volume strength peaking program designed to maximize 1RM squat, bench, and deadlift while maintaining joint integrity.',
+    difficulty: 'Advanced',
+    goal: 'Strength & Power',
+    durationWeeks: 6,
+    daysPerWeek: 4,
+    tags: ['Powerlifting', 'Strength', 'Peaking', 'RPE'],
+    assignedClientCount: 1,
+    createdAt: '2026-05-10',
+    updatedAt: '2026-08-01',
+    days: [
+      {
+        id: 'day-301',
+        dayNumber: 1,
+        name: 'Day 1: Heavy Squat & Bench Priming',
+        focus: 'Submaximal Triples and Competition Form',
+        estimatedDurationMin: 75,
+        exercises: [
+          {
+            id: 'we-301',
+            exerciseId: 'ex-1',
+            exerciseName: 'Barbell Back Squat (High Bar)',
+            primaryMuscle: 'Quads',
+            equipment: 'Barbell',
+            sets: [
+              { id: 's-301', setNumber: 1, targetReps: '3', targetRpe: 8, targetWeightKg: 150, restSeconds: 240 },
+              { id: 's-302', setNumber: 2, targetReps: '3', targetRpe: 8.5, targetWeightKg: 157.5, restSeconds: 240 },
+              { id: 's-303', setNumber: 3, targetReps: '3', targetRpe: 9, targetWeightKg: 165, restSeconds: 240 }
+            ]
+          },
+          {
+            id: 'we-302',
+            exerciseId: 'ex-2',
+            exerciseName: 'Flat Barbell Bench Press',
+            primaryMuscle: 'Chest',
+            equipment: 'Barbell',
+            sets: [
+              { id: 's-304', setNumber: 1, targetReps: '3', targetRpe: 8, targetWeightKg: 110, restSeconds: 180 },
+              { id: 's-305', setNumber: 2, targetReps: '3', targetRpe: 8.5, targetWeightKg: 115, restSeconds: 180 },
+              { id: 's-306', setNumber: 3, targetReps: '3', targetRpe: 9, targetWeightKg: 120, restSeconds: 240 }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+];
+
+export const INITIAL_SCHEDULED_WORKOUTS: ScheduledWorkout[] = [
+  {
+    id: 'sched-1',
+    clientId: 'client-1',
+    clientName: 'Marcus Vance',
+    clientAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+    programId: 'prog-1',
+    programName: '8-Week Athletic Hypertrophy Protocol',
+    workoutDayId: 'day-1',
+    workoutTitle: 'Day 1: Upper Body Power & Chest Focus',
+    date: '2026-08-16', // Today
+    time: '09:00 AM',
+    status: 'Completed',
+    durationMin: 62,
+    rating: 5,
+    clientFeedback: 'Felt insanely strong on the bench press! Pauses were solid and no shoulder twinges.',
+    coachFeedback: 'Great execution Marcus. Bump the incline DBs to 34kg next week.',
+    totalVolumeKg: 8420,
+    prCount: 1,
+    exercises: [
+      {
+        id: 'we-log-1',
+        exerciseId: 'ex-2',
+        exerciseName: 'Flat Barbell Bench Press',
+        primaryMuscle: 'Chest',
+        equipment: 'Barbell',
+        sets: [
+          { id: 'sl-1', setNumber: 1, targetReps: '8', targetRpe: 7, targetWeightKg: 80, completedReps: 8, completedWeightKg: 80, completedRpe: 7, isCompleted: true },
+          { id: 'sl-2', setNumber: 2, targetReps: '6', targetRpe: 8, targetWeightKg: 87.5, completedReps: 6, completedWeightKg: 87.5, completedRpe: 8, isCompleted: true },
+          { id: 'sl-3', setNumber: 3, targetReps: '6', targetRpe: 8.5, targetWeightKg: 90, completedReps: 6, completedWeightKg: 92.5, completedRpe: 8.5, isCompleted: true },
+          { id: 'sl-4', setNumber: 4, targetReps: '8', targetRpe: 8, targetWeightKg: 82.5, completedReps: 8, completedWeightKg: 82.5, completedRpe: 8, isCompleted: true }
+        ]
+      },
+      {
+        id: 'we-log-2',
+        exerciseId: 'ex-10',
+        exerciseName: 'Weighted Pull-Up (Neutral / Pronated Grip)',
+        primaryMuscle: 'Back',
+        equipment: 'Bodyweight',
+        sets: [
+          { id: 'sl-5', setNumber: 1, targetReps: '6-8', targetRpe: 8, targetWeightKg: 10, completedReps: 8, completedWeightKg: 10, completedRpe: 8, isCompleted: true },
+          { id: 'sl-6', setNumber: 2, targetReps: '6-8', targetRpe: 8, targetWeightKg: 10, completedReps: 7, completedWeightKg: 10, completedRpe: 8.5, isCompleted: true }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'sched-2',
+    clientId: 'client-2',
+    clientName: 'Elena Rostova',
+    clientAvatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80',
+    programId: 'prog-2',
+    programName: '12-Week Lean Body Recomposition',
+    workoutDayId: 'day-201',
+    workoutTitle: 'Day 1: Full Body Circuit A (Lower Dominant)',
+    date: '2026-08-16', // Today
+    time: '11:00 AM',
+    status: 'Completed',
+    durationMin: 54,
+    rating: 5,
+    clientFeedback: 'Hip thrusts felt super locked in. Glute pump was crazy!',
+    coachFeedback: 'Outstanding work Elena! You are 1.5kg away from your goal weight.',
+    totalVolumeKg: 6250,
+    prCount: 1,
+    exercises: []
+  },
+  {
+    id: 'sched-3',
+    clientId: 'client-3',
+    clientName: 'Damon Jackson',
+    clientAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+    programId: 'prog-3',
+    programName: '6-Week Peak Strength & Power Phase',
+    workoutDayId: 'day-301',
+    workoutTitle: 'Day 1: Heavy Squat & Bench Priming',
+    date: '2026-08-16', // Today
+    time: '05:30 PM',
+    status: 'Scheduled',
+    exercises: []
+  },
+  {
+    id: 'sched-4',
+    clientId: 'client-5',
+    clientName: 'Jordan Hayes',
+    clientAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+    programId: 'prog-1',
+    programName: '8-Week Athletic Hypertrophy Protocol',
+    workoutDayId: 'day-1',
+    workoutTitle: 'Day 1: Baseline Strength Assessment',
+    date: '2026-08-16', // Today
+    time: '04:00 PM',
+    status: 'Scheduled',
+    exercises: []
+  },
+  {
+    id: 'sched-5',
+    clientId: 'client-1',
+    clientName: 'Marcus Vance',
+    clientAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+    programId: 'prog-1',
+    programName: '8-Week Athletic Hypertrophy Protocol',
+    workoutDayId: 'day-2',
+    workoutTitle: 'Day 2: Lower Body Power & Posterior Chain',
+    date: '2026-08-17', // Tomorrow
+    time: '09:00 AM',
+    status: 'Scheduled',
+    exercises: []
+  },
+  {
+    id: 'sched-6',
+    clientId: 'client-4',
+    clientName: 'Chloe Bennett',
+    clientAvatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80',
+    programId: 'prog-2',
+    programName: '12-Week Lean Body Recomposition',
+    workoutDayId: 'day-201',
+    workoutTitle: 'Day 1: Rehab & Glute Activation Circuit',
+    date: '2026-08-17',
+    time: '10:30 AM',
+    status: 'Scheduled',
+    exercises: []
+  }
+];
+
+export const INITIAL_METRICS: MetricEntry[] = [
+  // Marcus Vance metric progress (from 84.5 to 81.2 kg)
+  { id: 'm-1', clientId: 'client-1', date: '2026-04-10', weightKg: 84.5, bodyFatPercentage: 17.5, chestCm: 104, waistCm: 89, armsCm: 37, thighsCm: 61, notes: 'Starting onboarding baseline.' },
+  { id: 'm-2', clientId: 'client-1', date: '2026-05-01', weightKg: 83.8, bodyFatPercentage: 16.8, chestCm: 104.5, waistCm: 87.5, armsCm: 37.5, thighsCm: 61, notes: 'Waist down 1.5cm, strength steady.' },
+  { id: 'm-3', clientId: 'client-1', date: '2026-05-22', weightKg: 83.0, bodyFatPercentage: 15.9, chestCm: 105, waistCm: 86, armsCm: 38, thighsCm: 61.5, notes: 'Noticeable upper body definition.' },
+  { id: 'm-4', clientId: 'client-1', date: '2026-06-15', weightKg: 82.3, bodyFatPercentage: 15.1, chestCm: 105.5, waistCm: 84.5, armsCm: 38.5, thighsCm: 62, notes: 'Bench press PR hit 90kg for reps.' },
+  { id: 'm-5', clientId: 'client-1', date: '2026-07-06', weightKg: 81.9, bodyFatPercentage: 14.4, chestCm: 106, waistCm: 83.5, armsCm: 38.8, thighsCm: 62, notes: 'Vascularity showing in deltoids.' },
+  { id: 'm-6', clientId: 'client-1', date: '2026-07-28', weightKg: 81.5, bodyFatPercentage: 14.0, chestCm: 106.5, waistCm: 82.5, armsCm: 39, thighsCm: 62.5, notes: 'Entering final 4-week cut phase.' },
+  { id: 'm-7', clientId: 'client-1', date: '2026-08-15', weightKg: 81.2, bodyFatPercentage: 13.8, chestCm: 107, waistCm: 81.5, armsCm: 39.2, thighsCm: 62.5, notes: 'Peak conditioning. 80kg target in sight.' },
+
+  // Elena Rostova metric progress (from 68.0 to 62.4 kg)
+  { id: 'm-8', clientId: 'client-2', date: '2026-05-15', weightKg: 68.0, bodyFatPercentage: 27.0, chestCm: 91, waistCm: 76, armsCm: 28, thighsCm: 58, notes: 'Initial weigh-in.' },
+  { id: 'm-9', clientId: 'client-2', date: '2026-06-05', weightKg: 66.5, bodyFatPercentage: 25.5, chestCm: 90, waistCm: 74, armsCm: 28, thighsCm: 57, notes: 'Great dietary compliance.' },
+  { id: 'm-10', clientId: 'client-2', date: '2026-06-26', weightKg: 65.1, bodyFatPercentage: 24.0, chestCm: 89.5, waistCm: 72, armsCm: 28.2, thighsCm: 56, notes: 'Waist down 4cm total.' },
+  { id: 'm-11', clientId: 'client-2', date: '2026-07-17', weightKg: 63.8, bodyFatPercentage: 22.8, chestCm: 89, waistCm: 70.5, armsCm: 28.5, thighsCm: 55.5, notes: 'Hip thrust PR 115kg.' },
+  { id: 'm-12', clientId: 'client-2', date: '2026-08-14', weightKg: 62.4, bodyFatPercentage: 21.2, chestCm: 88.5, waistCm: 69, armsCm: 28.5, thighsCm: 55, notes: 'Abs visible in morning light.' }
+];
+
+export const INITIAL_PRS: PersonalRecord[] = [
+  { id: 'pr-1', clientId: 'client-1', exerciseName: 'Barbell Back Squat', weightKg: 135, reps: 5, estimated1RmKg: 152, date: '2026-08-10', previousWeightKg: 130 },
+  { id: 'pr-2', clientId: 'client-1', exerciseName: 'Flat Barbell Bench Press', weightKg: 92.5, reps: 6, estimated1RmKg: 108, date: '2026-08-16', previousWeightKg: 87.5 },
+  { id: 'pr-3', clientId: 'client-1', exerciseName: 'Barbell Romanian Deadlift', weightKg: 110, reps: 8, estimated1RmKg: 136, date: '2026-08-02', previousWeightKg: 102.5 },
+  { id: 'pr-4', clientId: 'client-1', exerciseName: 'Weighted Pull-Up', weightKg: 15, reps: 6, estimated1RmKg: 18, date: '2026-07-25', previousWeightKg: 10 },
+
+  { id: 'pr-5', clientId: 'client-2', exerciseName: 'Barbell Hip Thrust', weightKg: 120, reps: 8, estimated1RmKg: 148, date: '2026-08-12', previousWeightKg: 110 },
+  { id: 'pr-6', clientId: 'client-2', exerciseName: 'Romanian Deadlift', weightKg: 75, reps: 8, estimated1RmKg: 93, date: '2026-07-30', previousWeightKg: 70 },
+
+  { id: 'pr-7', clientId: 'client-3', exerciseName: 'Conventional Deadlift', weightKg: 220, reps: 3, estimated1RmKg: 236, date: '2026-08-14', previousWeightKg: 210 },
+  { id: 'pr-8', clientId: 'client-3', exerciseName: 'Barbell Back Squat', weightKg: 175, reps: 3, estimated1RmKg: 188, date: '2026-08-08', previousWeightKg: 165 }
+];
+
+export const HABIT_TEMPLATES: HabitItem[] = [
+  { id: 'h-1', title: 'Daily Water Intake', targetValue: '3.5', unit: 'Liters', iconName: 'Droplets', category: 'Nutrition' },
+  { id: 'h-2', title: 'Protein Target', targetValue: '180', unit: 'Grams', iconName: 'Beef', category: 'Nutrition' },
+  { id: 'h-3', title: 'Daily Step Goal', targetValue: '10,000', unit: 'Steps', iconName: 'Footprints', category: 'Activity' },
+  { id: 'h-4', title: 'Sleep Duration', targetValue: '7.5+', unit: 'Hours', iconName: 'Moon', category: 'Recovery' },
+  { id: 'h-5', title: 'Mobility / Foam Rolling', targetValue: '10', unit: 'Minutes', iconName: 'Activity', category: 'Recovery' }
+];
+
+export const INITIAL_HABIT_LOGS: ClientDailyHabitLog[] = [
+  {
+    id: 'hl-1',
+    clientId: 'client-1',
+    date: '2026-08-16',
+    habits: [
+      { habitId: 'h-1', title: 'Daily Water Intake', completed: true, currentValue: '3.5', targetValue: '3.5', unit: 'Liters' },
+      { habitId: 'h-2', title: 'Protein Target', completed: true, currentValue: '192', targetValue: '180', unit: 'Grams' },
+      { habitId: 'h-3', title: 'Daily Step Goal', completed: true, currentValue: '11,400', targetValue: '10,000', unit: 'Steps' },
+      { habitId: 'h-4', title: 'Sleep Duration', completed: true, currentValue: '8.0', targetValue: '7.5+', unit: 'Hours' },
+      { habitId: 'h-5', title: 'Mobility / Foam Rolling', completed: false, currentValue: '0', targetValue: '10', unit: 'Minutes' }
+    ]
+  },
+  {
+    id: 'hl-2',
+    clientId: 'client-2',
+    date: '2026-08-16',
+    habits: [
+      { habitId: 'h-1', title: 'Daily Water Intake', completed: true, currentValue: '3.0', targetValue: '3.0', unit: 'Liters' },
+      { habitId: 'h-2', title: 'Protein Target', completed: true, currentValue: '140', targetValue: '135', unit: 'Grams' },
+      { habitId: 'h-3', title: 'Daily Step Goal', completed: true, currentValue: '13,200', targetValue: '10,000', unit: 'Steps' },
+      { habitId: 'h-4', title: 'Sleep Duration', completed: true, currentValue: '7.5', targetValue: '7.5+', unit: 'Hours' },
+      { habitId: 'h-5', title: 'Mobility / Foam Rolling', completed: true, currentValue: '15', targetValue: '10', unit: 'Minutes' }
+    ]
+  }
+];
+
+export const INITIAL_PHOTOS: ProgressPhoto[] = [
+  {
+    id: 'p-1',
+    clientId: 'client-1',
+    date: '2026-04-10',
+    view: 'Front',
+    photoUrl: 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=600&auto=format&fit=crop&q=80',
+    weightKg: 84.5,
+    bodyFatPercentage: 17.5,
+    notes: 'Starting day 1 photo. Goal: drop to 11% body fat.'
+  },
+  {
+    id: 'p-2',
+    clientId: 'client-1',
+    date: '2026-08-15',
+    view: 'Front',
+    photoUrl: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600&auto=format&fit=crop&q=80',
+    weightKg: 81.2,
+    bodyFatPercentage: 13.8,
+    notes: 'Week 16 check-in. Intercostals and serratus clearly visible!'
+  },
+  {
+    id: 'p-3',
+    clientId: 'client-1',
+    date: '2026-04-10',
+    view: 'Back',
+    photoUrl: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=600&auto=format&fit=crop&q=80',
+    weightKg: 84.5,
+    bodyFatPercentage: 17.5,
+    notes: 'Initial back lat spread.'
+  },
+  {
+    id: 'p-4',
+    clientId: 'client-1',
+    date: '2026-08-15',
+    view: 'Back',
+    photoUrl: 'https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?w=600&auto=format&fit=crop&q=80',
+    weightKg: 81.2,
+    bodyFatPercentage: 13.8,
+    notes: 'Deep spinal erector and rhomboid definition.'
+  },
+  // Elena Rostova photos
+  {
+    id: 'p-5',
+    clientId: 'client-2',
+    date: '2026-05-15',
+    view: 'Front',
+    photoUrl: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=600&auto=format&fit=crop&q=80',
+    weightKg: 68.0,
+    bodyFatPercentage: 27.0,
+    notes: 'Month 1 initial assessment.'
+  },
+  {
+    id: 'p-6',
+    clientId: 'client-2',
+    date: '2026-08-14',
+    view: 'Front',
+    photoUrl: 'https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=600&auto=format&fit=crop&q=80',
+    weightKg: 62.4,
+    bodyFatPercentage: 21.2,
+    notes: 'Month 3 progression. Significant waist tapering.'
+  }
+];
+
+export const INITIAL_MESSAGES: ChatMessage[] = [
+  {
+    id: 'msg-1',
+    clientId: 'client-1',
+    sender: 'client',
+    text: 'Hey Coach! Just finished Day 1 Upper Body. Flat bench was moving fast today, hit 92.5kg for 6 reps clean!',
+    timestamp: 'Today at 09:32 AM',
+    isRead: true
+  },
+  {
+    id: 'msg-2',
+    clientId: 'client-1',
+    sender: 'coach',
+    text: 'Awesome work Marcus! I saw your set logs come through. That was a clean new PR on bench. How was the right shoulder on the descent?',
+    timestamp: 'Today at 09:40 AM',
+    isRead: true
+  },
+  {
+    id: 'msg-3',
+    clientId: 'client-1',
+    sender: 'client',
+    text: 'Zero pain! The 3-second eccentric tempo and pulling my shoulder blades down really locked my scapula in place. Here is the video clip of set 3.',
+    timestamp: 'Today at 09:45 AM',
+    isRead: true,
+    attachment: {
+      type: 'video_form_check',
+      title: 'Flat Bench Press 92.5kg x 6 Reps (Form Check)',
+      url: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=500&auto=format&fit=crop&q=80',
+      durationSeconds: 32,
+      feedbackGiven: true
+    }
+  },
+  {
+    id: 'msg-4',
+    clientId: 'client-1',
+    sender: 'coach',
+    text: 'Bar path looks phenomenal! Look at that vertical forearm angle. Next week we will progress the incline dumbbell press to 34kg. Keep hydration on point today.',
+    timestamp: 'Today at 09:50 AM',
+    isRead: true,
+    attachment: {
+      type: 'workout_link',
+      title: 'Assigned: Day 2 Lower Body Power (Tomorrow)',
+      workoutId: 'sched-5'
+    }
+  },
+  {
+    id: 'msg-5',
+    clientId: 'client-2',
+    sender: 'client',
+    text: 'Coach, I weighed in at 62.4kg this morning! That is down 5.6kg since we started. So hyped!',
+    timestamp: 'Today at 07:15 AM',
+    isRead: true
+  },
+  {
+    id: 'msg-6',
+    clientId: 'client-2',
+    sender: 'coach',
+    text: 'Incredible consistency Elena! Your 98% compliance rate shows why you are getting elite results. Enjoy your high-carb refeed dinner tonight!',
+    timestamp: 'Today at 08:00 AM',
+    isRead: true
+  },
+  {
+    id: 'msg-7',
+    clientId: 'client-3',
+    sender: 'client',
+    text: 'Hey Coach, had to fly to Dallas on Wednesday. I have gym access here with calibrated plates though. Shall I run Day 1 tonight?',
+    timestamp: 'Yesterday at 04:12 PM',
+    isRead: false
+  }
+];
+
+export const INITIAL_ACTIVITY_FEED: ActivityFeedItem[] = [
+  {
+    id: 'act-1',
+    type: 'pr_achieved',
+    clientId: 'client-1',
+    clientName: 'Marcus Vance',
+    clientAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+    title: 'New PR on Flat Barbell Bench Press',
+    description: 'Logged 92.5 kg × 6 reps (Est 1RM: 108 kg)',
+    timestamp: '25 mins ago',
+    metadata: { weightKg: 92.5, exerciseName: 'Flat Barbell Bench Press' }
+  },
+  {
+    id: 'act-2',
+    type: 'workout_completed',
+    clientId: 'client-2',
+    clientName: 'Elena Rostova',
+    clientAvatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80',
+    title: 'Completed Full Body Circuit A',
+    description: 'Finished 54 min session with 6,250 kg volume',
+    timestamp: '1 hour ago',
+    metadata: { compliance: 98 }
+  },
+  {
+    id: 'act-3',
+    type: 'check_in_submitted',
+    clientId: 'client-2',
+    clientName: 'Elena Rostova',
+    clientAvatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80',
+    title: 'Logged New Metric Milestone',
+    description: 'Weighed in at 62.4 kg (-5.6 kg overall)',
+    timestamp: '3 hours ago',
+    metadata: { weightKg: 62.4 }
+  },
+  {
+    id: 'act-4',
+    type: 'new_message',
+    clientId: 'client-3',
+    clientName: 'Damon Jackson',
+    clientAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+    title: 'New Message from Damon',
+    description: '"Hey Coach, had to fly to Dallas on Wednesday..."',
+    timestamp: 'Yesterday'
+  },
+  {
+    id: 'act-5',
+    type: 'streak_milestone',
+    clientId: 'client-1',
+    clientName: 'Marcus Vance',
+    clientAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+    title: '30-Day Training Streak Reached',
+    description: 'Marcus maintained 94% weekly workout compliance',
+    timestamp: '2 days ago'
+  }
+];

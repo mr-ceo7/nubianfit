@@ -1,0 +1,7 @@
+{
+  "name": "NubianFit",
+  "description": "Comprehensive modern fitness coaching and athlete management platform with mobile-first native bottom navigation, offline PWA capabilities, workout programming, live set logging, and metric tracking.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+

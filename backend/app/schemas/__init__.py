@@ -1,0 +1,50 @@
+"""
+Pydantic Schemas Package
+"""
+
+from app.schemas.auth import LoginRequest, RegisterRequest, UserResponse, TokenResponse
+from app.schemas.client import ClientCreate, ClientUpdate, ClientResponse, AddCoachNoteRequest
+from app.schemas.exercise import ExerciseCreate, ExerciseUpdate, ExerciseResponse
+from app.schemas.program import ProgramCreate, ProgramUpdate, ProgramResponse, AssignProgramRequest
+from app.schemas.workout import ScheduledWorkoutCreate, ScheduledWorkoutUpdate, ScheduledWorkoutResponse, CompleteWorkoutRequest
+from app.schemas.metric import MetricEntryCreate, MetricEntryResponse
+from app.schemas.personal_record import PersonalRecordCreate, PersonalRecordResponse
+from app.schemas.habit import ClientDailyHabitLogCreate, ClientDailyHabitLogResponse, ToggleHabitRequest
+from app.schemas.photo import ProgressPhotoCreate, ProgressPhotoResponse
+from app.schemas.message import ChatMessageCreate, ChatMessageResponse
+from app.schemas.activity import ActivityFeedItemCreate, ActivityFeedItemResponse
+
+__all__ = [
+    "LoginRequest",
+    "RegisterRequest",
+    "UserResponse",
+    "TokenResponse",
+    "ClientCreate",
+    "ClientUpdate",
+    "ClientResponse",
+    "AddCoachNoteRequest",
+    "ExerciseCreate",
+    "ExerciseUpdate",
+    "ExerciseResponse",
+    "ProgramCreate",
+    "ProgramUpdate",
+    "ProgramResponse",
+    "AssignProgramRequest",
+    "ScheduledWorkoutCreate",
+    "ScheduledWorkoutUpdate",
+    "ScheduledWorkoutResponse",
+    "CompleteWorkoutRequest",
+    "MetricEntryCreate",
+    "MetricEntryResponse",
+    "PersonalRecordCreate",
+    "PersonalRecordResponse",
+    "ClientDailyHabitLogCreate",
+    "ClientDailyHabitLogResponse",
+    "ToggleHabitRequest",
+    "ProgressPhotoCreate",
+    "ProgressPhotoResponse",
+    "ChatMessageCreate",
+    "ChatMessageResponse",
+    "ActivityFeedItemCreate",
+    "ActivityFeedItemResponse",
+]
