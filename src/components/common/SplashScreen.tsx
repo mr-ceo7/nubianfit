@@ -55,7 +55,24 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
         />
 
       </motion.div>
-    </motion.div>
 
+      {/* Brand logo at the bottom */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.8, duration: 0.6 }}
+        className="absolute bottom-12 flex flex-col items-stretch w-[110px]"
+      >
+        <span className="font-logo text-[18px] tracking-wide text-logo-nubian lowercase block text-center leading-none">
+          nubian<span className="text-logo-fit">fit</span>
+        </span>
+        <div className="flex justify-between text-[8px] text-slate-400 font-bold tracking-normal lowercase mt-2 w-full leading-none">
+          <span>strength</span>
+          <span>&</span>
+          <span>strategy</span>
+        </div>
+      </motion.div>
+    </motion.div>
   );
 };
+
