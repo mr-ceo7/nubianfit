@@ -26,9 +26,14 @@
   --app-amber-text: #B45309;
   --app-amber-bg: #FEF3C7;
 
+  --app-cyan: #0891b2;
+  --app-cyan-light: #E0F7FA;
+  --app-cyan-dark: #155E75;
+
   --logo-nubian: var(--app-fg);
   --logo-fit: #0891b2; /* Deepened cyan for better contrast on light background */
 }
+
 
 
 
@@ -59,8 +64,13 @@
   --app-amber-text: #FBBF24;
   --app-amber-bg: #78350F;
 
+  --app-cyan: #22d3ee;
+  --app-cyan-light: #0B2B2E;
+  --app-cyan-dark: #06b6d4;
+
   --logo-fit: #22d3ee; /* Bright cyan for dark mode visibility */
 }
+
 
 
 
@@ -96,8 +106,21 @@
 
   --color-amber-400: var(--app-amber-text);
   --color-amber-500: var(--app-amber-text);
+  --color-amber-900: var(--app-amber-bg);
   --color-amber-950: var(--app-amber-bg);
+
+  --color-emerald-800: var(--app-accent-hover);
+  --color-emerald-900: var(--app-accent-hover);
+  --color-emerald-950: var(--app-accent-light);
+
+  --color-cyan-400: var(--app-cyan);
+  --color-cyan-500: var(--app-cyan-dark);
+  --color-cyan-900: var(--app-cyan-light);
+
+  --color-teal-400: var(--app-cyan);
+  --color-teal-500: var(--app-cyan-dark);
 }
+
 
 /* Custom Premium scrollbar styles */
 ::-webkit-scrollbar {

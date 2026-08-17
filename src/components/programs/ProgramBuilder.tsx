@@ -570,7 +570,7 @@ export const ProgramBuilder: React.FC<{
                                 step="0.5"
                                 value={set.targetRpe || 8}
                                 onChange={(e) => handleUpdateSet(item.id, setIdx, 'targetRpe', Number(e.target.value))}
-                                className="w-full h-7 px-2 rounded-md bg-slate-950 border border-slate-800 text-xs text-amber-400 font-bold focus:outline-hidden"
+                                className="w-full h-7 px-2 rounded-md bg-slate-950 border border-slate-800 text-xs text-white font-bold focus:outline-hidden"
                               />
                             </td>
                             <td className="py-1.5 pr-2">

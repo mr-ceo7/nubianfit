@@ -51,12 +51,9 @@ export const CoachDashboard: React.FC<{
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800/90 border border-slate-700 text-slate-200 text-xs font-medium whitespace-nowrap">
-                <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                <span>Coach Alex Rivers</span>
-              </div>
               <span className="text-xs text-slate-400 font-medium">Sunday, August 16</span>
             </div>
+
             <h2 className="text-2xl md:text-3xl font-bold text-white tracking-tight">
               Athlete Performance Overview
             </h2>

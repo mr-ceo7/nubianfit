@@ -169,8 +169,8 @@ export const ProgressTracker: React.FC = () => {
     if (title.includes('Water')) return <Droplets className="h-4 w-4 text-cyan-400" />;
     if (title.includes('Protein')) return <Beef className="h-4 w-4 text-emerald-400" />;
     if (title.includes('Step')) return <Footprints className="h-4 w-4 text-amber-400" />;
-    if (title.includes('Sleep')) return <Moon className="h-4 w-4 text-indigo-400" />;
-    return <Activity className="h-4 w-4 text-rose-400" />;
+    if (title.includes('Sleep')) return <Moon className="h-4 w-4 text-slate-300" />;
+    return <Activity className="h-4 w-4 text-emerald-400" />;
   };
 
   const completedHabitsCount = todayHabits.filter(h => h.completed).length;
@@ -281,7 +281,7 @@ export const ProgressTracker: React.FC = () => {
             activeTab === 'prs' ? 'border-emerald-500 text-emerald-400' : 'border-transparent text-slate-400 hover:text-slate-200'
           }`}
         >
-          <Award className="h-4 w-4 text-amber-400" />
+          <Award className="h-4 w-4 text-emerald-400" />
           Personal Records (PRs)
         </button>
         <button
@@ -516,7 +516,7 @@ export const ProgressTracker: React.FC = () => {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <h3 className="text-base font-bold text-white flex items-center gap-2">
-                  <Award className="h-5 w-5 text-amber-400" />
+                  <Award className="h-5 w-5 text-emerald-400" />
                   Personal Records (PR) Hall of Fame
                 </h3>
                 <p className="text-xs text-slate-400">
@@ -526,7 +526,7 @@ export const ProgressTracker: React.FC = () => {
 
               <button
                 onClick={() => setIsPrModalOpen(true)}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-bold hover:bg-amber-500/30 self-start sm:self-auto"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-bold hover:bg-emerald-500/30 self-start sm:self-auto"
               >
                 <Plus className="h-4 w-4" />
                 <span>+ Log New PR</span>
@@ -536,14 +536,14 @@ export const ProgressTracker: React.FC = () => {
             {/* PR Cards Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {clientPRs.map((pr) => (
-                <div key={pr.id} className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 hover:border-amber-500/40 transition-all space-y-3">
+                <div key={pr.id} className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 hover:border-emerald-500/40 transition-all space-y-3">
                   <div className="flex items-center justify-between">
                     <h4 className="font-bold text-sm text-white">{pr.exerciseName}</h4>
                     <span className="text-[10px] text-slate-400">{pr.date}</span>
                   </div>
 
                   <div className="flex items-baseline gap-2">
-                    <span className="text-2xl font-black text-amber-400">{pr.weightKg} kg</span>
+                    <span className="text-2xl font-black text-emerald-400">{pr.weightKg} kg</span>
                     <span className="text-xs text-slate-300 font-bold">× {pr.reps} reps</span>
                   </div>
 
@@ -757,7 +757,7 @@ export const ProgressTracker: React.FC = () => {
           <div className="relative w-full max-w-md rounded-3xl bg-slate-900 border border-slate-700 shadow-2xl p-6 space-y-4">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <Award className="h-5 w-5 text-amber-400" />
+                <Award className="h-5 w-5 text-emerald-400" />
                 Log Personal Record
               </h3>
               <button onClick={() => setIsPrModalOpen(false)} className="text-slate-400 hover:text-white">
@@ -809,7 +809,7 @@ export const ProgressTracker: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-amber-500 text-slate-950 font-bold shadow-md"
+                  className="px-5 py-2 rounded-xl bg-emerald-500 text-slate-950 font-bold shadow-md"
                 >
                   Log PR
                 </button>

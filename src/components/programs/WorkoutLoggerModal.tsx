@@ -111,7 +111,7 @@ export const WorkoutLoggerModal: React.FC = () => {
         particleCount: 100,
         spread: 70,
         origin: { y: 0.6 },
-        colors: ['#10b981', '#06b6d4', '#f59e0b', '#3b82f6']
+        colors: ['#10b981', '#06b6d4', '#f59e0b', '#06b6d4']
       });
     } catch (e) {
       // fallback
@@ -324,7 +324,7 @@ export const WorkoutLoggerModal: React.FC = () => {
                                 step="0.5"
                                 value={set.completedRpe !== undefined ? set.completedRpe : (set.targetRpe || 8)}
                                 onChange={(e) => handleUpdateSetCompletedValue(exIdx, setIdx, 'completedRpe', Number(e.target.value))}
-                                className="w-14 h-7 px-2 rounded-lg bg-slate-900 border border-slate-800 text-xs font-bold text-amber-400 focus:outline-hidden"
+                                className="w-14 h-7 px-2 rounded-lg bg-slate-900 border border-slate-800 text-xs font-bold text-white focus:outline-hidden"
                               />
                             </td>
                             <td className="py-2 text-slate-400 font-mono text-[11px]">
