@@ -89,7 +89,9 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="relative z-20 flex h-16 w-full items-center justify-between border-b border-slate-800 bg-slate-950/95 px-4 md:px-6 backdrop-blur-md">
+    <header className="relative z-20 flex h-14 items-center justify-between border border-slate-800/80 bg-slate-950/90 px-3.5 md:px-5 backdrop-blur-md rounded-xl mt-1.5 mx-1.5 shadow-lg shadow-slate-950/20">
+
+
 
       {/* Toast Notification Banner */}
       {toastMessage && (
