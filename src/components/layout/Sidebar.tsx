@@ -47,19 +47,26 @@ export const Sidebar: React.FC = () => {
       <div className="flex items-center justify-between p-4 h-16 border-b border-slate-800/80">
         <div className="flex items-center gap-3 overflow-hidden cursor-pointer" onClick={() => setActiveTab('dashboard')}>
           {isCollapsed ? (
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center font-logo text-lg text-emerald-400 font-bold lowercase">
-              nf
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center font-logo text-lg lowercase">
+              <span className="text-logo-nubian">n</span>
+              <span className="text-logo-fit">f</span>
             </div>
           ) : (
             <div className="flex flex-col">
-              <div className="flex items-center gap-1.5">
-                <span className="font-logo text-[14px] tracking-wider text-white lowercase">nubianfit</span>
-                <span className="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <div className="flex items-center gap-2">
+                <span className="font-logo text-base tracking-wide text-logo-nubian lowercase">
+                  nubian<span className="text-logo-fit">fit</span>
+                </span>
+
+                <span className="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 leading-none">
                   Coach
                 </span>
               </div>
-              <span className="text-[10px] text-slate-400 font-medium tracking-wide truncate">Coaching Suite</span>
+              <span className="text-[10px] text-slate-400 font-semibold tracking-wide lowercase mt-0.5 whitespace-nowrap">
+                strength & strategy
+              </span>
             </div>
+
           )}
         </div>
 

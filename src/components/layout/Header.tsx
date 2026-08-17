@@ -106,9 +106,13 @@ export const Header: React.FC<HeaderProps> = ({
           className="md:hidden shrink-0 active:scale-95 transition-transform text-left"
           title="Go to Dashboard"
         >
-          <span className="font-logo text-[13px] tracking-wide text-emerald-400 lowercase block leading-none">nubianfit</span>
+          <span className="font-logo text-sm tracking-wide text-logo-nubian lowercase block leading-none">
+            nubian<span className="text-logo-fit">fit</span>
+          </span>
+
           <span className="text-[8px] text-slate-400 font-bold uppercase tracking-wider block mt-0.5">Coach</span>
         </button>
+
 
         <div className="hidden xs:block md:hidden h-5 w-px bg-slate-800" />
 

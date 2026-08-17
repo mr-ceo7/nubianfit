@@ -25,7 +25,12 @@
 
   --app-amber-text: #B45309;
   --app-amber-bg: #FEF3C7;
+
+  --logo-nubian: var(--app-fg);
+  --logo-fit: #22d3ee;
 }
+
+
 
 :root.dark {
   /* Deep Bluish Theme (Dark Mode) */
@@ -52,11 +57,17 @@
 
   --app-amber-text: #FBBF24;
   --app-amber-bg: #78350F;
+
 }
+
+
 
 @theme {
   --color-white: var(--app-white);
   --font-logo: "Bruno Ace", sans-serif;
+  --color-logo-nubian: var(--logo-nubian);
+  --color-logo-fit: var(--logo-fit);
+
 
   
   --color-slate-50: var(--app-fg);

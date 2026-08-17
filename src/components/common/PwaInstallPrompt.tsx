@@ -88,11 +88,13 @@ export const PwaInstallPrompt: React.FC<PwaInstallPromptProps> = ({ isOpen, onCl
           {/* Header */}
           <div className="mb-4 text-left">
             <h3 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
-              Install <span className="font-logo text-emerald-400 lowercase">nubianfit</span>
-              <span className="text-[9px] uppercase font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-semibold">
+              Install <span className="font-logo text-logo-nubian lowercase">nubian<span className="text-logo-fit">fit</span></span>
+              <span className="text-[9px] uppercase font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-bold">
                 PWA
               </span>
             </h3>
+
+
             <p className="text-xs text-slate-400 mt-1">Install for quick home screen access and offline support</p>
           </div>
 
