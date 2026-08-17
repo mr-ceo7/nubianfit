@@ -28,6 +28,7 @@ export const CalendarScheduler: React.FC = () => {
   const [selectedClientFilter, setSelectedClientFilter] = useState<string>('All');
   const [currentDate, setCurrentDate] = useState(new Date(2026, 7, 16)); // August 2026
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+  const [mobileViewMode, setMobileViewMode] = useState<'list' | 'grid'>('list');
   
   // Schedule Modal form state
   const [schedClientId, setSchedClientId] = useState(clients[0]?.id || '');
@@ -117,23 +118,45 @@ export const CalendarScheduler: React.FC = () => {
 
       {/* Calendar Controls & Filter Strip */}
       <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        {/* Month Navigator */}
-        <div className="flex items-center gap-3">
-          <h3 className="text-base font-extrabold text-white min-w-44">
-            {monthNames[month]} {year}
-          </h3>
-          <div className="flex items-center gap-1">
+        {/* Month Navigator & Mobile Switcher */}
+        <div className="flex flex-wrap items-center justify-between sm:justify-start gap-4">
+          <div className="flex items-center gap-3">
+            <h3 className="text-base font-extrabold text-white min-w-40">
+              {monthNames[month]} {year}
+            </h3>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={handlePrevMonth}
+                className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <button
+                onClick={handleNextMonth}
+                className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Mobile View Mode Switcher (Mobile Only) */}
+          <div className="flex md:hidden bg-slate-950 p-1 rounded-xl border border-slate-800 shrink-0">
             <button
-              onClick={handlePrevMonth}
-              className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
+              onClick={() => setMobileViewMode('list')}
+              className={`px-3 py-1.5 rounded-lg text-[9px] font-extrabold uppercase tracking-wider transition-colors ${
+                mobileViewMode === 'list' ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-white'
+              }`}
             >
-              <ChevronLeft className="h-4 w-4" />
+              List
             </button>
             <button
-              onClick={handleNextMonth}
-              className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
+              onClick={() => setMobileViewMode('grid')}
+              className={`px-3 py-1.5 rounded-lg text-[9px] font-extrabold uppercase tracking-wider transition-colors ${
+                mobileViewMode === 'grid' ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-white'
+              }`}
             >
-              <ChevronRight className="h-4 w-4" />
+              Month
             </button>
           </div>
         </div>
@@ -155,8 +178,9 @@ export const CalendarScheduler: React.FC = () => {
         </div>
       </div>
 
-      {/* Monthly Calendar Grid (Desktop Only) */}
-      <div className="hidden md:block rounded-3xl bg-slate-900/90 border border-slate-800 overflow-hidden shadow-xl">
+      {/* Monthly Calendar Grid (Always visible on desktop, scrollable toggle on mobile) */}
+      <div className={`${mobileViewMode === 'grid' ? 'block' : 'hidden md:block'} rounded-3xl bg-slate-900/90 border border-slate-800 overflow-hidden shadow-xl overflow-x-auto`}>
+        <div className="min-w-[640px] md:min-w-0">
         {/* Day of week headers */}
         <div className="grid grid-cols-7 bg-slate-950/80 border-b border-slate-800 text-center text-[10px] font-extrabold uppercase tracking-wider text-slate-400 py-3">
           <span>Sun</span>
@@ -238,9 +262,10 @@ export const CalendarScheduler: React.FC = () => {
           })}
         </div>
       </div>
+    </div>
 
       {/* Mobile-Only List View Feed */}
-      <div className="md:hidden space-y-4">
+      <div className={`md:hidden ${mobileViewMode === 'list' ? 'block' : 'hidden'} space-y-4`}>
         {(() => {
           // Get all workouts for the current month
           const monthWorkouts = filteredWorkouts.filter(w => {
