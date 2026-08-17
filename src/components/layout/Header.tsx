@@ -268,6 +268,7 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         )}
 
+
         {/* Theme Toggle Button (Desktop Only) */}
         <button
           id="theme-toggle-btn"

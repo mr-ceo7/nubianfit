@@ -60,6 +60,8 @@ export const ClientRoster: React.FC<{
   const [formWeeklyDays, setFormWeeklyDays] = useState(4);
   const [formDietary, setFormDietary] = useState('High protein, balanced');
 
+  const [isSaving, setIsSaving] = useState(false);
+
   // Filter clients
   const filteredClients = clients.filter(c => {
     const matchesSearch = c.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -70,50 +72,55 @@ export const ClientRoster: React.FC<{
     return matchesSearch && matchesStatus && matchesGoal;
   });
 
-  const handleCreateClient = (e: React.FormEvent) => {
+  const handleCreateClient = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formName.trim() || !formEmail.trim()) return;
 
-    const avatars = [
-      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80'
-    ];
-    const randomAvatar = avatars[Math.floor(Math.random() * avatars.length)];
+    setIsSaving(true);
+    try {
+      const avatars = [
+        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+        'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80',
+        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+        'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80'
+      ];
+      const randomAvatar = avatars[Math.floor(Math.random() * avatars.length)];
 
-    addClient({
-      name: formName.trim(),
-      email: formEmail.trim(),
-      phone: formPhone.trim() || '+1 (555) 000-1234',
-      avatar: randomAvatar,
-      age: Number(formAge),
-      gender: formGender,
-      status: formStatus,
-      goal: formGoal,
-      experienceLevel: formExperience,
-      startDate: new Date().toISOString().split('T')[0],
-      startingWeightKg: Number(formWeight),
-      currentWeightKg: Number(formWeight),
-      targetWeightKg: Number(formTargetWeight),
-      heightCm: Number(formHeight),
-      bodyFatPercentage: Number(formBodyFat),
-      targetBodyFat: Number(formTargetBodyFat),
-      injuriesAndHealth: formInjuries.trim() ? formInjuries.split(',').map(s => s.trim()) : [],
-      medicalAlerts: formMedicalAlerts.trim() || undefined,
-      customCoachNotes: ['Initial onboarding assessment completed.'],
-      onboardingSurvey: {
-        gymAccess: formGymAccess,
-        weeklyAvailabilityDays: Number(formWeeklyDays),
-        dietaryRestrictions: formDietary,
-        sleepAvgHours: 7.5,
-        stressLevel: 'Moderate',
-        favoriteExercises: 'Compound movements',
-        leastFavoriteExercises: 'None reported'
-      }
-    });
+      await addClient({
+        name: formName.trim(),
+        email: formEmail.trim(),
+        phone: formPhone.trim() || '+1 (555) 000-1234',
+        avatar: randomAvatar,
+        age: Number(formAge),
+        gender: formGender,
+        status: formStatus,
+        goal: formGoal,
+        experienceLevel: formExperience,
+        startDate: new Date().toISOString().split('T')[0],
+        startingWeightKg: Number(formWeight),
+        currentWeightKg: Number(formWeight),
+        targetWeightKg: Number(formTargetWeight),
+        heightCm: Number(formHeight),
+        bodyFatPercentage: Number(formBodyFat),
+        targetBodyFat: Number(formTargetBodyFat),
+        injuriesAndHealth: formInjuries.trim() ? formInjuries.split(',').map(s => s.trim()) : [],
+        medicalAlerts: formMedicalAlerts.trim() || undefined,
+        customCoachNotes: ['Initial onboarding assessment completed.'],
+        onboardingSurvey: {
+          gymAccess: formGymAccess,
+          weeklyAvailabilityDays: Number(formWeeklyDays),
+          dietaryRestrictions: formDietary,
+          sleepAvgHours: 7.5,
+          stressLevel: 'Moderate',
+          favoriteExercises: 'Compound movements',
+          leastFavoriteExercises: 'None reported'
+        }
+      });
 
-    onCloseAddModal();
+      onCloseAddModal();
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const getStatusBadge = (status: ClientStatus) => {
@@ -591,15 +598,27 @@ export const ClientRoster: React.FC<{
                 <button
                   type="button"
                   onClick={onCloseAddModal}
-                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 font-bold hover:bg-slate-700 transition-colors"
+                  disabled={isSaving}
+                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 font-bold hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:pointer-events-none"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-bold hover:from-emerald-400 hover:to-teal-400 shadow-md shadow-emerald-500/20 transition-all"
+                  disabled={isSaving}
+                  className="flex items-center gap-2 px-5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-bold hover:from-emerald-400 hover:to-teal-400 shadow-md shadow-emerald-500/20 transition-all disabled:opacity-50 disabled:pointer-events-none"
                 >
-                  Save Athlete Profile
+                  {isSaving ? (
+                    <>
+                      <svg className="animate-spin h-3.5 w-3.5 text-slate-950" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      <span>Registering athlete...</span>
+                    </>
+                  ) : (
+                    <span>Save Athlete Profile</span>
+                  )}
                 </button>
               </div>
             </form>

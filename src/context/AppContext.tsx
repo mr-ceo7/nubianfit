@@ -93,11 +93,12 @@ interface AppContextType {
   
   // Refresh data from API
   refreshFromBackend: () => Promise<void>;
+  isLoading: boolean;
 
   // Theme State
   theme: 'light' | 'dark';
   toggleTheme: () => void;
-
+  
   // Toast notifications
   toastMessage: string | null;
   showToast: (msg: string) => void;
@@ -109,6 +110,8 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [activeTab, setActiveTab] = useState<NavigationTab>('dashboard');
   const [isBackendConnected, setIsBackendConnected] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
   
   const [clients, setClients] = useState<Client[]>(() => {
     const saved = localStorage.getItem('nubianfit_clients');
@@ -222,6 +225,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Fetch initial data from FastAPI backend
   const refreshFromBackend = useCallback(async () => {
+    setIsLoading(true);
     try {
       // Check auth / log in if needed
       const token = localStorage.getItem('nubianfit_token');
@@ -273,6 +277,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } catch (err) {
       console.warn('FastAPI backend not reachable, using offline store:', err);
       setIsBackendConnected(false);
+    } finally {
+      setIsLoading(false);
     }
   }, []);
 
@@ -817,6 +823,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         sendMessage,
         toggleHabitCompletion,
         refreshFromBackend,
+        isLoading,
         theme,
         toggleTheme,
         toastMessage,

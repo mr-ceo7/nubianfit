@@ -239,8 +239,14 @@ export const ProgramBuilder: React.FC<{
   };
 
   // Save Program Action
-  const handleSave = () => {
-    saveProgram(activeProgram);
+  const [isSaving, setIsSaving] = useState(false);
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await saveProgram(activeProgram);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // Filter exercises in picker
@@ -285,10 +291,23 @@ export const ProgramBuilder: React.FC<{
           <button
             id="save-program-builder-btn"
             onClick={handleSave}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold text-xs shadow-lg shadow-emerald-500/20 transition-all"
+            disabled={isSaving}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold text-xs shadow-lg shadow-emerald-500/20 transition-all disabled:opacity-50 disabled:pointer-events-none"
           >
-            <Save className="h-4 w-4" />
-            <span>Save Program</span>
+            {isSaving ? (
+              <>
+                <svg className="animate-spin h-4 w-4 text-slate-950" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                <span>Saving...</span>
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4" />
+                <span>Save Program</span>
+              </>
+            )}
           </button>
         </div>
       </div>

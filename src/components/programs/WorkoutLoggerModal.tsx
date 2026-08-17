@@ -36,6 +36,8 @@ export const WorkoutLoggerModal: React.FC = () => {
   const [rating, setRating] = useState(activeWorkoutToLog.rating || 5);
   const [durationMin, setDurationMin] = useState(activeWorkoutToLog.durationMin || 55);
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   // Built-in Rest Timer
   const [restSecondsLeft, setRestSecondsLeft] = useState<number | null>(null);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
@@ -88,7 +90,6 @@ export const WorkoutLoggerModal: React.FC = () => {
     setExercises(updated);
   };
 
-  // Calculate total volume and 1RM estimate
   const totalVolume = exercises.reduce((acc, ex) => {
     return acc + ex.sets.reduce((sAcc, s) => {
       if (s.isCompleted && s.completedWeightKg && s.completedReps) {
@@ -98,56 +99,84 @@ export const WorkoutLoggerModal: React.FC = () => {
     }, 0);
   }, 0);
 
+  const handleFinishWorkout = async () => {
+    setIsSubmitting(true);
+    try {
+
+      // Play success confetti sound or visual effect
+      try {
+        const duration = 2.5 * 1000;
+        const animationEnd = Date.now() + duration;
+        const defaults = { startVelocity: 25, spread: 360, ticks: 50, zIndex: 100 };
+
+        const randomInRange = (min: number, max: number) => Math.random() * (max - min) + min;
+
+        const interval = setInterval(() => {
+          const timeLeft = animationEnd - Date.now();
+
+          if (timeLeft <= 0) {
+            return clearInterval(interval);
+          }
+
+          const particleCount = 40 * (timeLeft / duration);
+          confetti({
+            ...defaults,
+            particleCount,
+            origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
+            colors: ['#22d3ee', '#10b981', '#06b6d4']
+          });
+          confetti({
+            ...defaults,
+            particleCount,
+            origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
+            colors: ['#22d3ee', '#10b981', '#06b6d4']
+          });
+        }, 250);
+      } catch (e) {
+        // fallback
+      }
+
+      // Check for high weight sets to log as PR
+      exercises.forEach(ex => {
+        ex.sets.forEach(s => {
+          if (s.isCompleted && s.completedWeightKg && s.completedReps && s.completedWeightKg > 100) {
+            const est1Rm = Math.round(s.completedWeightKg * (1 + s.completedReps / 30));
+            addPersonalRecord({
+              clientId: activeWorkoutToLog.clientId,
+              exerciseName: ex.exerciseName,
+              weightKg: s.completedWeightKg,
+              reps: s.completedReps,
+              estimated1RmKg: est1Rm,
+              date: activeWorkoutToLog.date
+            });
+          }
+        });
+      });
+
+      await updateWorkoutLog(activeWorkoutToLog.id, {
+        exercises,
+        durationMin,
+        totalVolumeKg: totalVolume
+      });
+
+      await completeWorkout(activeWorkoutToLog.id, {
+        clientFeedback,
+        coachFeedback,
+        rating
+      });
+      
+      closeWorkoutLogger();
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const completedSetsCount = exercises.reduce((acc, ex) => {
     return acc + ex.sets.filter(s => s.isCompleted).length;
   }, 0);
 
   const totalSetsCount = exercises.reduce((acc, ex) => acc + ex.sets.length, 0);
 
-  const handleFinishWorkout = () => {
-    // Fire confetti celebration
-    try {
-      confetti({
-        particleCount: 100,
-        spread: 70,
-        origin: { y: 0.6 },
-        colors: ['#10b981', '#06b6d4', '#f59e0b', '#06b6d4']
-      });
-    } catch (e) {
-      // fallback
-    }
-
-    // Check for high weight sets to log as PR
-    exercises.forEach(ex => {
-      ex.sets.forEach(s => {
-        if (s.isCompleted && s.completedWeightKg && s.completedReps && s.completedWeightKg > 100) {
-          const est1Rm = Math.round(s.completedWeightKg * (1 + s.completedReps / 30));
-          addPersonalRecord({
-            clientId: activeWorkoutToLog.clientId,
-            exerciseName: ex.exerciseName,
-            weightKg: s.completedWeightKg,
-            reps: s.completedReps,
-            estimated1RmKg: est1Rm,
-            date: activeWorkoutToLog.date
-          });
-        }
-      });
-    });
-
-    updateWorkoutLog(activeWorkoutToLog.id, {
-      exercises,
-      durationMin,
-      totalVolumeKg: totalVolume
-    });
-
-    completeWorkout(activeWorkoutToLog.id, {
-      clientFeedback,
-      coachFeedback,
-      rating
-    });
-
-    closeWorkoutLogger();
-  };
 
   const formatTime = (secs: number) => {
     const m = Math.floor(secs / 60);
@@ -414,7 +443,8 @@ export const WorkoutLoggerModal: React.FC = () => {
         <div className="p-4 bg-slate-950 border-t border-slate-800 flex items-center justify-between">
           <button
             onClick={closeWorkoutLogger}
-            className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 font-bold text-xs hover:bg-slate-700"
+            disabled={isSubmitting}
+            className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 font-bold text-xs hover:bg-slate-700 disabled:opacity-50 disabled:pointer-events-none"
           >
             Cancel / Close
           </button>
@@ -422,10 +452,23 @@ export const WorkoutLoggerModal: React.FC = () => {
           <button
             id="finish-workout-btn"
             onClick={handleFinishWorkout}
-            className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition-colors shadow-sm"
+            disabled={isSubmitting}
+            className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition-colors shadow-sm disabled:opacity-50 disabled:pointer-events-none"
           >
-            <CheckCircle2 className="h-4 w-4" />
-            <span>Complete & Save Workout</span>
+            {isSubmitting ? (
+              <>
+                <svg className="animate-spin h-4 w-4 text-slate-950" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                <span>Saving session...</span>
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="h-4 w-4" />
+                <span>Complete & Save Workout</span>
+              </>
+            )}
           </button>
         </div>
       </div>
