@@ -9,11 +9,11 @@ import {
   Dumbbell, 
   TrendingUp, 
   BookOpen, 
-  X, 
   Download,
   UserPlus,
   Play
 } from 'lucide-react';
+
 import { useApp, NavigationTab } from '../../context/AppContext';
 
 interface MobileBottomNavProps {
@@ -147,13 +147,18 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           <div className="flex-1 flex items-center justify-center -mt-5">
             <button
               id="mobile-quick-action-trigger"
-              onClick={handleOpenActionSheet}
-              className="w-12 h-12 rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 flex items-center justify-center shadow-md border-2 border-slate-950 active:scale-90 transition-transform focus:outline-none"
+              onClick={isActionSheetOpen ? () => setIsActionSheetOpen(false) : handleOpenActionSheet}
+              className={`w-12 h-12 rounded-full flex items-center justify-center shadow-md border-2 border-slate-950 active:scale-90 transition-all duration-300 focus:outline-none ${
+                isActionSheetOpen
+                  ? 'bg-slate-700 text-white rotate-45'
+                  : 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 rotate-0'
+              }`}
               title="Quick Actions"
             >
               <Plus className="w-6 h-6 stroke-[2.5]" />
             </button>
           </div>
+
 
           {/* 4. Schedule */}
           <button
@@ -216,38 +221,30 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
       {/* Mobile Quick Action Sheet Modal */}
       <AnimatePresence>
         {isActionSheetOpen && (
-          <div className="md:hidden fixed inset-0 z-50 flex items-end justify-center bg-slate-950/80 backdrop-blur-sm">
-            {/* Dismiss backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0"
-              onClick={() => setIsActionSheetOpen(false)}
-            />
-
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="md:hidden fixed inset-0 bottom-[76px] z-50 flex items-end justify-center bg-slate-950/85 backdrop-blur-xs cursor-pointer"
+            onClick={() => setIsActionSheetOpen(false)}
+          >
             {/* Action Sheet Card */}
             <motion.div
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 26, stiffness: 300 }}
-              className="relative w-full bg-slate-900 border-t border-slate-800 rounded-t-3xl p-5 pb-safe z-10 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto"
+              transition={{ type: 'spring', damping: 28, stiffness: 320 }}
+              className="relative w-full bg-slate-900 border-t border-slate-800 rounded-t-3xl p-5 pb-6 z-10 shadow-2xl space-y-4 max-h-[70vh] overflow-y-auto cursor-default"
+              onClick={(e) => e.stopPropagation()}
             >
+
               {/* Sheet Drag Handle */}
               <div className="w-12 h-1 bg-slate-700 rounded-full mx-auto" />
 
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="text-base font-bold text-white tracking-tight">Coach Quick Actions</h4>
-                  <p className="text-xs text-slate-400">Gym floor shortcuts</p>
-                </div>
-                <button
-                  onClick={() => setIsActionSheetOpen(false)}
-                  className="p-1.5 rounded-full bg-slate-800 text-slate-400 hover:text-white"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+              <div>
+                <h4 className="text-base font-bold text-white tracking-tight">Coach Quick Actions</h4>
+                <p className="text-xs text-slate-400">Gym floor shortcuts</p>
               </div>
 
               {/* Primary Action Tiles */}
@@ -255,9 +252,9 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
                 {/* 1. Live Workout Logger */}
                 <button
                   onClick={handleQuickLogFirstWorkout}
-                  className="p-3.5 rounded-2xl bg-slate-800/80 border border-emerald-500/30 flex flex-col items-start gap-2 text-left active:scale-[0.98] transition-transform"
+                  className="p-3.5 rounded-2xl bg-emerald-950/60 border border-emerald-800/40 flex flex-col items-start gap-2 text-left active:scale-[0.97] transition-transform"
                 >
-                  <div className="p-2 rounded-xl bg-emerald-500 text-slate-950 font-bold">
+                  <div className="p-2 rounded-xl bg-emerald-500 text-slate-950">
                     <Play className="w-4 h-4 fill-slate-950" />
                   </div>
                   <div>
@@ -272,10 +269,10 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
                     setIsActionSheetOpen(false);
                     onOpenNewClient();
                   }}
-                  className="p-3.5 rounded-2xl bg-slate-800/60 border border-slate-700/60 flex flex-col items-start gap-2 text-left active:scale-[0.98] transition-transform"
+                  className="p-3.5 rounded-2xl bg-slate-800/50 border border-slate-700/40 flex flex-col items-start gap-2 text-left active:scale-[0.97] transition-transform"
                 >
-                  <div className="p-2 rounded-xl bg-slate-700 text-slate-200">
-                    <UserPlus className="w-4 h-4 text-emerald-400" />
+                  <div className="p-2 rounded-xl bg-emerald-900/60 text-emerald-400">
+                    <UserPlus className="w-4 h-4" />
                   </div>
                   <div>
                     <span className="text-xs font-bold text-white block">Add Athlete</span>
@@ -289,10 +286,10 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
                     setIsActionSheetOpen(false);
                     handleTabClick('programs');
                   }}
-                  className="p-3.5 rounded-2xl bg-slate-800/60 border border-slate-700/60 flex flex-col items-start gap-2 text-left active:scale-[0.98] transition-transform"
+                  className="p-3.5 rounded-2xl bg-slate-800/50 border border-slate-700/40 flex flex-col items-start gap-2 text-left active:scale-[0.97] transition-transform"
                 >
-                  <div className="p-2 rounded-xl bg-slate-700 text-slate-200">
-                    <Dumbbell className="w-4 h-4 text-cyan-400" />
+                  <div className="p-2 rounded-xl bg-cyan-900/50 text-cyan-400">
+                    <Dumbbell className="w-4 h-4" />
                   </div>
                   <div>
                     <span className="text-xs font-bold text-white block">Program Builder</span>
@@ -306,10 +303,10 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
                     setIsActionSheetOpen(false);
                     handleTabClick('exercises');
                   }}
-                  className="p-3.5 rounded-2xl bg-slate-800/60 border border-slate-700/60 flex flex-col items-start gap-2 text-left active:scale-[0.98] transition-transform"
+                  className="p-3.5 rounded-2xl bg-slate-800/50 border border-slate-700/40 flex flex-col items-start gap-2 text-left active:scale-[0.97] transition-transform"
                 >
-                  <div className="p-2 rounded-xl bg-slate-700 text-slate-200">
-                    <BookOpen className="w-4 h-4 text-amber-400" />
+                  <div className="p-2 rounded-xl bg-amber-900/40 text-amber-400">
+                    <BookOpen className="w-4 h-4" />
                   </div>
                   <div>
                     <span className="text-xs font-bold text-white block">Exercise Catalog</span>
@@ -323,10 +320,10 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
                     setIsActionSheetOpen(false);
                     handleTabClick('progress');
                   }}
-                  className="p-3.5 rounded-2xl bg-slate-800/60 border border-slate-700/60 flex flex-col items-start gap-2 text-left active:scale-[0.98] transition-transform"
+                  className="p-3.5 rounded-2xl bg-slate-800/50 border border-slate-700/40 flex flex-col items-start gap-2 text-left active:scale-[0.97] transition-transform"
                 >
-                  <div className="p-2 rounded-xl bg-slate-700 text-slate-200">
-                    <TrendingUp className="w-4 h-4 text-emerald-400" />
+                  <div className="p-2 rounded-xl bg-emerald-900/50 text-emerald-400">
+                    <TrendingUp className="w-4 h-4" />
                   </div>
                   <div>
                     <span className="text-xs font-bold text-white block">Progress Charts</span>
@@ -340,10 +337,10 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
                     setIsActionSheetOpen(false);
                     onOpenInstallModal();
                   }}
-                  className="p-3.5 rounded-2xl bg-slate-800/60 border border-slate-700/60 flex flex-col items-start gap-2 text-left active:scale-[0.98] transition-transform"
+                  className="p-3.5 rounded-2xl bg-slate-800/50 border border-slate-700/40 flex flex-col items-start gap-2 text-left active:scale-[0.97] transition-transform"
                 >
-                  <div className="p-2 rounded-xl bg-slate-700 text-slate-200">
-                    <Download className="w-4 h-4 text-emerald-400" />
+                  <div className="p-2 rounded-xl bg-slate-700/80 text-slate-300">
+                    <Download className="w-4 h-4" />
                   </div>
                   <div>
                     <span className="text-xs font-bold text-white block">Install PWA</span>
@@ -352,15 +349,11 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
                 </button>
               </div>
 
-              {/* Dismiss button */}
-              <button
-                onClick={() => setIsActionSheetOpen(false)}
-                className="w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs transition-colors"
-              >
-                Close
-              </button>
+
+
+
             </motion.div>
-          </div>
+          </motion.div>
         )}
       </AnimatePresence>
     </>
