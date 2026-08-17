@@ -29,6 +29,7 @@ export const CalendarScheduler: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(new Date(2026, 7, 16)); // August 2026
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
   const [mobileViewMode, setMobileViewMode] = useState<'list' | 'grid'>('list');
+  const [selectedDate, setSelectedDate] = useState('2026-08-16');
   
   // Schedule Modal form state
   const [schedClientId, setSchedClientId] = useState(clients[0]?.id || '');
@@ -178,9 +179,8 @@ export const CalendarScheduler: React.FC = () => {
         </div>
       </div>
 
-      {/* Monthly Calendar Grid (Always visible on desktop, scrollable toggle on mobile) */}
-      <div className={`${mobileViewMode === 'grid' ? 'block' : 'hidden md:block'} rounded-3xl bg-slate-900/90 border border-slate-800 overflow-hidden shadow-xl overflow-x-auto`}>
-        <div className="min-w-[640px] md:min-w-0">
+      {/* Monthly Calendar Grid (Desktop Only) */}
+      <div className="hidden md:block rounded-3xl bg-slate-900/90 border border-slate-800 overflow-hidden shadow-xl">
         {/* Day of week headers */}
         <div className="grid grid-cols-7 bg-slate-950/80 border-b border-slate-800 text-center text-[10px] font-extrabold uppercase tracking-wider text-slate-400 py-3">
           <span>Sun</span>
@@ -262,7 +262,148 @@ export const CalendarScheduler: React.FC = () => {
           })}
         </div>
       </div>
-    </div>
+
+      {/* Monthly Calendar Grid (Mobile Only - Compact & Scroll-Free) */}
+      <div className={`md:hidden ${mobileViewMode === 'grid' ? 'block' : 'hidden'} rounded-2xl bg-slate-900/90 border border-slate-800 overflow-hidden shadow-xl`}>
+        {/* Day of week headers */}
+        <div className="grid grid-cols-7 bg-slate-950/80 border-b border-slate-800 text-center text-[9px] font-extrabold uppercase tracking-wider text-slate-400 py-2">
+          <span>Sun</span>
+          <span>Mon</span>
+          <span>Tue</span>
+          <span>Wed</span>
+          <span>Thu</span>
+          <span>Fri</span>
+          <span>Sat</span>
+        </div>
+
+        {/* Days grid */}
+        <div className="grid grid-cols-7 auto-rows-fr divide-x divide-y divide-slate-800/60 bg-slate-900/40">
+          {/* Empty cells before month start */}
+          {Array.from({ length: firstDayIndex }).map((_, i) => (
+            <div key={`empty-mobile-${i}`} className="min-h-12 bg-slate-950/30 opacity-40" />
+          ))}
+
+          {/* Days of month */}
+          {Array.from({ length: daysInMonth }).map((_, i) => {
+            const dayNum = i + 1;
+            const dayDateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
+            const dayWorkouts = filteredWorkouts.filter(w => w.date === dayDateStr);
+            const isSelected = dayDateStr === selectedDate;
+            const isToday = dayDateStr === '2026-08-16';
+
+            // Dots counts
+            const completedCount = dayWorkouts.filter(w => w.status === 'Completed').length;
+            const scheduledCount = dayWorkouts.filter(w => w.status === 'Scheduled').length;
+
+            return (
+              <button
+                key={`day-mobile-${dayNum}`}
+                onClick={() => setSelectedDate(dayDateStr)}
+                className={`min-h-12 p-1 flex flex-col items-center justify-between transition-colors focus:outline-hidden ${
+                  isSelected 
+                    ? 'bg-emerald-950/40 ring-1 ring-emerald-500/60' 
+                    : isToday 
+                      ? 'bg-slate-800/40' 
+                      : 'hover:bg-slate-800/20'
+                }`}
+              >
+                <span className={`text-[10px] font-bold h-5 w-5 rounded-full flex items-center justify-center ${
+                  isSelected 
+                    ? 'bg-emerald-500 text-slate-950 font-extrabold' 
+                    : isToday
+                      ? 'border border-emerald-500/50 text-emerald-400 font-extrabold'
+                      : 'text-slate-300'
+                }`}>
+                  {dayNum}
+                </span>
+
+                {/* Workout Dots */}
+                <div className="flex items-center justify-center gap-0.5 mt-0.5 h-1.5">
+                  {Array.from({ length: completedCount }).map((_, idx) => (
+                    <span key={`comp-dot-${idx}`} className="h-1 w-1 rounded-full bg-emerald-400 shrink-0" />
+                  ))}
+                  {Array.from({ length: scheduledCount }).map((_, idx) => (
+                    <span key={`sched-dot-${idx}`} className="h-1 w-1 rounded-full bg-cyan-400 shrink-0" />
+                  ))}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Selected Day Workouts List for Mobile Month View */}
+      <div className={`md:hidden ${mobileViewMode === 'grid' ? 'block' : 'hidden'} space-y-3 mt-4`}>
+        <div className="flex items-center justify-between px-2">
+          <h4 className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
+            Schedule for {new Date(selectedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', weekday: 'short' })}
+          </h4>
+          <button
+            onClick={() => {
+              setSchedDate(selectedDate);
+              setIsScheduleModalOpen(true);
+            }}
+            className="text-[10px] font-bold text-emerald-400 flex items-center gap-1 hover:underline"
+          >
+            <Plus className="h-3 w-3" /> Add Split
+          </button>
+        </div>
+
+        {(() => {
+          const dayWorkouts = filteredWorkouts.filter(w => w.date === selectedDate);
+          if (dayWorkouts.length === 0) {
+            return (
+              <div className="p-6 text-center rounded-2xl bg-slate-900/60 border border-slate-800 text-slate-400 text-xs">
+                No workouts scheduled for this day.
+              </div>
+            );
+          }
+          return (
+            <div className="space-y-2">
+              {dayWorkouts.map(w => {
+                const isDone = w.status === 'Completed';
+                return (
+                  <div
+                    key={w.id}
+                    onClick={() => openWorkoutLogger(w)}
+                    className="p-3.5 rounded-2xl border flex items-center justify-between gap-3 bg-slate-900 border-slate-800/80 hover:border-slate-700 transition-colors active:scale-[0.99]"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <img
+                        src={w.clientAvatar}
+                        alt={w.clientName}
+                        className="h-8 w-8 rounded-full object-cover shrink-0 border border-slate-800"
+                      />
+                      <div className="min-w-0 text-left">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-bold text-white text-xs truncate">{w.clientName}</span>
+                          <span className="text-[8px] font-mono px-1.5 py-0.5 rounded bg-slate-950 text-slate-400 border border-slate-800 shrink-0">
+                            {w.time || '09:00 AM'}
+                          </span>
+                        </div>
+                        <div className="text-[10px] text-slate-400 truncate mt-0.5">
+                          {w.workoutTitle}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="shrink-0 flex items-center gap-2">
+                      {isDone ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                          Done
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-slate-950 text-cyan-400 border border-slate-800">
+                          Scheduled
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
+      </div>
 
       {/* Mobile-Only List View Feed */}
       <div className={`md:hidden ${mobileViewMode === 'list' ? 'block' : 'hidden'} space-y-4`}>
