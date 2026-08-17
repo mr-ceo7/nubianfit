@@ -1,5 +1,105 @@
 @import "tailwindcss";
 
+:root {
+  /* Light Cream Theme (Light Mode) */
+  --brand-deep: #0D3A35;
+  --brand-moderate: #276152;
+  --brand-laurel: #B1B7AB;
+  --brand-cream: #FBF6F0;
+
+  --app-bg: #FBF6F0;
+  --app-card: #FFFFFF;
+  --app-card-hover: #F6EEE4;
+  --app-border: #D1C5B3;
+  --app-border-light: #E6DCCD;
+  
+  --app-fg: #0D3A35;
+  --app-fg-secondary: #276152;
+  --app-muted: #6B7977;
+  --app-muted-light: #9CA8A6;
+  --app-white: #0D3A35; /* Remap white to deep bluish text in light mode */
+
+  --app-accent: #276152;
+  --app-accent-hover: #0D3A35;
+  --app-accent-light: #E4ECEB;
+
+  --app-amber-text: #B45309;
+  --app-amber-bg: #FEF3C7;
+}
+
+:root.dark {
+  /* Deep Bluish Theme (Dark Mode) */
+  --brand-deep: #0D3A35;
+  --brand-moderate: #276152;
+  --brand-laurel: #B1B7AB;
+  --brand-cream: #FBF6F0;
+
+  --app-bg: #051412;
+  --app-card: #0C2622;
+  --app-card-hover: #133832;
+  --app-border: #153E38;
+  --app-border-light: #205A51;
+
+  --app-fg: #FBF6F0;
+  --app-fg-secondary: #B1B7AB;
+  --app-muted: #839794;
+  --app-muted-light: #566E6A;
+  --app-white: #FFFFFF; /* Normal white in dark mode */
+
+  --app-accent: #276152;
+  --app-accent-hover: #327C69;
+  --app-accent-light: #0B2B25;
+
+  --app-amber-text: #FBBF24;
+  --app-amber-bg: #78350F;
+}
+
+@theme {
+  --color-white: var(--app-white);
+  
+  --color-slate-50: var(--app-fg);
+  --color-slate-100: var(--app-fg);
+  --color-slate-200: var(--app-fg-secondary);
+  --color-slate-300: var(--app-muted);
+  --color-slate-400: var(--app-muted);
+  --color-slate-500: var(--app-muted-light);
+  --color-slate-600: var(--app-muted-light);
+  --color-slate-700: var(--app-border-light);
+  --color-slate-800: var(--app-border);
+  --color-slate-900: var(--app-card);
+  --color-slate-950: var(--app-bg);
+
+  --color-emerald-50: var(--app-accent-light);
+  --color-emerald-100: var(--app-accent-light);
+  --color-emerald-200: var(--app-accent-light);
+  --color-emerald-300: var(--app-accent);
+  --color-emerald-400: var(--app-accent);
+  --color-emerald-500: var(--app-accent);
+  --color-emerald-600: var(--app-accent-hover);
+  --color-emerald-700: var(--app-accent-hover);
+
+  --color-amber-400: var(--app-amber-text);
+  --color-amber-500: var(--app-amber-text);
+  --color-amber-950: var(--app-amber-bg);
+}
+
+/* Custom Premium scrollbar styles */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--app-bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--app-border);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--app-fg-secondary);
+}
+
+
 @layer utilities {
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom, 0px);

@@ -7,8 +7,11 @@ import {
   UserPlus, 
   CheckCircle2, 
   X,
-  Download
+  Download,
+  Sun,
+  Moon
 } from 'lucide-react';
+
 import { useApp } from '../../context/AppContext';
 
 interface HeaderProps {
@@ -34,8 +37,11 @@ export const Header: React.FC<HeaderProps> = ({
     toastMessage, 
     setSelectedClientId,
     scheduledWorkouts,
-    openWorkoutLogger
+    openWorkoutLogger,
+    theme,
+    toggleTheme
   } = useApp();
+
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -79,7 +85,8 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="relative z-20 flex h-16 w-full items-center justify-between border-b border-slate-800 bg-[#090d16]/95 px-4 md:px-6 backdrop-blur-md">
+    <header className="relative z-20 flex h-16 w-full items-center justify-between border-b border-slate-800 bg-slate-950/95 px-4 md:px-6 backdrop-blur-md">
+
       {/* Toast Notification Banner */}
       {toastMessage && (
         <div className="absolute top-2 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2 text-xs font-bold text-slate-950 shadow-lg animate-in fade-in slide-in-from-top-3">
@@ -241,22 +248,35 @@ export const Header: React.FC<HeaderProps> = ({
             id="header-install-pwa-btn"
             onClick={onOpenInstallModal}
             className="flex items-center gap-1.5 h-9 px-2.5 sm:px-3 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 hover:text-emerald-300 text-xs font-semibold transition-colors"
-            title="Install NubianFit PWA"
           >
             <Download className="h-4 w-4 shrink-0" />
             <span className="hidden sm:inline">Install App</span>
           </button>
         )}
 
+
+        {/* Theme Toggle Button */}
+        <button
+          id="theme-toggle-btn"
+          onClick={toggleTheme}
+          className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+          title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
+        >
+          {theme === 'light' ? <Moon className="h-4.5 w-4.5 text-slate-400" /> : <Sun className="h-4.5 w-4.5 text-amber-500" />}
+        </button>
+
+
         {/* Notifications Popover */}
         <div className="relative">
+
           <button
             id="notifications-btn"
             onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
             className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
           >
             <Bell className="h-4 w-4" />
-            <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-[#090d16]" />
+            <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-slate-950" />
+
           </button>
 
           {isNotificationsOpen && (

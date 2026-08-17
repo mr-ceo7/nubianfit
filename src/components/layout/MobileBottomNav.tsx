@@ -89,7 +89,8 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
       {/* Mobile Bottom Navigation Bar (Hidden on desktop md+) */}
       <nav 
         id="mobile-bottom-nav"
-        className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#090d16]/95 backdrop-blur-xl border-t border-slate-800 pb-safe transition-transform duration-200"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-950/95 backdrop-blur-xl border-t border-slate-800 pb-safe transition-transform duration-200"
+
       >
         <div className="flex items-center justify-around px-2 py-1.5 h-16 max-w-lg mx-auto">
           {/* 1. Dashboard */}

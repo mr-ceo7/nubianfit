@@ -36,7 +36,8 @@ export const Sidebar: React.FC = () => {
   return (
     <aside 
       id="sidebar-navigation"
-      className={`relative hidden md:flex flex-col border-r border-slate-800 bg-[#090d16] text-slate-200 transition-all duration-300 z-30 shrink-0 ${
+      className={`relative hidden md:flex flex-col border-r border-slate-800 bg-slate-950 text-slate-200 transition-all duration-300 z-30 shrink-0 ${
+
         isCollapsed ? 'w-20' : 'w-64'
       }`}
     >
@@ -112,8 +113,9 @@ export const Sidebar: React.FC = () => {
               {isCollapsed && item.badge !== undefined && (
                 <span className={`absolute top-1.5 right-1.5 h-2.5 w-2.5 rounded-full ${
                   item.badgeColor || 'bg-emerald-500'
-                } ring-2 ring-[#090d16]`} />
+                } ring-2 ring-slate-950`} />
               )}
+
             </button>
           );
         })}
@@ -157,7 +159,7 @@ export const Sidebar: React.FC = () => {
       </div>
 
       {/* Coach Profile Footer */}
-      <div className="p-3 border-t border-slate-800/80 bg-[#0c1220]/60">
+      <div className="p-3 border-t border-slate-800/80 bg-slate-900/60">
         <div className="flex items-center gap-3">
           <div className="relative">
             <img 
@@ -165,7 +167,8 @@ export const Sidebar: React.FC = () => {
               alt="Coach Alex"
               className="h-10 w-10 rounded-xl object-cover border-2 border-emerald-500/40"
             />
-            <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-[#090d16]" />
+            <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-slate-950" />
+
           </div>
           
           {!isCollapsed && (

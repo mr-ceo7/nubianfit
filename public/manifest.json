@@ -20,8 +20,9 @@
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "theme_color": "#020617",
-  "background_color": "#020617",
+  "theme_color": "#0D3A35",
+  "background_color": "#0D3A35",
+
   "categories": ["fitness", "sports", "productivity", "health"],
   "shortcuts": [
     {

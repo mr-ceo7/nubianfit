@@ -94,10 +94,15 @@ interface AppContextType {
   // Refresh data from API
   refreshFromBackend: () => Promise<void>;
 
+  // Theme State
+  theme: 'light' | 'dark';
+  toggleTheme: () => void;
+
   // Toast notifications
   toastMessage: string | null;
   showToast: (msg: string) => void;
 }
+
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -163,6 +168,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setToastMessage(null);
     }, 3500);
   };
+
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    const saved = localStorage.getItem('nubianfit_theme');
+    if (saved === 'light' || saved === 'dark') return saved;
+    return 'light';
+  });
+
+
+  const toggleTheme = () => {
+    setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
+  };
+
+  useEffect(() => {
+    localStorage.setItem('nubianfit_theme', theme);
+    const root = document.documentElement;
+    if (theme === 'dark') {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+  }, [theme]);
+
 
   // Sync to localStorage as backup
   useEffect(() => {
@@ -790,12 +817,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         sendMessage,
         toggleHabitCompletion,
         refreshFromBackend,
+        theme,
+        toggleTheme,
         toastMessage,
         showToast
       }}
     >
       {children}
     </AppContext.Provider>
+
   );
 };
 
