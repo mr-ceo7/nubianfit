@@ -101,8 +101,8 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       )}
 
-      {/* Left: View title & status */}
-      <div className="flex items-center gap-2.5">
+      {/* Left: Mobile Brand Logo */}
+      <div className="flex items-center">
         <button
           onClick={() => setActiveTab('dashboard')}
           className="md:hidden shrink-0 active:scale-95 transition-transform text-left flex flex-col items-stretch"
@@ -117,22 +117,18 @@ export const Header: React.FC<HeaderProps> = ({
             <span>strategy</span>
           </div>
         </button>
-
-
-
-        <div className="hidden xs:block md:hidden h-5 w-px bg-slate-800" />
-
-
-
-        <div className="flex flex-col">
-          <h1 className="text-sm sm:text-base font-bold text-white tracking-tight flex items-center gap-1.5 truncate max-w-[160px] sm:max-w-none">
-            {getBreadcrumbTitle()}
-          </h1>
-          <span className="text-[10px] sm:text-[11px] text-slate-400 hidden sm:inline-block">
-            NubianFit Coaching Suite
-          </span>
-        </div>
       </div>
+
+      {/* Center on mobile, Left on desktop: View Title */}
+      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none md:pointer-events-auto md:static md:translate-x-0 md:translate-y-0 text-center md:text-left flex flex-col">
+        <h1 className="text-sm md:text-base font-bold text-white tracking-tight flex items-center justify-center md:justify-start gap-1.5 truncate max-w-[130px] sm:max-w-none">
+          {getBreadcrumbTitle()}
+        </h1>
+        <span className="text-[10px] sm:text-[11px] text-slate-400 hidden sm:inline-block">
+          NubianFit Coaching Suite
+        </span>
+      </div>
+
 
       {/* Center / Right: Global Search & Actions */}
       <div className="flex items-center gap-2 sm:gap-3">
