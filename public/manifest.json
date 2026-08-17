@@ -4,15 +4,15 @@
   "description": "Professional Fitness Coaching & Athlete Management Platform with periodized programming, live workout logging, metric tracking, and instant athlete messenger.",
   "icons": [
     {
-      "src": "/icon.svg",
+      "src": "/icon.png",
       "sizes": "192x192 512x512",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icon.svg",
+      "src": "/icon.png",
       "sizes": "192x192 512x512",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "maskable"
     }
   ],
@@ -30,21 +30,21 @@
       "short_name": "Log Workout",
       "description": "Record sets, reps, load, and rest timers",
       "url": "/?tab=programs",
-      "icons": [{ "src": "/icon.svg", "sizes": "192x192" }]
+      "icons": [{ "src": "/icon.png", "sizes": "192x192" }]
     },
     {
       "name": "Athlete Roster",
       "short_name": "Athletes",
       "description": "View client profiles, goals, and compliance",
       "url": "/?tab=clients",
-      "icons": [{ "src": "/icon.svg", "sizes": "192x192" }]
+      "icons": [{ "src": "/icon.png", "sizes": "192x192" }]
     },
     {
       "name": "Coach Messenger",
       "short_name": "Messenger",
       "description": "1-on-1 direct athlete communication",
       "url": "/?tab=messenger",
-      "icons": [{ "src": "/icon.svg", "sizes": "192x192" }]
+      "icons": [{ "src": "/icon.png", "sizes": "192x192" }]
     }
   ]
 }

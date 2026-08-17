@@ -6,7 +6,7 @@
 import React, { useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Loader } from './Loader';
-
+import logoIcon from '../../logo-icon.png';
 
 
 interface SplashScreenProps {
@@ -39,6 +39,20 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
       <div className="absolute -top-40 -left-40 w-96 h-96 bg-emerald-600/15 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-cyan-600/15 rounded-full blur-3xl pointer-events-none" />
 
+      {/* Big & Heroic Transparent Graphic Icon (Positioned absolutely relative to center to prevent layout pushes) */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.8, y: -20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ delay: 0.2, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+        className="absolute bottom-[calc(50%+5.5rem)] sm:bottom-[calc(50%+7rem)] md:bottom-[calc(50%+8rem)] flex justify-center z-10"
+      >
+        <img
+          src={logoIcon}
+          alt="NubianFit Brand Mark"
+          className="h-24 w-24 sm:h-32 sm:w-32 md:h-40 md:w-40 object-contain filter drop-shadow-[0_10px_25px_rgba(16,185,129,0.25)]"
+        />
+      </motion.div>
+
       {/* Core Perspective Sliced Loader (Centered, Large, and Visible) */}
       <motion.div
         initial={{ scale: 0.85, opacity: 0 }}
@@ -53,7 +67,6 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
           shadowColor="var(--loader-shadow)"
           shineColor="var(--loader-shine)"
         />
-
       </motion.div>
 
       {/* Brand logo at the bottom */}
