@@ -47,6 +47,8 @@ export const Header: React.FC<HeaderProps> = ({
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isQuickActionsOpen, setIsQuickActionsOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
 
   // Filter search items
   const filteredClients = searchQuery.trim() 
@@ -242,33 +244,30 @@ export const Header: React.FC<HeaderProps> = ({
           )}
         </div>
 
-        {/* PWA Install Button */}
+        {/* PWA Install Button (Desktop Only) */}
         {onOpenInstallModal && (
           <button
             id="header-install-pwa-btn"
             onClick={onOpenInstallModal}
-            className="flex items-center gap-1.5 h-9 px-2.5 sm:px-3 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 hover:text-emerald-300 text-xs font-semibold transition-colors"
+            className="hidden md:flex items-center gap-1.5 h-9 px-2.5 sm:px-3 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 hover:text-emerald-300 text-xs font-semibold transition-colors"
           >
             <Download className="h-4 w-4 shrink-0" />
             <span className="hidden sm:inline">Install App</span>
           </button>
         )}
 
-
-        {/* Theme Toggle Button */}
+        {/* Theme Toggle Button (Desktop Only) */}
         <button
           id="theme-toggle-btn"
           onClick={toggleTheme}
-          className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+          className="hidden md:flex h-9 w-9 items-center justify-center rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
           title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
         >
           {theme === 'light' ? <Moon className="h-4.5 w-4.5 text-slate-400" /> : <Sun className="h-4.5 w-4.5 text-amber-500" />}
         </button>
 
-
-        {/* Notifications Popover */}
+        {/* Notifications Popover (Visible on Mobile & Desktop) */}
         <div className="relative">
-
           <button
             id="notifications-btn"
             onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
@@ -276,7 +275,6 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <Bell className="h-4 w-4" />
             <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-slate-950" />
-
           </button>
 
           {isNotificationsOpen && (
@@ -311,7 +309,7 @@ export const Header: React.FC<HeaderProps> = ({
           )}
         </div>
 
-        {/* Quick Workout Logger Button */}
+        {/* Quick Workout Logger Button (Desktop Only) */}
         <button
           id="quick-log-workout-btn"
           onClick={handleStartTodayWorkout}
@@ -321,8 +319,8 @@ export const Header: React.FC<HeaderProps> = ({
           <span>Log Workout</span>
         </button>
 
-        {/* Action Button Dropdown */}
-        <div className="relative">
+        {/* Action Button Dropdown (Desktop Only) */}
+        <div className="relative hidden md:block">
           <button
             id="quick-action-menu-btn"
             onClick={() => setIsQuickActionsOpen(!isQuickActionsOpen)}
@@ -369,6 +367,59 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           )}
         </div>
+
+        {/* Mobile Profile Settings Menu Trigger */}
+        <div className="relative md:hidden">
+          <button
+            id="mobile-profile-menu-btn"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-800 overflow-hidden active:scale-95 transition-transform"
+          >
+            <img
+              src="https://images.unsplash.com/photo-1568602471122-7832951cc4c5?w=100&auto=format&fit=crop&q=80"
+              alt="Coach Rivers"
+              className="h-full w-full object-cover"
+            />
+          </button>
+
+          {isMobileMenuOpen && (
+            <div className="absolute top-11 right-0 w-56 rounded-2xl bg-slate-900 border border-slate-700 shadow-2xl p-2 z-50 space-y-1">
+              <div className="px-3 py-2 border-b border-slate-800/80 mb-1.5 text-left">
+                <div className="text-xs font-bold text-white">Coach Alex Rivers</div>
+                <div className="text-[10px] text-slate-400">Head Strength Coach (CSCS)</div>
+              </div>
+              
+              {/* Theme Toggle (Mobile) */}
+              <button
+                onClick={() => {
+                  toggleTheme();
+                  setIsMobileMenuOpen(false);
+                }}
+                className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-left text-xs text-slate-200 hover:text-white hover:bg-slate-800 transition-colors"
+              >
+                <span className="font-semibold">App Theme</span>
+                <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-400 capitalize">
+                  {theme} mode
+                </span>
+              </button>
+
+              {/* Install PWA (Mobile) */}
+              {onOpenInstallModal && (
+                <button
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    onOpenInstallModal();
+                  }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left text-xs text-slate-200 hover:text-white hover:bg-slate-800 transition-colors"
+                >
+                  <Download className="h-4 w-4 shrink-0 text-emerald-400" />
+                  <span className="font-semibold">Install App</span>
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
       </div>
     </header>
   );

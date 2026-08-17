@@ -29,6 +29,8 @@ export const CoachDashboard: React.FC<{
   } = useApp();
 
   const todayStr = new Date().toISOString().split('T')[0];
+  const [activeMobileSection, setActiveMobileSection] = React.useState<'schedule' | 'activity' | 'watchlist'>('schedule');
+
 
   // Calculated metrics
   const activeClientsCount = clients.filter(c => c.status === 'Active').length;
@@ -84,94 +86,129 @@ export const CoachDashboard: React.FC<{
           </div>
         </div>
       </div>
-
       {/* 4 Primary Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Card 1: Active Athletes */}
         <div 
           onClick={() => setActiveTab('clients')}
-          className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 transition-all cursor-pointer group shadow-sm"
+          className="p-3.5 sm:p-5 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 transition-all cursor-pointer group shadow-sm"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Active Roster</span>
-            <div className="h-9 w-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
-              <Users className="h-5 w-5" />
+            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-400">Active Roster</span>
+            <div className="h-7 w-7 sm:h-9 sm:w-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
+              <Users className="h-4 w-4 sm:h-5 sm:w-5" />
             </div>
           </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-3xl font-extrabold text-white">{activeClientsCount}</span>
-            <span className="text-xs text-slate-400">/ {clients.length} total clients</span>
+          <div className="mt-2.5 sm:mt-3 flex items-baseline gap-1 sm:gap-2">
+            <span className="text-xl sm:text-3xl font-extrabold text-white">{activeClientsCount}</span>
+            <span className="text-[10px] sm:text-xs text-slate-400">/ {clients.length}</span>
           </div>
-          <div className="mt-2 flex items-center text-xs text-emerald-400 font-medium">
-            <span className="truncate">2 onboarding • 1 review pending</span>
+          <div className="mt-1 sm:mt-2 flex items-center text-[10px] sm:text-xs text-emerald-400 font-medium">
+            <span className="truncate">2 onboarding • 1 review</span>
           </div>
         </div>
 
         {/* Card 2: Workouts Completed Today */}
         <div 
           onClick={() => setActiveTab('calendar')}
-          className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 transition-all cursor-pointer group shadow-sm"
+          className="p-3.5 sm:p-5 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 transition-all cursor-pointer group shadow-sm"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Today's Workouts</span>
-            <div className="h-9 w-9 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 group-hover:scale-110 transition-transform">
-              <Dumbbell className="h-5 w-5" />
+            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-400">Today's Workouts</span>
+            <div className="h-7 w-7 sm:h-9 sm:w-9 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 group-hover:scale-110 transition-transform">
+              <Dumbbell className="h-4 w-4 sm:h-5 sm:w-5" />
             </div>
           </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-3xl font-extrabold text-white">{completedTodayCount}</span>
-            <span className="text-xs text-slate-400">/ {todayWorkouts.length} logged today</span>
+          <div className="mt-2.5 sm:mt-3 flex items-baseline gap-1 sm:gap-2">
+            <span className="text-xl sm:text-3xl font-extrabold text-white">{completedTodayCount}</span>
+            <span className="text-[10px] sm:text-xs text-slate-400">/ {todayWorkouts.length}</span>
           </div>
-          <div className="mt-2 flex items-center text-xs text-cyan-400 font-medium">
-            <span>{todayWorkouts.length - completedTodayCount} sessions scheduled later</span>
+          <div className="mt-1 sm:mt-2 flex items-center text-[10px] sm:text-xs text-cyan-400 font-medium">
+            <span className="truncate">{todayWorkouts.length - completedTodayCount} scheduled</span>
           </div>
         </div>
 
         {/* Card 3: Pending Check-ins */}
         <div 
           onClick={() => setActiveTab('clients')}
-          className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 transition-all cursor-pointer group shadow-sm"
+          className="p-3.5 sm:p-5 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 transition-all cursor-pointer group shadow-sm"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Weekly Check-Ins</span>
-            <div className="h-9 w-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 group-hover:scale-110 transition-transform">
-              <AlertCircle className="h-5 w-5" />
+            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-400">Weekly Check-Ins</span>
+            <div className="h-7 w-7 sm:h-9 sm:w-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 group-hover:scale-110 transition-transform">
+              <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5" />
             </div>
           </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-3xl font-extrabold text-white">{pendingCheckinsCount}</span>
-            <span className="text-xs text-amber-400/80 font-medium">Requires Feedback</span>
+          <div className="mt-2.5 sm:mt-3 flex items-baseline gap-1 sm:gap-2">
+            <span className="text-xl sm:text-3xl font-extrabold text-white">{pendingCheckinsCount}</span>
+            <span className="text-[10px] sm:text-xs text-amber-400/80 font-medium">Feedback</span>
           </div>
-          <div className="mt-2 flex items-center text-xs text-slate-400 font-medium truncate">
-            <span>Damon J. needs squat video review</span>
+          <div className="mt-1 sm:mt-2 flex items-center text-[10px] sm:text-xs text-slate-400 font-medium truncate">
+            <span className="truncate">Damon J. squat video</span>
           </div>
         </div>
 
         {/* Card 4: Weekly Compliance Rate */}
         <div 
           onClick={() => setActiveTab('progress')}
-          className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 transition-all cursor-pointer group shadow-sm"
+          className="p-3.5 sm:p-5 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 transition-all cursor-pointer group shadow-sm"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Avg Compliance</span>
-            <div className="h-9 w-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
-              <TrendingUp className="h-5 w-5" />
+            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-400">Avg Compliance</span>
+            <div className="h-7 w-7 sm:h-9 sm:w-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
+              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" />
             </div>
           </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-3xl font-extrabold text-emerald-400">{avgCompliance}%</span>
-            <span className="text-xs text-slate-400">team consistency</span>
+          <div className="mt-2.5 sm:mt-3 flex items-baseline gap-1 sm:gap-2">
+            <span className="text-xl sm:text-3xl font-extrabold text-emerald-400">{avgCompliance}%</span>
+            <span className="text-[10px] sm:text-xs text-slate-400">rate</span>
           </div>
-          <div className="mt-2 flex items-center text-xs text-slate-400 font-medium">
-            <span>{totalCompletedWorkoutsAllTime} total sessions completed</span>
+          <div className="mt-1 sm:mt-2 flex items-center text-[10px] sm:text-xs text-slate-400 font-medium truncate">
+            <span className="truncate">{totalCompletedWorkoutsAllTime} done</span>
           </div>
         </div>
       </div>
 
+      {/* Mobile Segmented Control */}
+      <div className="lg:hidden flex p-1 bg-slate-900 border border-slate-800 rounded-xl mb-4">
+        <button
+          onClick={() => setActiveMobileSection('schedule')}
+          className={`flex-1 py-2 text-xs font-bold rounded-lg transition-colors ${
+            activeMobileSection === 'schedule'
+              ? 'bg-emerald-500 text-slate-950 shadow-xs'
+              : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          Today's Schedule
+        </button>
+        <button
+          onClick={() => setActiveMobileSection('activity')}
+          className={`flex-1 py-2 text-xs font-bold rounded-lg transition-colors ${
+            activeMobileSection === 'activity'
+              ? 'bg-emerald-500 text-slate-950 shadow-xs'
+              : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          Activity Feed
+        </button>
+        <button
+          onClick={() => setActiveMobileSection('watchlist')}
+          className={`flex-1 py-2 text-xs font-bold rounded-lg transition-colors ${
+            activeMobileSection === 'watchlist'
+              ? 'bg-emerald-500 text-slate-950 shadow-xs'
+              : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          Watchlist
+        </button>
+      </div>
+
       {/* Main Grid: Today's Workouts + Recent Activity Feed */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
         {/* Left 2 Cols: Today's Scheduled Workouts */}
-        <div className="lg:col-span-2 space-y-4">
+        <div className={`lg:col-span-2 space-y-4 ${activeMobileSection === 'schedule' ? 'block' : 'hidden lg:block'}`}>
+
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Calendar className="h-5 w-5 text-emerald-400" />
@@ -308,58 +345,62 @@ export const CoachDashboard: React.FC<{
         </div>
 
         {/* Right 1 Col: Live Activity Feed & Milestone Alerts */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Trophy className="h-5 w-5 text-amber-400" />
-              <h3 className="text-base font-bold text-white tracking-tight">Milestones & Activity</h3>
-            </div>
-            <span className="text-[11px] text-slate-400 font-semibold">Live stream</span>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 divide-y divide-slate-800/80">
-            {activityFeed.slice(0, 6).map((item) => (
-              <div 
-                key={item.id}
-                className="py-3 first:pt-0 last:pb-0 flex items-start gap-3 hover:bg-slate-800/30 p-2 rounded-xl transition-colors cursor-pointer"
-                onClick={() => {
-                  setSelectedClientId(item.clientId);
-                  if (item.type === 'new_message') setActiveTab('messenger');
-                  else if (item.type === 'pr_achieved') setActiveTab('progress');
-                  else setActiveTab('clients');
-                }}
-              >
-                <div className="relative shrink-0">
-                  <img 
-                    src={item.clientAvatar} 
-                    alt={item.clientName} 
-                    className="h-8 w-8 rounded-full object-cover border border-slate-700" 
-                  />
-                  {item.type === 'pr_achieved' && (
-                    <span className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-amber-500 flex items-center justify-center text-[9px] text-slate-950 font-black">
-                      ★
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-1">
-                    <span className="text-xs font-bold text-white truncate">{item.clientName}</span>
-                    <span className="text-[10px] text-slate-400 shrink-0">{item.timestamp}</span>
-                  </div>
-                  <div className="text-xs font-medium text-emerald-400 truncate mt-0.5">
-                    {item.title}
-                  </div>
-                  <div className="text-[11px] text-slate-400 line-clamp-1">
-                    {item.description}
-                  </div>
-                </div>
+        <div className={`space-y-6 ${activeMobileSection !== 'schedule' ? 'block' : 'hidden lg:block'}`}>
+          
+          {/* Milestones & Activity Feed */}
+          <div className={`space-y-4 ${activeMobileSection === 'activity' ? 'block' : 'hidden lg:block'}`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Trophy className="h-5 w-5 text-amber-400" />
+                <h3 className="text-base font-bold text-white tracking-tight">Milestones & Activity</h3>
               </div>
-            ))}
+              <span className="text-[11px] text-slate-400 font-semibold">Live stream</span>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 divide-y divide-slate-800/80">
+              {activityFeed.slice(0, 6).map((item) => (
+                <div 
+                  key={item.id}
+                  className="py-3 first:pt-0 last:pb-0 flex items-start gap-3 hover:bg-slate-800/30 p-2 rounded-xl transition-colors cursor-pointer"
+                  onClick={() => {
+                    setSelectedClientId(item.clientId);
+                    if (item.type === 'new_message') setActiveTab('messenger');
+                    else if (item.type === 'pr_achieved') setActiveTab('progress');
+                    else setActiveTab('clients');
+                  }}
+                >
+                  <div className="relative shrink-0">
+                    <img 
+                      src={item.clientAvatar} 
+                      alt={item.clientName} 
+                      className="h-8 w-8 rounded-full object-cover border border-slate-700" 
+                    />
+                    {item.type === 'pr_achieved' && (
+                      <span className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-amber-500 flex items-center justify-center text-[9px] text-slate-950 font-black">
+                        ★
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="text-xs font-bold text-white truncate">{item.clientName}</span>
+                      <span className="text-[10px] text-slate-400 shrink-0">{item.timestamp}</span>
+                    </div>
+                    <div className="text-xs font-medium text-emerald-400 truncate mt-0.5">
+                      {item.title}
+                    </div>
+                    <div className="text-[11px] text-slate-400 line-clamp-1">
+                      {item.description}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Injury & Health Watchlist Widget */}
-          <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800">
+          <div className={`p-4 rounded-2xl bg-slate-900/90 border border-slate-800 ${activeMobileSection === 'watchlist' ? 'block' : 'hidden lg:block'}`}>
             <div className="flex items-center gap-2 mb-3">
               <ShieldAlert className="h-4 w-4 text-amber-400" />
               <h4 className="text-xs font-bold text-white uppercase tracking-wider">Athlete Health Watchlist</h4>
@@ -387,6 +428,7 @@ export const CoachDashboard: React.FC<{
             </div>
           </div>
         </div>
+
       </div>
     </div>
   );

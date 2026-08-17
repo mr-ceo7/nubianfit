@@ -156,10 +156,17 @@ export const WorkoutLoggerModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md animate-in fade-in">
-      <div className="relative w-full max-w-4xl max-h-[92vh] rounded-3xl bg-slate-900 border border-slate-700 shadow-2xl overflow-hidden flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-6 bg-black/80 backdrop-blur-xs animate-in fade-in duration-200">
+      <div className="relative w-full max-w-4xl h-[88vh] sm:h-auto max-h-[88vh] sm:max-h-[92vh] rounded-t-3xl sm:rounded-3xl bg-slate-900 border-t sm:border border-slate-700 shadow-2xl overflow-hidden flex flex-col animate-in slide-in-from-bottom sm:slide-in-from-bottom-0 duration-300">
+        
+        {/* Mobile bottom-sheet drag handle */}
+        <div className="flex justify-center py-2 sm:hidden bg-slate-950/80 shrink-0">
+          <div className="w-10 h-1.5 bg-slate-700 rounded-full" />
+        </div>
+
         {/* Header */}
-        <div className="p-5 bg-gradient-to-r from-slate-950 via-slate-900 to-emerald-950/40 border-b border-slate-800 flex items-center justify-between">
+        <div className="p-4 sm:p-5 bg-gradient-to-r from-slate-950 via-slate-900 to-emerald-950/40 border-b border-slate-800 flex items-center justify-between">
+
           <div className="flex items-center gap-3">
             <img 
               src={activeWorkoutToLog.clientAvatar} 
