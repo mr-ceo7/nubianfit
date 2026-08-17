@@ -37,7 +37,7 @@ export const ClientRoster: React.FC<{
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>('All');
   const [selectedGoalFilter, setSelectedGoalFilter] = useState<string>('All');
-  const [viewMode, setViewMode] = useState<'grid' | 'table'>('table');
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   const [viewingClientProfile, setViewingClientProfile] = useState<Client | null>(null);
 
   // New Client Form State
