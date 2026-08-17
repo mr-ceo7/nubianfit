@@ -32,7 +32,12 @@
 
   --logo-nubian: var(--app-fg);
   --logo-fit: #0891b2; /* Deepened cyan for better contrast on light background */
+
+  --loader-text: var(--app-fg);
+  --loader-shadow: var(--brand-laurel);
+  --loader-shine: rgba(39, 97, 82, 0.25);
 }
+
 
 
 
@@ -69,7 +74,12 @@
   --app-cyan-dark: #06b6d4;
 
   --logo-fit: #22d3ee; /* Bright cyan for dark mode visibility */
+
+  --loader-text: #ffffff;
+  --loader-shadow: #153e38;
+  --loader-shine: rgba(34, 211, 238, 0.45);
 }
+
 
 
 

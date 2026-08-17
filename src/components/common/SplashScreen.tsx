@@ -49,9 +49,9 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
         <Loader
           text="NUBIANFIT"
           size="40rem"
-          textColor="#ffffff"
-          shadowColor="#153e38"
-          shineColor="rgba(34, 211, 238, 0.45)"
+          textColor="var(--loader-text)"
+          shadowColor="var(--loader-shadow)"
+          shineColor="var(--loader-shine)"
         />
 
       </motion.div>
