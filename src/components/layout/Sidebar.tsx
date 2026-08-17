@@ -52,20 +52,22 @@ export const Sidebar: React.FC = () => {
               <span className="text-logo-fit">f</span>
             </div>
           ) : (
-            <div className="flex flex-col">
-              <div className="flex items-center gap-2">
-                <span className="font-logo text-base tracking-wide text-logo-nubian lowercase">
+            <div className="flex items-center gap-2.5">
+              <div className="flex flex-col items-stretch">
+                <span className="font-logo text-[17px] tracking-wide text-logo-nubian lowercase block leading-none">
                   nubian<span className="text-logo-fit">fit</span>
                 </span>
-
-                <span className="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 leading-none">
-                  Coach
-                </span>
+                <div className="flex justify-between text-[8px] text-slate-400 font-bold tracking-normal lowercase mt-1.5 w-full leading-none">
+                  <span>strength</span>
+                  <span>&</span>
+                  <span>strategy</span>
+                </div>
               </div>
-              <span className="text-[10px] text-slate-400 font-semibold tracking-wide lowercase mt-0.5 whitespace-nowrap">
-                strength & strategy
+              <span className="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 leading-none self-start mt-0.5">
+                Coach
               </span>
             </div>
+
 
           )}
         </div>

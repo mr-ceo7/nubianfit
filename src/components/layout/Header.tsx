@@ -103,15 +103,19 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="flex items-center gap-2.5">
         <button
           onClick={() => setActiveTab('dashboard')}
-          className="md:hidden shrink-0 active:scale-95 transition-transform text-left"
+          className="md:hidden shrink-0 active:scale-95 transition-transform text-left flex flex-col items-stretch"
           title="Go to Dashboard"
         >
-          <span className="font-logo text-sm tracking-wide text-logo-nubian lowercase block leading-none">
+          <span className="font-logo text-[15px] tracking-wide text-logo-nubian lowercase block leading-none">
             nubian<span className="text-logo-fit">fit</span>
           </span>
-
-          <span className="text-[8px] text-slate-400 font-bold uppercase tracking-wider block mt-0.5">Coach</span>
+          <div className="flex justify-between text-[7px] text-slate-400 font-bold tracking-normal lowercase mt-1.5 w-full leading-none">
+            <span>strength</span>
+            <span>&</span>
+            <span>strategy</span>
+          </div>
         </button>
+
 
 
         <div className="hidden xs:block md:hidden h-5 w-px bg-slate-800" />
