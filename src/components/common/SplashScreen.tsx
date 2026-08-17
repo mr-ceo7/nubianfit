@@ -48,11 +48,12 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
       >
         <Loader
           text="NUBIANFIT"
-          size="7.5rem"
+          size="40rem"
           textColor="#ffffff"
           shadowColor="#153e38"
           shineColor="rgba(34, 211, 238, 0.45)"
         />
+
       </motion.div>
     </motion.div>
 

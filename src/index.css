@@ -332,11 +332,12 @@
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    height: 0.05em;
-    width: calc(var(--main-size) / 2);
-    margin-top: 0.9em;
-    border-radius: 0.05em;
+    height: 3px;
+    width: 240px;
+    margin-top: 4.5rem;
+    border-radius: 1.5px;
   }
+
 
   .perspective-loader .loader-line::before {
     content: "";
@@ -353,11 +354,12 @@
     height: 100%;
     width: 100%;
     background-color: var(--text-color);
-    border-radius: 0.05em;
+    border-radius: 1.5px;
     transform: translateX(-90%);
     animation: loader-wobble 2s cubic-bezier(0.5, 0.8, 0.5, 0.2) infinite;
   }
 }
+
 
 @keyframes loader-wobble {
   0% {
