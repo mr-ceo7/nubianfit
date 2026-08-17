@@ -113,7 +113,7 @@ export const Header: React.FC<HeaderProps> = ({
           </span>
           <div className="flex justify-between text-[7px] text-slate-400 font-bold tracking-normal lowercase mt-1.5 w-full leading-none">
             <span>strength</span>
-            <span>&</span>
+            <span>and</span>
             <span>strategy</span>
           </div>
         </button>

@@ -59,7 +59,7 @@ export const Sidebar: React.FC = () => {
                 </span>
                 <div className="flex justify-between text-[8px] text-slate-400 font-bold tracking-normal lowercase mt-1.5 w-full leading-none">
                   <span>strength</span>
-                  <span>&</span>
+                  <span>and</span>
                   <span>strategy</span>
                 </div>
               </div>
