@@ -7,6 +7,8 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Loader } from './Loader';
 import { Dumbbell, ShieldCheck, Zap } from 'lucide-react';
+import { NubianFitLogo } from './NubianFitLogo';
+
 
 interface SplashScreenProps {
   onFinish?: () => void;
@@ -68,18 +70,14 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.6 }}
-        className="flex items-center gap-3 mb-8 px-4 py-2 rounded-full bg-slate-900/80 border border-slate-800 shadow-xl backdrop-blur-md"
+        className="flex items-center gap-3 mb-8 px-4.5 py-2.5 rounded-full bg-slate-900/80 border border-slate-800 shadow-xl backdrop-blur-md"
       >
-        <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center text-slate-950 font-black shadow-lg shadow-emerald-500/25">
-          <Dumbbell className="w-4 h-4" />
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="font-extrabold tracking-wider text-sm text-white">NUBIANFIT</span>
-          <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-            PRO COACH v2.4
-          </span>
-        </div>
+        <span className="font-logo text-xs tracking-wider text-emerald-400 lowercase">nubianfit</span>
+        <span className="text-[9px] uppercase font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-semibold">
+          PRO COACH v2.4
+        </span>
       </motion.div>
+
 
       {/* Core Perspective Sliced Loader */}
       <motion.div

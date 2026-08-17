@@ -11,6 +11,8 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { useApp, NavigationTab } from '../../context/AppContext';
+import { NubianFitLogo } from '../common/NubianFitLogo';
+
 
 export const Sidebar: React.FC = () => {
   const { activeTab, setActiveTab, clients, messages, scheduledWorkouts, setSelectedClientId } = useApp();
@@ -44,21 +46,23 @@ export const Sidebar: React.FC = () => {
       {/* Brand Header */}
       <div className="flex items-center justify-between p-4 h-16 border-b border-slate-800/80">
         <div className="flex items-center gap-3 overflow-hidden cursor-pointer" onClick={() => setActiveTab('dashboard')}>
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500 text-slate-950 font-black text-xl tracking-tight">
-            NF
-          </div>
-          {!isCollapsed && (
+          {isCollapsed ? (
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center font-logo text-lg text-emerald-400 font-bold lowercase">
+              nf
+            </div>
+          ) : (
             <div className="flex flex-col">
               <div className="flex items-center gap-1.5">
-                <span className="font-extrabold text-lg text-white tracking-tight">NubianFit</span>
-                <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <span className="font-logo text-[14px] tracking-wider text-white lowercase">nubianfit</span>
+                <span className="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                   Coach
                 </span>
               </div>
-              <span className="text-[11px] text-slate-400 font-medium truncate">Coaching Suite</span>
+              <span className="text-[10px] text-slate-400 font-medium tracking-wide truncate">Coaching Suite</span>
             </div>
           )}
         </div>
+
 
         {/* Collapse Button */}
         <button 

@@ -18,6 +18,8 @@ import {
   Dumbbell
 } from 'lucide-react';
 import { promptInstall, isPwaInstalled, isIosDevice, subscribeToInstallPrompt, BeforeInstallPromptEvent } from '../../utils/pwa';
+import { NubianFitLogo } from './NubianFitLogo';
+
 
 interface PwaInstallPromptProps {
   isOpen: boolean;
@@ -84,20 +86,16 @@ export const PwaInstallPrompt: React.FC<PwaInstallPromptProps> = ({ isOpen, onCl
           </button>
 
           {/* Header */}
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-              <Dumbbell className="w-6 h-6 text-emerald-400" />
-            </div>
-            <div>
-              <h3 className="text-lg font-bold text-white tracking-tight flex items-center gap-2">
-                Install NubianFit
-                <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                  PWA
-                </span>
-              </h3>
-              <p className="text-xs text-slate-400">Install for quick home screen access and offline support</p>
-            </div>
+          <div className="mb-4 text-left">
+            <h3 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
+              Install <span className="font-logo text-emerald-400 lowercase">nubianfit</span>
+              <span className="text-[9px] uppercase font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-semibold">
+                PWA
+              </span>
+            </h3>
+            <p className="text-xs text-slate-400 mt-1">Install for quick home screen access and offline support</p>
           </div>
+
 
           {/* Benefits Grid */}
           <div className="grid grid-cols-2 gap-2.5 my-5">

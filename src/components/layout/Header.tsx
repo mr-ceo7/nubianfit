@@ -13,6 +13,8 @@ import {
 } from 'lucide-react';
 
 import { useApp } from '../../context/AppContext';
+import { NubianFitLogo } from '../common/NubianFitLogo';
+
 
 interface HeaderProps {
   onOpenNewClient: () => void;
@@ -99,14 +101,18 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Left: View title & status */}
       <div className="flex items-center gap-2.5">
-        {/* Mobile Brand Emblem */}
         <button
           onClick={() => setActiveTab('dashboard')}
-          className="md:hidden flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500 text-slate-950 font-black text-sm active:scale-95 transition-transform"
+          className="md:hidden shrink-0 active:scale-95 transition-transform text-left"
           title="Go to Dashboard"
         >
-          NF
+          <span className="font-logo text-[13px] tracking-wide text-emerald-400 lowercase block leading-none">nubianfit</span>
+          <span className="text-[8px] text-slate-400 font-bold uppercase tracking-wider block mt-0.5">Coach</span>
         </button>
+
+        <div className="hidden xs:block md:hidden h-5 w-px bg-slate-800" />
+
+
 
         <div className="flex flex-col">
           <h1 className="text-sm sm:text-base font-bold text-white tracking-tight flex items-center gap-1.5 truncate max-w-[160px] sm:max-w-none">
