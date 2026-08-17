@@ -155,8 +155,8 @@ export const CalendarScheduler: React.FC = () => {
         </div>
       </div>
 
-      {/* Monthly Calendar Grid */}
-      <div className="rounded-3xl bg-slate-900/90 border border-slate-800 overflow-hidden shadow-xl">
+      {/* Monthly Calendar Grid (Desktop Only) */}
+      <div className="hidden md:block rounded-3xl bg-slate-900/90 border border-slate-800 overflow-hidden shadow-xl">
         {/* Day of week headers */}
         <div className="grid grid-cols-7 bg-slate-950/80 border-b border-slate-800 text-center text-[10px] font-extrabold uppercase tracking-wider text-slate-400 py-3">
           <span>Sun</span>
@@ -237,6 +237,109 @@ export const CalendarScheduler: React.FC = () => {
             );
           })}
         </div>
+      </div>
+
+      {/* Mobile-Only List View Feed */}
+      <div className="md:hidden space-y-4">
+        {(() => {
+          // Get all workouts for the current month
+          const monthWorkouts = filteredWorkouts.filter(w => {
+            const wDate = new Date(w.date);
+            return wDate.getFullYear() === year && wDate.getMonth() === month;
+          });
+
+          // Sort workouts chronologically
+          monthWorkouts.sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
+
+          // Group by date string
+          const groupedByDate: Record<string, ScheduledWorkout[]> = {};
+          monthWorkouts.forEach(w => {
+            if (!groupedByDate[w.date]) {
+              groupedByDate[w.date] = [];
+            }
+            groupedByDate[w.date].push(w);
+          });
+
+          const sortedDates = Object.keys(groupedByDate).sort();
+
+          if (sortedDates.length === 0) {
+            return (
+              <div className="p-8 text-center rounded-2xl bg-slate-900/60 border border-slate-800 text-slate-400">
+                <CalendarIcon className="h-8 w-8 mx-auto mb-2 text-slate-500" />
+                <p className="font-bold text-xs">No sessions scheduled for this month.</p>
+                <button
+                  onClick={() => setIsScheduleModalOpen(true)}
+                  className="mt-3 text-xs text-emerald-400 font-bold hover:underline"
+                >
+                  Schedule a workout
+                </button>
+              </div>
+            );
+          }
+
+          return sortedDates.map(dateStr => {
+            const dateObj = new Date(dateStr);
+            const formattedDate = dateObj.toLocaleDateString('en-US', {
+              weekday: 'long',
+              month: 'short',
+              day: 'numeric'
+            });
+            const workoutsForDate = groupedByDate[dateStr];
+
+            return (
+              <div key={dateStr} className="space-y-2">
+                <h4 className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 pl-2">
+                  {formattedDate}
+                </h4>
+                <div className="space-y-2">
+                  {workoutsForDate.map(w => {
+                    const isDone = w.status === 'Completed';
+
+                    return (
+                      <div
+                        key={w.id}
+                        onClick={() => openWorkoutLogger(w)}
+                        className="p-3.5 rounded-2xl border flex items-center justify-between gap-3 bg-slate-900 border-slate-800/80 hover:border-slate-700 transition-colors active:scale-[0.99]"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <img
+                            src={w.clientAvatar}
+                            alt={w.clientName}
+                            className="h-10 w-10 rounded-full object-cover shrink-0 border border-slate-800"
+                          />
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-bold text-white text-xs truncate">{w.clientName}</span>
+                              <span className="text-[8px] font-mono px-1.5 py-0.5 rounded bg-slate-950 text-slate-400 border border-slate-800 uppercase tracking-widest shrink-0">
+                                {w.time || '09:00 AM'}
+                              </span>
+                            </div>
+                            <div className="text-[11px] text-slate-400 truncate mt-0.5">
+                              {w.workoutTitle}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="shrink-0 flex items-center gap-2">
+                          {isDone ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                              <CheckCircle2 className="h-3 w-3 shrink-0" />
+                              Done
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-slate-950 text-cyan-400 border border-slate-800">
+                              Scheduled
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          });
+        })()}
       </div>
 
       {/* Schedule Workout Modal */}
