@@ -80,8 +80,6 @@ class Settings(BaseSettings):
     PLATFORM_FEE_PERCENT: float = 0.0
     # Days before a manual (non-card) renewal is due that the client gets a pay link.
     RENEWAL_NOTICE_DAYS: int = 3
-    # Comma-separated emails of platform admins (can see every coach, suspend accounts).
-    ADMIN_EMAILS: str = ""
 
     # Public URLs of the three portals, used in emails and CORS.
     LANDING_URL: str = "https://nubianfit.xn--jhb4c.com"
@@ -113,13 +111,6 @@ class Settings(BaseSettings):
             ]
         origins += [o.strip() for o in self.EXTRA_CORS_ORIGINS.split(",") if o.strip()]
         return origins
-
-    @property
-    def admin_emails(self) -> Set[str]:
-        emails = {e.strip().lower() for e in self.ADMIN_EMAILS.split(",") if e.strip()}
-        if not self.is_production:
-            emails.add(self.DEFAULT_COACH_EMAIL.strip().lower())  # the demo coach is an admin in dev
-        return emails
 
     def is_head_coach(self, email: Optional[str]) -> bool:
         return bool(email) and email.strip().lower() == self.DEFAULT_COACH_EMAIL.strip().lower()

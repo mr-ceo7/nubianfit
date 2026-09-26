@@ -13,7 +13,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select, update
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
@@ -21,7 +21,7 @@ from app.dependencies import get_db, get_current_user
 from app.models.client import Client
 from app.models.otp import EmailOTP
 from app.models.user import User
-from app.rate_limiter import rate_limit
+from app.rate_limiter import rate_limit, rate_limiter
 from app.schemas.auth import (
     ChangePasswordRequest,
     CoachRegisterRequest,
@@ -37,6 +37,9 @@ from app.services.email import EmailDeliveryError, send_login_code
 logger = logging.getLogger("nubianfit.auth")
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
+
+OTP_CODES_PER_HOUR = 5
+LOGIN_FAILURES_PER_15_MIN = 10
 
 
 def _normalize_email(email: str) -> str:
@@ -57,7 +60,7 @@ def user_response(user: User) -> UserResponse:
         avatar=user.avatar or "",
         is_active=user.is_active,
         has_password=bool(user.hashed_password),
-        is_admin=user.is_admin or user.email.lower() in settings.admin_emails,
+        is_admin=user.is_admin,
     )
 
 
@@ -81,9 +84,14 @@ async def _find_client_for_email(db: AsyncSession, email: str) -> Client | None:
 )
 async def login(req: LoginRequest, db: AsyncSession = Depends(get_db)):
     """Email + password login (coaches, and clients who have set a password)."""
-    result = await db.execute(select(User).where(User.email == _normalize_email(req.email)))
+    email = _normalize_email(req.email)
+    if not settings.TESTING and not await rate_limiter.allow(f"login-email:{email}", LOGIN_FAILURES_PER_15_MIN, 900, peek=True):
+        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail="Too many attempts. Try again in 15 minutes.")
+    result = await db.execute(select(User).where(User.email == email))
     user = result.scalar_one_or_none()
     if not user or not user.hashed_password or not verify_password(req.password, user.hashed_password):
+        if not settings.TESTING:
+            await rate_limiter.allow(f"login-email:{email}", LOGIN_FAILURES_PER_15_MIN, 900)  # count the failure
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
     if not user.is_active:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="This account has been deactivated")
@@ -127,6 +135,14 @@ async def request_login_code(req: OtpRequest, db: AsyncSession = Depends(get_db)
 
     client = await _find_client_for_email(db, email)
     if not client:
+        return response
+
+    # Per-address cap so rotating IPs can't keep minting fresh codes (each code allows a few guesses).
+    recent = (await db.execute(select(func.count()).select_from(EmailOTP).where(
+        EmailOTP.email == email, EmailOTP.created_at >= datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(hours=1)
+    ))).scalar_one()
+    if recent >= OTP_CODES_PER_HOUR:
+        logger.warning("OTP request cap hit for %s", email)
         return response
 
     # Invalidate earlier codes so only the newest one works.
@@ -194,7 +210,10 @@ async def verify_login_code(req: OtpVerifyRequest, db: AsyncSession = Depends(ge
         )
         db.add(user)
     elif user.client_id != client.id:
-        user.client_id = client.id
+        # Keep an existing link: another coach adding the same email must not take over this login.
+        current = await db.get(Client, user.client_id) if user.client_id else None
+        if current is None:
+            user.client_id = client.id
     if not user.is_active:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="This account has been deactivated")
 
@@ -204,8 +223,9 @@ async def verify_login_code(req: OtpVerifyRequest, db: AsyncSession = Depends(ge
 
 @router.post("/dev-login", response_model=TokenResponse, include_in_schema=False)
 async def dev_login(role: str = "coach", db: AsyncSession = Depends(get_db)):
-    """Development only: sign in as the demo coach or the first demo client without credentials."""
-    if settings.ENVIRONMENT == "production":
+    """Development only: sign in as the demo coach or the first demo client without credentials.
+    Requires ENABLE_DEV_SEED (which production refuses), so a misconfigured deploy doesn't expose it."""
+    if settings.is_production or not (settings.ENABLE_DEV_SEED or settings.TESTING):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not Found")
 
     if role == "coach":

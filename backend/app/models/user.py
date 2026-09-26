@@ -23,7 +23,8 @@ class User(Base):
     client_id: Mapped[Optional[str]] = mapped_column(String(64), index=True, nullable=True)
     avatar: Mapped[str] = mapped_column(String(512), default="")
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    # Platform admin (see settings.ADMIN_EMAILS); can view all coaches and suspend accounts.
+    # Platform admin: can view all coaches and suspend accounts. Set for the bootstrapped head
+    # coach, or with `python scripts/make_admin.py <email>`.
     is_admin: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
     # Email a summary of unread notifications the user hasn't seen in the app.
     email_digest: Mapped[bool] = mapped_column(Boolean, default=True, server_default=true())

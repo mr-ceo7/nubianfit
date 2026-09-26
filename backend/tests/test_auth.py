@@ -106,4 +106,32 @@ async def test_dev_login_signs_in_demo_accounts(api):
 
 async def test_dev_login_disabled_in_production(api, monkeypatch):
     monkeypatch.setattr(settings, "ENVIRONMENT", "production")
+    monkeypatch.setattr(settings, "TESTING", False)
     assert (await api.post("/api/auth/dev-login")).status_code == 404
+
+
+async def test_dev_login_needs_dev_seed_flag(api, monkeypatch):
+    # A deploy that forgot ENVIRONMENT=production must still not expose demo sign-in.
+    monkeypatch.setattr(settings, "TESTING", False)
+    monkeypatch.setattr(settings, "ENABLE_DEV_SEED", False)
+    assert (await api.post("/api/auth/dev-login")).status_code == 404
+
+
+async def test_otp_requests_are_capped_per_email(api, demo_client_email):
+    for _ in range(8):
+        await api.post("/api/auth/otp/request", json={"email": demo_client_email})
+    assert len([m for m in email.outbox if m["to"] == [demo_client_email]]) == 5
+
+
+async def test_another_coach_cannot_take_over_a_client_login(api, other_coach, client_user, demo_client_email):
+    # Rival coach adds a client with Marcus's email; Marcus's next sign-in keeps his original profile.
+    await api.post("/api/clients", headers=other_coach, json={"name": "Imposter", "email": demo_client_email})
+    await api.post("/api/auth/otp/request", json={"email": demo_client_email})
+    code = email.outbox[-1]["text"].split("code is ")[1][:6]
+    res = await api.post("/api/auth/otp/verify", json={"email": demo_client_email, "code": code})
+    assert res.json()["user"]["clientId"] == "client-1"
+
+
+async def test_admin_is_a_flag_not_an_email(api, other_coach):
+    assert (await api.get("/api/auth/me", headers=other_coach)).json()["isAdmin"] is False
+    assert (await api.get("/api/admin/summary", headers=other_coach)).status_code == 403

@@ -131,7 +131,10 @@ async def _apply_package(db: AsyncSession, package: Package, client: Client, tod
 async def fulfil(db: AsyncSession, data: Dict[str, Any], today: Optional[date] = None) -> Optional[Payment]:
     """Apply a Paystack transaction (from verify, webhook or charge_authorization). Idempotent."""
     today = today or date.today()
-    payment = (await db.execute(select(Payment).where(Payment.reference == data.get("reference")))).scalar_one_or_none()
+    # Row lock (Postgres) so the webhook and the client's return can't both apply the payment.
+    payment = (await db.execute(
+        select(Payment).where(Payment.reference == data.get("reference")).with_for_update()
+    )).scalar_one_or_none()
     if not payment:
         logger.warning("Paystack event for unknown reference %s", data.get("reference"))
         return None
@@ -262,6 +265,13 @@ async def run_renewals(db: AsyncSession, today: date) -> int:
         if sub.authorization_code and due and sub.status == "active":
             account = await db.get(PayoutAccount, sub.coach_id)
             if not account or not account.active:
+                continue
+            # A charge already attempted today (e.g. the loop and the cron tick overlapping) means skip.
+            recent = (await db.execute(select(Payment.id).where(
+                Payment.subscription_id == sub.id, Payment.payment_request_id.is_(None),
+                Payment.created_at >= datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(hours=20),
+            ))).first()
+            if recent:
                 continue
             reference = new_reference()
             db.add(Payment(id=new_id("pay"), reference=reference, coach_id=sub.coach_id, client_id=sub.client_id,

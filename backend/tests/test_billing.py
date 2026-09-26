@@ -3,10 +3,10 @@
 import hashlib
 import hmac
 import json
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 import pytest
-from sqlalchemy import select
+from sqlalchemy import select, update
 
 from app.config import settings
 from app.database import AsyncSessionLocal
@@ -200,8 +200,18 @@ async def test_card_renewal_success_and_failure(ps):
     assert sub.status == "active" and sub.current_period_end == add_months(TODAY, 1)
     assert ("charge", 800000, "AUTH_demo", "ACCT_demo") in ps.calls
 
-    ps.charge_outcome = "failed"
+    # A second charge within the same day is skipped (loop + cron overlap guard)...
     await _set_sub(current_period_end=TODAY)
+    async with AsyncSessionLocal() as db:
+        await run_renewals(db, TODAY)
+    assert sum(1 for c in ps.calls if c[0] == "charge") == 1
+
+    # ...so pretend the first charge happened yesterday, then fail the next one.
+    async with AsyncSessionLocal() as db:
+        await db.execute(update(Payment).where(Payment.subscription_id == "sub-demo").values(
+            created_at=datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=1)))
+        await db.commit()
+    ps.charge_outcome = "failed"
     async with AsyncSessionLocal() as db:
         await run_renewals(db, TODAY)
         requests = (await db.execute(select(Payment).where(Payment.subscription_id == "sub-demo", Payment.status == "failed"))).scalars().all()

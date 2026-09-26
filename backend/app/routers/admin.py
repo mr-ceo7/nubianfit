@@ -21,7 +21,9 @@ router = APIRouter(prefix="/admin", tags=["Admin"])
 
 
 def is_admin(user: User) -> bool:
-    return user.is_admin or user.email.lower() in settings.admin_emails
+    # A database flag only (set for the bootstrapped head coach); never derived from an
+    # email address, since coach sign-up doesn't verify email ownership.
+    return user.is_admin
 
 
 async def require_admin(user: User = Depends(get_current_user)) -> User:

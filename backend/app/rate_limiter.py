@@ -16,12 +16,13 @@ class InMemoryRateLimiter:
         self._hits: Dict[str, List[float]] = {}
         self._lock = asyncio.Lock()
 
-    async def allow(self, key: str, limit: int, window_seconds: int) -> bool:
+    async def allow(self, key: str, limit: int, window_seconds: int, peek: bool = False) -> bool:
+        """True if under the limit. Records a hit unless `peek` (check only)."""
         now = time.monotonic()
         async with self._lock:
             recent = [t for t in self._hits.get(key, []) if t > now - window_seconds]
             allowed = len(recent) < limit
-            if allowed:
+            if allowed and not peek:
                 recent.append(now)
             self._hits[key] = recent
             return allowed

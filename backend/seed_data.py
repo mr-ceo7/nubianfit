@@ -334,6 +334,7 @@ async def seed_database(force: bool = False):
             full_name=settings.DEFAULT_COACH_NAME,
             role="coach",
             is_active=True,
+            is_admin=True,
             created_at=datetime.now(timezone.utc),
         ))
         print(f"-> Seeded demo coach: {settings.DEFAULT_COACH_EMAIL}")

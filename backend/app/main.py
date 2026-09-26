@@ -60,6 +60,7 @@ async def bootstrap_head_coach() -> None:
             hashed_password=get_password_hash(settings.DEFAULT_COACH_PASSWORD),
             full_name=settings.DEFAULT_COACH_NAME,
             role="coach",
+            is_admin=True,
         ))
         await session.commit()
         logger.warning("Head coach account %s created. Unset BOOTSTRAP_INITIAL_ADMIN now.", settings.DEFAULT_COACH_EMAIL)

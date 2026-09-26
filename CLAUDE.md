@@ -141,7 +141,7 @@ On first purchase, `fulfil()` also applies the package's program, Autoflow and o
 - Unpaid subscriptions become `past_due`.
 - One-time packages become `completed`, and ones set to cancel at period end become `cancelled`.
 
-**Admin.** Admins are users with `is_admin` or an email in `ADMIN_EMAILS`; in dev the demo coach is an admin. The `/admin/*` endpoints list coaches and can suspend one, which sets `is_active`. That blocks the coach's login and their pay links.
+**Admin.** Admin rights come only from the `users.is_admin` column. It's set for the bootstrapped head coach and the dev demo coach; `scripts/make_admin.py` grants it to others. It's never derived from an email address, because coach sign-up doesn't verify email ownership. The `/admin/*` endpoints list coaches and can suspend one, which sets `is_active`. That blocks the coach's login and their pay links.
 
 ### Theming
 Chart marks use `--chart-1`, validated with the dataviz palette checks against both card surfaces. Tailwind colors are remapped to CSS variables in `src/index.css`. `slate-*` and `emerald-*` follow light and dark mode, and `text-white` becomes dark green in light mode. For text on an accent background, use `bg-emerald-500 text-slate-950`.
