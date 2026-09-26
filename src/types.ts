@@ -232,6 +232,7 @@ export interface ChatMessage {
   timestamp: string;
   isRead: boolean;
   attachment?: ChatAttachment;
+  createdAt: string;
 }
 
 export interface ActivityFeedItem {
@@ -243,6 +244,7 @@ export interface ActivityFeedItem {
   title: string;
   description: string;
   timestamp: string;
+  createdAt?: string;
   metadata?: {
     weightKg?: number;
     exerciseName?: string;

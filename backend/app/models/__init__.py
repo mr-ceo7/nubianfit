@@ -13,6 +13,7 @@ from app.models.habit import ClientDailyHabitLog
 from app.models.photo import ProgressPhoto
 from app.models.message import ChatMessage
 from app.models.activity import ActivityFeedItem
+from app.models.otp import EmailOTP
 
 __all__ = [
     "User",
@@ -26,4 +27,5 @@ __all__ = [
     "ProgressPhoto",
     "ChatMessage",
     "ActivityFeedItem",
+    "EmailOTP",
 ]

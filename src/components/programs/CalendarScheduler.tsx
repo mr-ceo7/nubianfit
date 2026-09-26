@@ -11,6 +11,7 @@ import {
   X,
   Play
 } from 'lucide-react';
+import { ClientAvatar } from '../common/ClientAvatar';
 import { useApp } from '../../context/AppContext';
 import { ScheduledWorkout } from '../../types';
 
@@ -128,13 +129,13 @@ export const CalendarScheduler: React.FC = () => {
             <div className="flex items-center gap-1">
               <button
                 onClick={handlePrevMonth}
-                className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
+                className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-100 transition-colors"
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
               <button
                 onClick={handleNextMonth}
-                className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
+                className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-100 transition-colors"
               >
                 <ChevronRight className="h-4 w-4" />
               </button>
@@ -246,7 +247,7 @@ export const CalendarScheduler: React.FC = () => {
                         }`}
                       >
                         <div className="flex items-center gap-1.5">
-                          <img src={w.clientAvatar} alt={w.clientName} className="h-4 w-4 rounded-full object-cover shrink-0" />
+                          <ClientAvatar client={{ name: w.clientName, avatar: w.clientAvatar }} className="h-4 w-4 rounded-full shrink-0" />
                           <span className="font-bold truncate text-[10px]">{w.clientName}</span>
                           {isDone && <CheckCircle2 className="h-3 w-3 text-emerald-400 shrink-0 ml-auto" />}
                         </div>
@@ -369,11 +370,7 @@ export const CalendarScheduler: React.FC = () => {
                     className="p-3.5 rounded-2xl border flex items-center justify-between gap-3 bg-slate-900 border-slate-800/80 hover:border-slate-700 transition-colors active:scale-[0.99]"
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <img
-                        src={w.clientAvatar}
-                        alt={w.clientName}
-                        className="h-8 w-8 rounded-full object-cover shrink-0 border border-slate-800"
-                      />
+                      <ClientAvatar client={{ name: w.clientName, avatar: w.clientAvatar }} className="h-8 w-8 rounded-full shrink-0 border border-slate-800" />
                       <div className="min-w-0 text-left">
                         <div className="flex items-center gap-1.5">
                           <span className="font-bold text-white text-xs truncate">{w.clientName}</span>
@@ -468,11 +465,7 @@ export const CalendarScheduler: React.FC = () => {
                         className="p-3.5 rounded-2xl border flex items-center justify-between gap-3 bg-slate-900 border-slate-800/80 hover:border-slate-700 transition-colors active:scale-[0.99]"
                       >
                         <div className="flex items-center gap-3 min-w-0">
-                          <img
-                            src={w.clientAvatar}
-                            alt={w.clientName}
-                            className="h-10 w-10 rounded-full object-cover shrink-0 border border-slate-800"
-                          />
+                          <ClientAvatar client={{ name: w.clientName, avatar: w.clientAvatar }} className="h-10 w-10 rounded-full shrink-0 border border-slate-800" />
                           <div className="min-w-0">
                             <div className="flex items-center gap-1.5">
                               <span className="font-bold text-white text-xs truncate">{w.clientName}</span>
@@ -595,7 +588,7 @@ export const CalendarScheduler: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsScheduleModalOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 font-bold"
+                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-100 font-bold"
                 >
                   Cancel
                 </button>

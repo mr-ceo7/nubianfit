@@ -3,7 +3,8 @@ Activity Feed Pydantic Schemas
 """
 
 from typing import Dict, Any, Optional
-from app.schemas.common import CamelModel
+from pydantic import Field
+from app.schemas.common import CamelModel, UtcDatetime
 
 
 class ActivityFeedItemBase(CamelModel):
@@ -23,3 +24,6 @@ class ActivityFeedItemCreate(ActivityFeedItemBase):
 
 class ActivityFeedItemResponse(ActivityFeedItemBase):
     id: str
+    created_at: UtcDatetime
+    # The frontend type calls this field `metadata`.
+    metadata_json: Optional[Dict[str, Any]] = Field(default=None, serialization_alias="metadata")

@@ -1,17 +1,20 @@
 """
 Chat Messages Router
+
+Each client has one thread with their coach. The sender is taken from the caller's role.
 """
 
-import time
 from datetime import datetime
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, update
 
-from app.dependencies import get_db
+from app.dependencies import get_db, get_current_user, get_accessible_client, resolve_client_filter
 from app.models.message import ChatMessage
+from app.models.user import User
 from app.schemas.message import ChatMessageCreate, ChatMessageResponse
+from app.services.activity import new_id
 
 router = APIRouter(prefix="/messages", tags=["Messages"])
 
@@ -19,36 +22,51 @@ router = APIRouter(prefix="/messages", tags=["Messages"])
 @router.get("", response_model=List[ChatMessageResponse])
 async def list_messages(
     client_id: Optional[str] = Query(None, alias="clientId"),
-    db: AsyncSession = Depends(get_db)
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
-    """List chat messages, optionally filtered by client."""
-    query = select(ChatMessage)
-    if client_id:
-        query = query.where(ChatMessage.client_id == client_id)
-    
-    result = await db.execute(query.order_by(ChatMessage.id.asc()))
+    client_ids = await resolve_client_filter(client_id, user, db)
+    result = await db.execute(
+        select(ChatMessage).where(ChatMessage.client_id.in_(client_ids)).order_by(ChatMessage.created_at.asc())
+    )
     return result.scalars().all()
 
 
 @router.post("", response_model=ChatMessageResponse, status_code=status.HTTP_201_CREATED)
 async def send_message(
     msg_in: ChatMessageCreate,
-    db: AsyncSession = Depends(get_db)
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
-    """Send a new message."""
-    now_str = datetime.now().strftime("%I:%M %p")
-    msg_id = f"msg-{int(time.time() * 1000)}"
-    
-    new_msg = ChatMessage(
-        id=msg_id,
+    await get_accessible_client(msg_in.client_id, user, db)
+    msg = ChatMessage(
+        id=new_id("msg"),
         client_id=msg_in.client_id,
-        sender=msg_in.sender,
+        sender=user.role,
         text=msg_in.text,
-        timestamp=now_str,
-        is_read=True,
-        attachment=msg_in.attachment
+        timestamp=datetime.now().strftime("%I:%M %p"),
+        is_read=False,
+        attachment=msg_in.attachment,
     )
-    db.add(new_msg)
+    db.add(msg)
     await db.commit()
-    await db.refresh(new_msg)
-    return new_msg
+    await db.refresh(msg)
+    return msg
+
+
+@router.post("/read")
+async def mark_thread_read(
+    client_id: str = Query(..., alias="clientId"),
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Mark the other party's messages in a thread as read."""
+    await get_accessible_client(client_id, user, db)
+    other = "client" if user.role == "coach" else "coach"
+    await db.execute(
+        update(ChatMessage)
+        .where(ChatMessage.client_id == client_id, ChatMessage.sender == other, ChatMessage.is_read == False)  # noqa: E712
+        .values(is_read=True)
+    )
+    await db.commit()
+    return {"message": "Thread marked as read"}

@@ -3,7 +3,8 @@ Chat Message ORM Model
 """
 
 from typing import Dict, Any, Optional
-from sqlalchemy import String, Boolean, Text, JSON
+from datetime import datetime, timezone
+from sqlalchemy import DateTime, String, Boolean, Text, JSON
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
@@ -19,3 +20,4 @@ class ChatMessage(Base):
     timestamp: Mapped[str] = mapped_column(String(64), default="")
     is_read: Mapped[bool] = mapped_column(Boolean, default=False)
     attachment: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, index=True, default=lambda: datetime.now(timezone.utc))

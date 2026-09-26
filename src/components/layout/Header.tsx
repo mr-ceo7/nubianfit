@@ -9,10 +9,14 @@ import {
   X,
   Download,
   Sun,
-  Moon
+  Moon,
+  LogOut
 } from 'lucide-react';
 
+import { localDateStr, timeAgo } from '../../utils/dates';
 import { useApp } from '../../context/AppContext';
+import { useAuth } from '../../context/AuthContext';
+import { ClientAvatar } from '../common/ClientAvatar';
 import { NubianFitLogo } from '../common/NubianFitLogo';
 
 
@@ -43,6 +47,7 @@ export const Header: React.FC<HeaderProps> = ({
     theme,
     toggleTheme
   } = useApp();
+  const { user, logout } = useAuth();
 
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -81,7 +86,7 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   const handleStartTodayWorkout = () => {
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = localDateStr();
     const todayWorkout = scheduledWorkouts.find(w => w.date === todayStr && w.status === 'Scheduled') || scheduledWorkouts[0];
     if (todayWorkout) {
       openWorkoutLogger(todayWorkout);
@@ -182,7 +187,7 @@ export const Header: React.FC<HeaderProps> = ({
                         }}
                         className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-800 cursor-pointer text-slate-200"
                       >
-                        <img src={c.avatar} alt={c.name} className="h-6 w-6 rounded-full object-cover" />
+                        <ClientAvatar client={c} className="h-6 w-6 rounded-full" />
                         <div className="flex-1 min-w-0">
                           <div className="font-semibold text-white truncate">{c.name}</div>
                           <div className="text-[10px] text-slate-400">{c.goal} • {c.status}</div>
@@ -273,6 +278,7 @@ export const Header: React.FC<HeaderProps> = ({
         <button
           id="theme-toggle-btn"
           onClick={toggleTheme}
+          aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
           className="hidden md:flex h-9 w-9 items-center justify-center rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
           title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
         >
@@ -284,6 +290,7 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             id="notifications-btn"
             onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+            aria-label="Notifications"
             className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
           >
             <Bell className="h-4 w-4" />
@@ -309,11 +316,11 @@ export const Header: React.FC<HeaderProps> = ({
                       setIsNotificationsOpen(false);
                     }}
                   >
-                    <img src={act.clientAvatar} alt={act.clientName} className="h-7 w-7 rounded-full object-cover shrink-0 mt-0.5 border border-slate-700" />
+                    <ClientAvatar client={{ name: act.clientName, avatar: act.clientAvatar }} className="h-7 w-7 rounded-full shrink-0 mt-0.5 border border-slate-700" />
                     <div className="flex-1 min-w-0 text-left">
                       <div className="text-xs font-semibold text-slate-100 truncate">{act.title}</div>
                       <div className="text-[11px] text-slate-400 line-clamp-1">{act.description}</div>
-                      <div className="text-[9px] text-slate-400 mt-0.5">{act.timestamp}</div>
+                      <div className="text-[9px] text-slate-400 mt-0.5">{act.createdAt ? timeAgo(act.createdAt) : act.timestamp}</div>
                     </div>
                   </div>
                 ))}
@@ -326,7 +333,7 @@ export const Header: React.FC<HeaderProps> = ({
         <button
           id="quick-log-workout-btn"
           onClick={handleStartTodayWorkout}
-          className="hidden lg:flex items-center gap-2 h-9 px-3 rounded-xl bg-slate-800 text-slate-200 border border-slate-700 text-xs font-semibold hover:bg-slate-700 hover:text-white transition-colors"
+          className="hidden lg:flex items-center gap-2 h-9 px-3 rounded-xl bg-slate-800 text-slate-100 border border-slate-700 text-xs font-semibold hover:bg-slate-700 hover:text-white transition-colors"
         >
           <Dumbbell className="h-3.5 w-3.5 text-emerald-400" />
           <span>Log Workout</span>
@@ -386,20 +393,17 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             id="mobile-profile-menu-btn"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-label="Account menu"
             className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-800 overflow-hidden active:scale-95 transition-transform"
           >
-            <img
-              src="https://images.unsplash.com/photo-1568602471122-7832951cc4c5?w=100&auto=format&fit=crop&q=80"
-              alt="Coach Rivers"
-              className="h-full w-full object-cover"
-            />
+            <ClientAvatar client={{ name: user?.fullName ?? 'Coach', avatar: user?.avatar }} className="h-full w-full" />
           </button>
 
           {isMobileMenuOpen && (
             <div className="absolute top-11 right-0 w-56 rounded-2xl bg-slate-900 border border-slate-700 shadow-2xl p-2 z-50 space-y-1">
               <div className="px-3 py-2 border-b border-slate-800/80 mb-1.5 text-left">
-                <div className="text-xs font-bold text-white">Coach Alex Rivers</div>
-                <div className="text-[10px] text-slate-400">Head Strength Coach (CSCS)</div>
+                <div className="text-xs font-bold text-white truncate">{user?.fullName}</div>
+                <div className="text-[10px] text-slate-400 truncate">{user?.email}</div>
               </div>
               
               {/* Theme Toggle (Mobile) */}
@@ -429,6 +433,14 @@ export const Header: React.FC<HeaderProps> = ({
                   <span className="font-semibold">Install App</span>
                 </button>
               )}
+
+              <button
+                onClick={logout}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left text-xs text-red-400 hover:bg-slate-800 transition-colors"
+              >
+                <LogOut className="h-4 w-4 shrink-0" />
+                <span className="font-semibold">Sign out</span>
+              </button>
             </div>
           )}
         </div>

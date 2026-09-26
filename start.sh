@@ -1,8 +1,9 @@
 #!/bin/bash
 
 # Configuration
-FRONTEND_PORT=3000
-BACKEND_PORT=8000
+# Override with e.g. FRONTEND_PORT=3000 BACKEND_PORT=8000 ./start.sh
+FRONTEND_PORT=${FRONTEND_PORT:-3010}
+BACKEND_PORT=${BACKEND_PORT:-8010}
 
 echo "=================================================="
 echo " Starting NubianFit Application Services "
@@ -55,27 +56,34 @@ if [ ! -d "backend/venv" ]; then
   ./backend/venv/bin/pip install -r backend/requirements.txt
 fi
 
-# Ensure database is seeded
-if [ ! -f "backend/nubianfit.db" ]; then
-  echo "Initializing and seeding database..."
-  ./backend/venv/bin/python backend/seed_data.py
+# Seed demo data (dev only). Reseed if the local DB predates the current schema
+# (no clients.coach_id column); dev uses create_all, which never alters existing tables.
+export ENABLE_DEV_SEED=true
+if [ -f "backend/nubianfit.db" ] && ! ./backend/venv/bin/python - <<'PY'
+import sqlite3, sys
+cols = [r[1] for r in sqlite3.connect("backend/nubianfit.db").execute("PRAGMA table_info(clients)")]
+sys.exit(0 if "coach_id" in cols else 1)
+PY
+then
+  echo "Local database uses an old schema; reseeding demo data..."
+  (cd backend && ./venv/bin/python seed_data.py --force)
 fi
 
 # Start Backend Server
 echo "Starting FastAPI Backend Server..."
 cd backend
 if [ -f "./venv/bin/uvicorn" ]; then
-  ./venv/bin/uvicorn app.main:app --host 0.0.0.0 --port $BACKEND_PORT &
+  ./venv/bin/uvicorn app.main:app --reload --host 0.0.0.0 --port $BACKEND_PORT &
   BACKEND_PID=$!
 else
-  python3 -m uvicorn app.main:app --host 0.0.0.0 --port $BACKEND_PORT &
+  python3 -m uvicorn app.main:app --reload --host 0.0.0.0 --port $BACKEND_PORT &
   BACKEND_PID=$!
 fi
 cd ..
 
 # Start Frontend Server
 echo "Starting Vite Frontend Server..."
-npm run dev > /dev/null 2>&1 &
+API_PROXY_TARGET="http://127.0.0.1:$BACKEND_PORT" npx vite --port $FRONTEND_PORT --strictPort --host 0.0.0.0 > /dev/null 2>&1 &
 FRONTEND_PID=$!
 
 echo "=================================================="
@@ -83,6 +91,7 @@ echo " 🏋️ NubianFit Services successfully started!"
 echo " - Frontend: http://localhost:$FRONTEND_PORT"
 echo " - Backend:  http://localhost:$BACKEND_PORT"
 echo " - API Docs: http://localhost:$BACKEND_PORT/docs"
+echo " - Portals:  ?portal=landing | coach | client (demo coach: coach@nubianfit.com / Coach@123)"
 echo "=================================================="
 echo "Tailing backend logs directly (Press Ctrl+C to stop servers)..."
 echo "--------------------------------------------------"

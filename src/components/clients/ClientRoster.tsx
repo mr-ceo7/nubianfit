@@ -17,6 +17,8 @@ import {
   X, 
   Target
 } from 'lucide-react';
+import { ClientAvatar } from '../common/ClientAvatar';
+import { localDateStr } from '../../utils/dates';
 import { useApp } from '../../context/AppContext';
 import { Client, ClientStatus, FitnessGoal, ExperienceLevel } from '../../types';
 import { ClientProfileModal } from './ClientProfileModal';
@@ -43,6 +45,7 @@ export const ClientRoster: React.FC<{
   // New Client Form State
   const [formName, setFormName] = useState('');
   const [formEmail, setFormEmail] = useState('');
+  const [formSendInvite, setFormSendInvite] = useState(true);
   const [formPhone, setFormPhone] = useState('');
   const [formAge, setFormAge] = useState(28);
   const [formGender, setFormGender] = useState('Male');
@@ -78,25 +81,17 @@ export const ClientRoster: React.FC<{
 
     setIsSaving(true);
     try {
-      const avatars = [
-        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-        'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80',
-        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-        'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80'
-      ];
-      const randomAvatar = avatars[Math.floor(Math.random() * avatars.length)];
-
-      await addClient({
+      const ok = await addClient({
         name: formName.trim(),
         email: formEmail.trim(),
-        phone: formPhone.trim() || '+1 (555) 000-1234',
-        avatar: randomAvatar,
+        phone: formPhone.trim(),
+        avatar: '',
         age: Number(formAge),
         gender: formGender,
         status: formStatus,
         goal: formGoal,
         experienceLevel: formExperience,
-        startDate: new Date().toISOString().split('T')[0],
+        startDate: localDateStr(),
         startingWeightKg: Number(formWeight),
         currentWeightKg: Number(formWeight),
         targetWeightKg: Number(formTargetWeight),
@@ -105,19 +100,19 @@ export const ClientRoster: React.FC<{
         targetBodyFat: Number(formTargetBodyFat),
         injuriesAndHealth: formInjuries.trim() ? formInjuries.split(',').map(s => s.trim()) : [],
         medicalAlerts: formMedicalAlerts.trim() || undefined,
-        customCoachNotes: ['Initial onboarding assessment completed.'],
+        customCoachNotes: [],
         onboardingSurvey: {
           gymAccess: formGymAccess,
           weeklyAvailabilityDays: Number(formWeeklyDays),
           dietaryRestrictions: formDietary,
-          sleepAvgHours: 7.5,
-          stressLevel: 'Moderate',
-          favoriteExercises: 'Compound movements',
-          leastFavoriteExercises: 'None reported'
+          sleepAvgHours: 0,
+          stressLevel: '',
+          favoriteExercises: '',
+          leastFavoriteExercises: ''
         }
-      });
+      }, { sendInvite: formSendInvite });
 
-      onCloseAddModal();
+      if (ok) onCloseAddModal();
     } finally {
       setIsSaving(false);
     }
@@ -247,11 +242,7 @@ export const ClientRoster: React.FC<{
                         {/* Athlete Column */}
                         <td className="py-3.5 px-4">
                           <div className="flex items-center gap-3">
-                            <img 
-                              src={client.avatar} 
-                              alt={client.name} 
-                              className="h-10 w-10 rounded-xl object-cover border border-slate-700" 
-                            />
+                            <ClientAvatar client={client} className="h-10 w-10 rounded-xl border border-slate-700" />
                             <div>
                               <div className="font-bold text-white group-hover:text-emerald-400 transition-colors">
                                 {client.name}
@@ -340,7 +331,7 @@ export const ClientRoster: React.FC<{
                             </button>
                             <button
                               onClick={() => setViewingClientProfile(client)}
-                              className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition-colors"
+                              className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-100 text-xs font-bold transition-colors"
                             >
                               Profile
                             </button>
@@ -366,11 +357,7 @@ export const ClientRoster: React.FC<{
               <div>
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <img 
-                      src={client.avatar} 
-                      alt={client.name} 
-                      className="h-12 w-12 rounded-2xl object-cover border border-slate-700" 
-                    />
+                    <ClientAvatar client={client} className="h-12 w-12 rounded-2xl border border-slate-700" />
                     <div>
                       <h3 className="font-bold text-white text-sm group-hover:text-emerald-400 transition-colors">
                         {client.name}
@@ -458,6 +445,15 @@ export const ClientRoster: React.FC<{
                     onChange={(e) => setFormEmail(e.target.value)}
                     className="w-full h-9 px-3 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:border-emerald-500 focus:outline-hidden"
                   />
+                  <label className="mt-1.5 flex items-center gap-2 text-[11px] text-slate-300">
+                    <input
+                      type="checkbox"
+                      checked={formSendInvite}
+                      onChange={(e) => setFormSendInvite(e.target.checked)}
+                      className="accent-emerald-500"
+                    />
+                    Email them an invite to the client app
+                  </label>
                 </div>
               </div>
 
@@ -599,7 +595,7 @@ export const ClientRoster: React.FC<{
                   type="button"
                   onClick={onCloseAddModal}
                   disabled={isSaving}
-                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 font-bold hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-100 font-bold hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:pointer-events-none"
                 >
                   Cancel
                 </button>

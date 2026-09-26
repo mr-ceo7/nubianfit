@@ -3,34 +3,48 @@ Authentication Pydantic Schemas
 """
 
 from typing import Optional
-from pydantic import BaseModel, EmailStr, ConfigDict
+from pydantic import Field
+from app.schemas.common import CamelModel
 
 
-class LoginRequest(BaseModel):
+class LoginRequest(CamelModel):
     email: str
     password: str
 
 
-class RegisterRequest(BaseModel):
+class CoachRegisterRequest(CamelModel):
     email: str
-    password: str
-    full_name: str
-    avatar: Optional[str] = None
-    role: Optional[str] = "coach"
+    password: str = Field(min_length=8)
+    full_name: str = Field(min_length=1)
+    invite_code: str
 
 
-class UserResponse(BaseModel):
+class OtpRequest(CamelModel):
+    email: str
+
+
+class OtpVerifyRequest(CamelModel):
+    email: str
+    code: str
+
+
+class ChangePasswordRequest(CamelModel):
+    current_password: Optional[str] = None
+    new_password: str = Field(min_length=8)
+
+
+class UserResponse(CamelModel):
     id: str
     email: str
     full_name: str
     role: str
+    client_id: Optional[str] = None
     avatar: str
     is_active: bool
+    has_password: bool = False
 
-    model_config = ConfigDict(from_attributes=True)
 
-
-class TokenResponse(BaseModel):
+class TokenResponse(CamelModel):
     access_token: str
     token_type: str = "bearer"
     user: UserResponse

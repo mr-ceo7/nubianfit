@@ -13,6 +13,8 @@ import {
   ChevronRight,
   ShieldAlert
 } from 'lucide-react';
+import { ClientAvatar } from '../common/ClientAvatar';
+import { localDateStr, timeAgo } from '../../utils/dates';
 import { useApp } from '../../context/AppContext';
 
 export const CoachDashboard: React.FC<{
@@ -28,7 +30,7 @@ export const CoachDashboard: React.FC<{
     openWorkoutLogger
   } = useApp();
 
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = localDateStr();
   const [activeMobileSection, setActiveMobileSection] = React.useState<'schedule' | 'activity' | 'watchlist'>('schedule');
 
 
@@ -36,7 +38,9 @@ export const CoachDashboard: React.FC<{
   const activeClientsCount = clients.filter(c => c.status === 'Active').length;
   const todayWorkouts = scheduledWorkouts.filter(w => w.date === todayStr);
   const completedTodayCount = todayWorkouts.filter(w => w.status === 'Completed').length;
-  const pendingCheckinsCount = clients.filter(c => c.status === 'Needs Check-in').length;
+  const pendingCheckinClients = clients.filter(c => c.status === 'Needs Check-in');
+  const pendingCheckinsCount = pendingCheckinClients.length;
+  const onboardingCount = clients.filter(c => c.status === 'Onboarding').length;
   
   const avgCompliance = Math.round(
     clients.reduce((acc, c) => acc + c.complianceRate, 0) / (clients.length || 1)
@@ -51,14 +55,14 @@ export const CoachDashboard: React.FC<{
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <span className="text-xs text-slate-400 font-medium">Sunday, August 16</span>
+              <span className="text-xs text-slate-400 font-medium">{new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</span>
             </div>
 
             <h2 className="text-2xl md:text-3xl font-bold text-white tracking-tight">
               Athlete Performance Overview
             </h2>
             <p className="text-sm text-slate-300 mt-1 max-w-2xl">
-              You have <strong className="text-emerald-400 font-semibold">{todayWorkouts.length} sessions</strong> scheduled today with {completedTodayCount} logged. {pendingCheckinsCount > 0 ? `${pendingCheckinsCount} client requires weekly review.` : 'All client check-ins are up to date.'}
+              You have <strong className="text-emerald-400 font-semibold">{todayWorkouts.length} sessions</strong> scheduled today with {completedTodayCount} logged. {pendingCheckinsCount > 0 ? `${pendingCheckinsCount} ${pendingCheckinsCount === 1 ? 'client needs' : 'clients need'} a check-in review.` : 'All client check-ins are up to date.'}
             </p>
           </div>
 
@@ -66,7 +70,7 @@ export const CoachDashboard: React.FC<{
             <button
               id="dashboard-onboard-client-btn"
               onClick={onOpenNewClient}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white text-xs font-semibold border border-slate-700 transition-colors"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-100 hover:text-white text-xs font-semibold border border-slate-700 transition-colors"
             >
               <Users className="h-4 w-4 text-emerald-400" />
               <span>Add Athlete</span>
@@ -101,7 +105,7 @@ export const CoachDashboard: React.FC<{
             <span className="text-[10px] sm:text-xs text-slate-400">/ {clients.length}</span>
           </div>
           <div className="mt-1 sm:mt-2 flex items-center text-[10px] sm:text-xs text-emerald-400 font-medium">
-            <span className="truncate">2 onboarding • 1 review</span>
+            <span className="truncate">{onboardingCount} onboarding • {pendingCheckinsCount} to review</span>
           </div>
         </div>
 
@@ -138,10 +142,10 @@ export const CoachDashboard: React.FC<{
           </div>
           <div className="mt-2.5 sm:mt-3 flex items-baseline gap-1 sm:gap-2">
             <span className="text-xl sm:text-3xl font-extrabold text-white">{pendingCheckinsCount}</span>
-            <span className="text-[10px] sm:text-xs text-amber-400/80 font-medium">Feedback</span>
+            <span className="text-[10px] sm:text-xs text-amber-400 font-medium">to review</span>
           </div>
           <div className="mt-1 sm:mt-2 flex items-center text-[10px] sm:text-xs text-slate-400 font-medium truncate">
-            <span className="truncate">Damon J. squat video</span>
+            <span className="truncate">{pendingCheckinClients[0]?.name ?? 'None waiting'}{pendingCheckinClients.length > 1 ? ` +${pendingCheckinClients.length - 1}` : ''}</span>
           </div>
         </div>
 
@@ -240,11 +244,7 @@ export const CoachDashboard: React.FC<{
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       {/* Client info & workout title */}
                       <div className="flex items-center gap-3">
-                        <img 
-                          src={workout.clientAvatar} 
-                          alt={workout.clientName} 
-                          className="h-11 w-11 rounded-xl object-cover border border-slate-700" 
-                        />
+                        <ClientAvatar client={{ name: workout.clientName, avatar: workout.clientAvatar }} className="h-11 w-11 rounded-xl border border-slate-700" />
                         <div>
                           <div className="flex items-center gap-2">
                             <span 
@@ -256,7 +256,7 @@ export const CoachDashboard: React.FC<{
                             >
                               {workout.clientName}
                             </span>
-                            <span className="text-[10px] text-slate-400 px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700">
+                            <span className="text-[10px] text-slate-100 px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700">
                               {workout.time || 'All Day'}
                             </span>
                           </div>
@@ -279,7 +279,7 @@ export const CoachDashboard: React.FC<{
                             </span>
                             <button
                               onClick={() => openWorkoutLogger(workout)}
-                              className="px-2.5 py-1 text-xs text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700 font-medium"
+                              className="px-2.5 py-1 text-xs text-slate-100 bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700 font-medium"
                             >
                               Review Log
                             </button>
@@ -318,27 +318,6 @@ export const CoachDashboard: React.FC<{
           </div>
 
           {/* Quick Roster At-A-Glance Bar */}
-          <div className="pt-2">
-            <div className="p-4 rounded-2xl bg-slate-900/70 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400">
-                  <Flame className="h-5 w-5" />
-                </div>
-                <div>
-                  <h4 className="text-xs font-bold text-white uppercase tracking-wider">Coaching Tip of the Day</h4>
-                  <p className="text-xs text-slate-300 mt-0.5">
-                    Reinforce Valsalva breath-holding and lat engagement on all RDLs and high-load squats this week.
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setActiveTab('messenger')}
-                className="text-xs font-bold text-emerald-400 hover:underline shrink-0"
-              >
-                Broadcast to Athletes →
-              </button>
-            </div>
-          </div>
         </div>
 
         {/* Right 1 Col: Live Activity Feed & Milestone Alerts */}
@@ -367,11 +346,7 @@ export const CoachDashboard: React.FC<{
                   }}
                 >
                   <div className="relative shrink-0">
-                    <img 
-                      src={item.clientAvatar} 
-                      alt={item.clientName} 
-                      className="h-8 w-8 rounded-full object-cover border border-slate-700" 
-                    />
+                    <ClientAvatar client={{ name: item.clientName, avatar: item.clientAvatar }} className="h-8 w-8 rounded-full border border-slate-700" />
                     {item.type === 'pr_achieved' && (
                       <span className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-amber-500 flex items-center justify-center text-[9px] text-slate-950 font-black">
                         ★
@@ -382,7 +357,7 @@ export const CoachDashboard: React.FC<{
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-1">
                       <span className="text-xs font-bold text-white truncate">{item.clientName}</span>
-                      <span className="text-[10px] text-slate-400 shrink-0">{item.timestamp}</span>
+                      <span className="text-[10px] text-slate-400 shrink-0">{item.createdAt ? timeAgo(item.createdAt) : item.timestamp}</span>
                     </div>
                     <div className="text-xs font-medium text-emerald-400 truncate mt-0.5">
                       {item.title}

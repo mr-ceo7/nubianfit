@@ -2,7 +2,7 @@
 Pydantic Schemas Package
 """
 
-from app.schemas.auth import LoginRequest, RegisterRequest, UserResponse, TokenResponse
+from app.schemas.auth import LoginRequest, CoachRegisterRequest, UserResponse, TokenResponse
 from app.schemas.client import ClientCreate, ClientUpdate, ClientResponse, AddCoachNoteRequest
 from app.schemas.exercise import ExerciseCreate, ExerciseUpdate, ExerciseResponse
 from app.schemas.program import ProgramCreate, ProgramUpdate, ProgramResponse, AssignProgramRequest
@@ -16,7 +16,7 @@ from app.schemas.activity import ActivityFeedItemCreate, ActivityFeedItemRespons
 
 __all__ = [
     "LoginRequest",
-    "RegisterRequest",
+    "CoachRegisterRequest",
     "UserResponse",
     "TokenResponse",
     "ClientCreate",

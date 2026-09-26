@@ -1,21 +1,9 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
-import { render, screen, act } from '@testing-library/react';
+import { screen, act } from '@testing-library/react';
 import React from 'react';
-import { AppProvider, useApp } from '../context/AppContext';
+import { useApp } from '../context/AppContext';
+import { renderWithProviders, mockApi } from './helpers';
 
-vi.mock('../services/apiClient', () => ({
-  authApi: { me: vi.fn().mockResolvedValue({ email: 'coach@nubianfit.com' }) },
-  clientsApi: { list: vi.fn().mockResolvedValue([]) },
-  exercisesApi: { list: vi.fn().mockResolvedValue([]) },
-  programsApi: { list: vi.fn().mockResolvedValue([]) },
-  workoutsApi: { list: vi.fn().mockResolvedValue([]) },
-  metricsApi: { list: vi.fn().mockResolvedValue([]) },
-  prsApi: { list: vi.fn().mockResolvedValue([]) },
-  habitsApi: { list: vi.fn().mockResolvedValue([]) },
-  photosApi: { list: vi.fn().mockResolvedValue([]) },
-  messagesApi: { list: vi.fn().mockResolvedValue([]) },
-  activityApi: { list: vi.fn().mockResolvedValue([]) },
-}));
 
 const ThemeTesterComponent = () => {
   const { theme, toggleTheme } = useApp();
@@ -30,14 +18,13 @@ const ThemeTesterComponent = () => {
 describe('Theme Context Unit Tests', () => {
   beforeEach(() => {
     localStorage.clear();
+    mockApi();
     document.documentElement.className = '';
   });
 
   test('should default to light mode', () => {
-    render(
-      <AppProvider>
-        <ThemeTesterComponent />
-      </AppProvider>
+    renderWithProviders(
+      <ThemeTesterComponent />
     );
 
     expect(screen.getByTestId('theme-value').textContent).toBe('light');
@@ -45,10 +32,8 @@ describe('Theme Context Unit Tests', () => {
   });
 
   test('should toggle to dark mode and add dark class to documentElement', () => {
-    render(
-      <AppProvider>
-        <ThemeTesterComponent />
-      </AppProvider>
+    renderWithProviders(
+      <ThemeTesterComponent />
     );
 
     const button = screen.getByTestId('toggle-btn');

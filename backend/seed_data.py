@@ -7,7 +7,7 @@ import asyncio
 import json
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 
 # Add backend directory to sys.path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -31,65 +31,104 @@ from app.models import (
 )
 
 
+SEED_JSON = os.path.join(os.path.dirname(os.path.abspath(__file__)), "seed_data.json")
+DEMO_COACH_ID = "coach-1"
+
+# seed_data.json was written as if "today" were this date. Demo dates are shifted by
+# (real today - anchor) so scheduled workouts are always upcoming and history stays recent.
+SEED_ANCHOR_DATE = date(2026, 8, 16)
+
+
+def _shift(value: str, offset: timedelta) -> str:
+    """Shift a YYYY-MM-DD string by offset; leave anything else untouched."""
+    try:
+        return (date.fromisoformat(value) + offset).isoformat()
+    except (TypeError, ValueError):
+        return value
+
+
+def _load_seed_json() -> dict:
+    with open(SEED_JSON, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+async def seed_exercise_library() -> None:
+    """Insert any missing global library exercises. Safe to run in every environment."""
+    data = _load_seed_json()
+    async with AsyncSessionLocal() as session:
+        existing = set((await session.execute(select(Exercise.id))).scalars().all())
+        added = 0
+        for item in data.get("exercises", []):
+            if item["id"] in existing:
+                continue
+            session.add(Exercise(
+                id=item["id"],
+                coach_id=None,
+                name=item["name"],
+                primary_muscle=item["primaryMuscle"],
+                secondary_muscles=item.get("secondaryMuscles", []),
+                equipment=item["equipment"],
+                difficulty=item.get("difficulty", "Intermediate"),
+                category=item.get("category", "Strength"),
+                description=item.get("description", ""),
+                instructions=item.get("instructions", []),
+                form_cues=item.get("formCues", []),
+                demo_video_placeholder_url=item.get("demoVideoPlaceholderUrl"),
+                thumbnail_url=item.get("thumbnailUrl", ""),
+                is_custom=False,
+            ))
+            added += 1
+        await session.commit()
+        if added:
+            print(f"-> Added {added} library exercises")
+
+
 async def seed_database(force: bool = False):
-    """Seed the database from seed_data.json."""
-    # 1. Create tables
+    """Seed demo data (dev and tests only): a demo coach, their clients and sample history.
+    With force=True all tables are dropped and recreated first."""
     async with engine.begin() as conn:
+        if force:
+            await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
 
-    # 2. Check if already seeded
+    await seed_exercise_library()
+
     async with AsyncSessionLocal() as session:
-        result = await session.execute(select(Client).limit(1))
-        has_clients = result.scalar_one_or_none() is not None
-        
-        user_res = await session.execute(select(User).limit(1))
-        has_users = user_res.scalar_one_or_none() is not None
-
-        if not force and has_clients and has_users:
-            print("Database already contains data. Skipping seed.")
+        if (await session.execute(select(User).limit(1))).scalar_one_or_none():
+            print("Database already contains users. Skipping demo seed.")
             return
 
-        print("Seeding NubianFit database...")
+        print("Seeding NubianFit demo data...")
+        session.add(User(
+            id=DEMO_COACH_ID,
+            email=settings.DEFAULT_COACH_EMAIL.lower(),
+            hashed_password=get_password_hash(settings.DEFAULT_COACH_PASSWORD),
+            full_name=settings.DEFAULT_COACH_NAME,
+            role="coach",
+            is_active=True,
+            created_at=datetime.now(timezone.utc),
+        ))
+        print(f"-> Seeded demo coach: {settings.DEFAULT_COACH_EMAIL}")
 
-        # 3. Seed Default Coach User
-        if not has_users or force:
-            coach_user = User(
-                id="coach-1",
-                email=settings.DEFAULT_COACH_EMAIL.lower(),
-                hashed_password=get_password_hash(settings.DEFAULT_COACH_PASSWORD),
-                full_name=settings.DEFAULT_COACH_NAME,
-                role="coach",
-                avatar="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
-                is_active=True,
-                created_at=datetime.now(timezone.utc),
-            )
-            session.add(coach_user)
-            print(f"-> Seeded Coach user: {settings.DEFAULT_COACH_EMAIL}")
-
-        # 4. Load seed_data.json
-        json_path = os.path.join(os.path.dirname(__file__), "seed_data.json")
-        if not os.path.exists(json_path):
-            print(f"Warning: {json_path} not found.")
-            await session.commit()
-            return
-
-        with open(json_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
+        data = _load_seed_json()
+        now = datetime.now(timezone.utc)
+        offset = date.today() - SEED_ANCHOR_DATE
 
         # Clients
         for item in data.get("clients", []):
             c = Client(
                 id=item["id"],
+                coach_id=DEMO_COACH_ID,
                 name=item["name"],
                 avatar=item.get("avatar", ""),
-                email=item.get("email", ""),
+                email=item.get("email", "").lower(),
                 phone=item.get("phone", ""),
                 age=item.get("age", 25),
                 gender=item.get("gender", "Male"),
                 status=item.get("status", "Active"),
                 goal=item.get("goal", "Hypertrophy"),
                 experience_level=item.get("experienceLevel", "Intermediate"),
-                start_date=item.get("startDate", ""),
+                start_date=_shift(item.get("startDate", ""), offset),
                 current_program_id=item.get("currentProgramId"),
                 current_program_name=item.get("currentProgramName"),
                 compliance_rate=float(item.get("complianceRate", 100.0)),
@@ -110,30 +149,11 @@ async def seed_database(force: bool = False):
             session.add(c)
         print(f"-> Seeded {len(data.get('clients', []))} clients")
 
-        # Exercises
-        for item in data.get("exercises", []):
-            ex = Exercise(
-                id=item["id"],
-                name=item["name"],
-                primary_muscle=item["primaryMuscle"],
-                secondary_muscles=item.get("secondaryMuscles", []),
-                equipment=item["equipment"],
-                difficulty=item.get("difficulty", "Intermediate"),
-                category=item.get("category", "Strength"),
-                description=item.get("description", ""),
-                instructions=item.get("instructions", []),
-                form_cues=item.get("formCues", []),
-                demo_video_placeholder_url=item.get("demoVideoPlaceholderUrl"),
-                thumbnail_url=item.get("thumbnailUrl", ""),
-                is_custom=item.get("isCustom", False),
-            )
-            session.add(ex)
-        print(f"-> Seeded {len(data.get('exercises', []))} exercises")
-
         # Programs
         for item in data.get("programs", []):
             prog = TrainingProgram(
                 id=item["id"],
+                coach_id=DEMO_COACH_ID,
                 title=item["title"],
                 subtitle=item.get("subtitle", ""),
                 description=item.get("description", ""),
@@ -144,13 +164,18 @@ async def seed_database(force: bool = False):
                 days=item.get("days", []),
                 tags=item.get("tags", []),
                 assigned_client_count=int(item.get("assignedClientCount", 0)),
-                created_at=item.get("createdAt", ""),
-                updated_at=item.get("updatedAt", ""),
+                created_at=_shift(item.get("createdAt", ""), offset),
+                updated_at=_shift(item.get("updatedAt", ""), offset),
             )
             session.add(prog)
         print(f"-> Seeded {len(data.get('programs', []))} programs")
 
-        # Scheduled Workouts
+        # Scheduled Workouts (fill empty ones from their program day so they can be logged)
+        program_days = {
+            (prog["id"], day["id"]): day.get("exercises", [])
+            for prog in data.get("programs", [])
+            for day in prog.get("days", [])
+        }
         for item in data.get("scheduledWorkouts", []):
             sw = ScheduledWorkout(
                 id=item["id"],
@@ -161,7 +186,7 @@ async def seed_database(force: bool = False):
                 program_name=item.get("programName"),
                 workout_day_id=item.get("workoutDayId", ""),
                 workout_title=item.get("workoutTitle", "Workout"),
-                date=item.get("date", ""),
+                date=_shift(item.get("date", ""), offset),
                 time=item.get("time"),
                 status=item.get("status", "Scheduled"),
                 duration_min=item.get("durationMin"),
@@ -170,7 +195,7 @@ async def seed_database(force: bool = False):
                 coach_feedback=item.get("coachFeedback"),
                 total_volume_kg=item.get("totalVolumeKg"),
                 pr_count=item.get("prCount"),
-                exercises=item.get("exercises", []),
+                exercises=item.get("exercises") or program_days.get((item.get("programId"), item.get("workoutDayId")), []),
             )
             session.add(sw)
         print(f"-> Seeded {len(data.get('scheduledWorkouts', []))} scheduled workouts")
@@ -180,7 +205,7 @@ async def seed_database(force: bool = False):
             m = MetricEntry(
                 id=item["id"],
                 client_id=item["clientId"],
-                date=item.get("date", ""),
+                date=_shift(item.get("date", ""), offset),
                 weight_kg=float(item.get("weightKg", 0.0)),
                 body_fat_percentage=item.get("bodyFatPercentage"),
                 chest_cm=item.get("chestCm"),
@@ -201,7 +226,7 @@ async def seed_database(force: bool = False):
                 weight_kg=float(item.get("weightKg", 0.0)),
                 reps=int(item.get("reps", 1)),
                 estimated_1rm_kg=float(item.get("estimated1RmKg", 0.0)),
-                date=item.get("date", ""),
+                date=_shift(item.get("date", ""), offset),
                 previous_weight_kg=item.get("previousWeightKg"),
             )
             session.add(pr)
@@ -212,7 +237,7 @@ async def seed_database(force: bool = False):
             h = ClientDailyHabitLog(
                 id=item["id"],
                 client_id=item["clientId"],
-                date=item.get("date", ""),
+                date=_shift(item.get("date", ""), offset),
                 habits=item.get("habits", []),
             )
             session.add(h)
@@ -223,7 +248,7 @@ async def seed_database(force: bool = False):
             p = ProgressPhoto(
                 id=item["id"],
                 client_id=item["clientId"],
-                date=item.get("date", ""),
+                date=_shift(item.get("date", ""), offset),
                 view=item.get("view", "Front"),
                 photo_url=item.get("photoUrl", ""),
                 weight_kg=float(item.get("weightKg", 70.0)),
@@ -234,8 +259,9 @@ async def seed_database(force: bool = False):
         print(f"-> Seeded {len(data.get('photos', []))} progress photos")
 
         # Messages
-        for item in data.get("messages", []):
+        for idx, item in enumerate(data.get("messages", [])):
             msg = ChatMessage(
+                created_at=now - timedelta(minutes=len(data["messages"]) - idx),
                 id=item["id"],
                 client_id=item["clientId"],
                 sender=item.get("sender", "coach"),
@@ -248,8 +274,11 @@ async def seed_database(force: bool = False):
         print(f"-> Seeded {len(data.get('messages', []))} messages")
 
         # Activity Feed
-        for item in data.get("activityFeed", []):
+        # The JSON lists the feed newest first.
+        for idx, item in enumerate(data.get("activityFeed", [])):
             act = ActivityFeedItem(
+                coach_id=DEMO_COACH_ID,
+                created_at=now - timedelta(minutes=idx),
                 id=item["id"],
                 type=item.get("type", "check_in_submitted"),
                 client_id=item.get("clientId", ""),

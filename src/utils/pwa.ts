@@ -17,27 +17,13 @@ let deferredPrompt: BeforeInstallPromptEvent | null = null;
 const listeners: Array<(prompt: BeforeInstallPromptEvent | null) => void> = [];
 
 export function registerServiceWorker() {
-  if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
+  // Production only: a service worker in dev would serve stale modules and break hot reload.
+  if ('serviceWorker' in navigator && import.meta.env.PROD) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker
-        .register('/sw.js')
-        .then((reg) => {
-          console.log('[PWA] Service Worker registered with scope:', reg.scope);
-        })
-        .catch((err) => {
-          console.log('[PWA] Service Worker registration failed:', err);
-        });
-    });
-  } else if ('serviceWorker' in navigator) {
-    // Development registration for instant testing
-    navigator.serviceWorker
-      .register('/sw.js')
-      .then((reg) => {
-        console.log('[PWA] Dev Service Worker registered:', reg.scope);
-      })
-      .catch((err) => {
-        console.log('[PWA] Dev SW init:', err);
+      navigator.serviceWorker.register('/sw.js').catch((err) => {
+        console.warn('[PWA] Service worker registration failed:', err);
       });
+    });
   }
 
   // Capture install prompt

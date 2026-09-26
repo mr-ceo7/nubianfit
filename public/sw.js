@@ -3,7 +3,7 @@
  * Provides offline resilience, static asset caching, and instantaneous loads.
  */
 
-const CACHE_NAME = 'nubianfit-cache-v1.2';
+const CACHE_NAME = 'nubianfit-cache-v2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -39,9 +39,11 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const request = event.request;
 
-  // Skip non-GET and cross-origin analytics/external requests
+  // Skip non-GET and cross-origin requests
   if (request.method !== 'GET') return;
   if (!request.url.startsWith(self.location.origin)) return;
+  // Never cache API responses: they are per-user and must always be fresh.
+  if (new URL(request.url).pathname.startsWith('/api/')) return;
 
   // Handle SPA navigation requests
   if (request.mode === 'navigate') {

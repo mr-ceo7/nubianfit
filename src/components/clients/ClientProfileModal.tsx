@@ -17,6 +17,7 @@ import {
   Mail, 
   Target
 } from 'lucide-react';
+import { ClientAvatar } from '../common/ClientAvatar';
 import { useApp } from '../../context/AppContext';
 import { Client } from '../../types';
 
@@ -30,6 +31,7 @@ export const ClientProfileModal: React.FC<ClientProfileModalProps> = ({ client, 
   const { 
     updateClient, 
     addCoachNote, 
+    inviteClient,
     programs, 
     assignProgramToClient, 
     scheduledWorkouts, 
@@ -93,11 +95,7 @@ export const ClientProfileModal: React.FC<ClientProfileModalProps> = ({ client, 
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
-              <img 
-                src={client.avatar} 
-                alt={client.name} 
-                className="h-16 w-16 rounded-2xl object-cover border-2 border-emerald-500/40 shadow-lg"
-              />
+              <ClientAvatar client={client} className="h-16 w-16 rounded-2xl border-2 border-emerald-500/40 shadow-lg" />
               <div>
                 <div className="flex items-center gap-2.5">
                   <h2 className="text-xl font-extrabold text-white tracking-tight">{client.name}</h2>
@@ -130,11 +128,21 @@ export const ClientProfileModal: React.FC<ClientProfileModalProps> = ({ client, 
                   setActiveTab('messenger');
                   onClose();
                 }}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-slate-700 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-100 text-xs font-bold border border-slate-700 transition-colors"
               >
                 <MessageSquare className="h-3.5 w-3.5 text-cyan-400" />
                 <span>Message</span>
               </button>
+              {client.email && (
+                <button
+                  onClick={() => inviteClient(client.id)}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-100 text-xs font-bold border border-slate-700 transition-colors"
+                  title="Email the client a link to the client app"
+                >
+                  <Mail className="h-3.5 w-3.5 text-emerald-400" />
+                  <span>Send app invite</span>
+                </button>
+              )}
 
               <button
                 onClick={() => {
@@ -236,7 +244,7 @@ export const ClientProfileModal: React.FC<ClientProfileModalProps> = ({ client, 
                   <select
                     value={selectedProgramToAssign}
                     onChange={(e) => setSelectedProgramToAssign(e.target.value)}
-                    className="h-8 px-2.5 rounded-lg bg-slate-800 border border-slate-700 text-xs text-slate-200 focus:outline-hidden"
+                    className="h-8 px-2.5 rounded-lg bg-slate-800 border border-slate-700 text-xs text-slate-100 focus:outline-hidden"
                   >
                     <option value="">Select template...</option>
                     {programs.map(p => (
@@ -348,7 +356,7 @@ export const ClientProfileModal: React.FC<ClientProfileModalProps> = ({ client, 
                       </div>
                       <div className="flex items-center gap-2">
                         <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                          w.status === 'Completed' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-300'
+                          w.status === 'Completed' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-100'
                         }`}>
                           {w.status}
                         </span>
@@ -357,7 +365,7 @@ export const ClientProfileModal: React.FC<ClientProfileModalProps> = ({ client, 
                             openWorkoutLogger(w);
                             onClose();
                           }}
-                          className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200"
+                          className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-100"
                         >
                           Open Log
                         </button>

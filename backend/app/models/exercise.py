@@ -13,6 +13,8 @@ class Exercise(Base):
     __tablename__ = "exercises"
 
     id: Mapped[str] = mapped_column(String(64), primary_key=True, index=True)
+    # None = shared global library; otherwise a coach's custom exercise.
+    coach_id: Mapped[Optional[str]] = mapped_column(String(64), index=True, nullable=True)
     name: Mapped[str] = mapped_column(String(255), index=True, nullable=False)
     primary_muscle: Mapped[str] = mapped_column(String(64), index=True, nullable=False)
     secondary_muscles: Mapped[List[str]] = mapped_column(JSON, default=list)

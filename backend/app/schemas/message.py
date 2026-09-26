@@ -3,7 +3,7 @@ Chat Message Pydantic Schemas
 """
 
 from typing import Dict, Any, Optional
-from app.schemas.common import CamelModel
+from app.schemas.common import CamelModel, UtcDatetime
 
 
 class ChatAttachmentSchema(CamelModel):
@@ -33,3 +33,4 @@ class ChatMessageCreate(CamelModel):
 
 class ChatMessageResponse(ChatMessageBase):
     id: str
+    created_at: UtcDatetime

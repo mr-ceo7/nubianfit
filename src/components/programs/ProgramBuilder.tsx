@@ -16,6 +16,7 @@ import {
   Target,
   ArrowRight
 } from 'lucide-react';
+import { localDateStr } from '../../utils/dates';
 import { useApp } from '../../context/AppContext';
 import { 
   TrainingProgram, 
@@ -26,6 +27,35 @@ import {
   FitnessGoal, 
   Difficulty 
 } from '../../types';
+
+/** An unsaved program; its placeholder id is replaced by the server's on first save. */
+function makeBlankProgram(): TrainingProgram {
+  const today = localDateStr();
+  return {
+    id: `draft-${Date.now()}`,
+    title: 'New Training Program',
+    subtitle: '',
+    description: '',
+    difficulty: 'Intermediate',
+    goal: 'Hypertrophy',
+    durationWeeks: 8,
+    daysPerWeek: 3,
+    tags: [],
+    assignedClientCount: 0,
+    createdAt: today,
+    updatedAt: today,
+    days: [
+      {
+        id: `day-${Date.now()}-1`,
+        dayNumber: 1,
+        name: 'Day 1',
+        focus: '',
+        estimatedDurationMin: 60,
+        exercises: []
+      }
+    ]
+  };
+}
 
 export const ProgramBuilder: React.FC<{
   initialProgramId?: string;
@@ -42,9 +72,10 @@ export const ProgramBuilder: React.FC<{
   // Active loaded program
   const defaultProgram = programs.find(p => p.id === initialProgramId) || programs[0];
 
-  const [activeProgram, setActiveProgram] = useState<TrainingProgram>(() => {
-    return JSON.parse(JSON.stringify(defaultProgram));
-  });
+  const [activeProgram, setActiveProgram] = useState<TrainingProgram>(() =>
+    defaultProgram ? structuredClone(defaultProgram) : makeBlankProgram()
+  );
+  const isSaved = programs.some(p => p.id === activeProgram.id);
 
   const [activeDayIndex, setActiveDayIndex] = useState<number>(0);
   const [isExercisePickerOpen, setIsExercisePickerOpen] = useState(false);
@@ -62,33 +93,7 @@ export const ProgramBuilder: React.FC<{
   };
 
   const handleCreateNewBlankProgram = () => {
-    const newProg: TrainingProgram = {
-      id: `prog-${Date.now()}`,
-      title: 'New Custom Training Program',
-      subtitle: 'Custom Split Programming',
-      description: 'Periodized training protocol tailored for athlete progression.',
-      difficulty: 'Intermediate',
-      goal: 'Hypertrophy',
-      durationWeeks: 8,
-      daysPerWeek: 4,
-      tags: ['Custom', 'Periodized'],
-      assignedClientCount: 0,
-      createdAt: new Date().toISOString().split('T')[0],
-      updatedAt: new Date().toISOString().split('T')[0],
-      days: [
-        {
-          id: `day-${Date.now()}-1`,
-          dayNumber: 1,
-          name: 'Day 1: Upper Body Focus',
-          focus: 'Horizontal Push & Pull Volume',
-          estimatedDurationMin: 60,
-          warmupNotes: 'Shoulder dislocates 2x15, thoracic rotation.',
-          cooldownNotes: 'Doorway pectoral stretch.',
-          exercises: []
-        }
-      ]
-    };
-    setActiveProgram(newProg);
+    setActiveProgram(makeBlankProgram());
     setActiveDayIndex(0);
   };
 
@@ -243,7 +248,8 @@ export const ProgramBuilder: React.FC<{
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await saveProgram(activeProgram);
+      const saved = await saveProgram(activeProgram);
+      if (saved) setActiveProgram(structuredClone(saved));
     } finally {
       setIsSaving(false);
     }
@@ -273,7 +279,7 @@ export const ProgramBuilder: React.FC<{
           <button
             id="new-program-builder-btn"
             onClick={handleCreateNewBlankProgram}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-slate-700 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-100 text-xs font-bold border border-slate-700 transition-colors"
           >
             <Plus className="h-4 w-4 text-emerald-400" />
             <span>+ New Blank Program</span>
@@ -413,7 +419,7 @@ export const ProgramBuilder: React.FC<{
               }`}
             >
               <span>{day.name}</span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-800 text-slate-300">
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-800 text-slate-100">
                 {day.exercises?.length || 0} Ex
               </span>
             </button>
@@ -507,7 +513,7 @@ export const ProgramBuilder: React.FC<{
                       <div>
                         <div className="flex items-center gap-2">
                           <h4 className="text-sm font-bold text-white">{item.exerciseName}</h4>
-                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300">
+                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-100">
                             {item.primaryMuscle}
                           </span>
                           <span className="text-[10px] text-slate-400">
@@ -524,7 +530,7 @@ export const ProgramBuilder: React.FC<{
                         className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-colors ${
                           item.isSupersetWithNext
                             ? 'bg-cyan-500 text-slate-950'
-                            : 'bg-slate-800 text-slate-400 hover:text-white'
+                            : 'bg-slate-800 text-slate-100 hover:text-white'
                         }`}
                         title="Link with next exercise as Superset/Circuit"
                       >
@@ -740,11 +746,12 @@ export const ProgramBuilder: React.FC<{
             <div className="pt-3 border-t border-slate-800 flex justify-end gap-2">
               <button
                 onClick={() => setIsAssignModalOpen(false)}
-                className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold hover:bg-slate-700"
+                className="px-4 py-2 rounded-xl bg-slate-800 text-slate-100 text-xs font-bold hover:bg-slate-700"
               >
                 Cancel
               </button>
               <button
+                disabled={!isSaved || !selectedClientToAssign}
                 onClick={() => {
                   assignProgramToClient(activeProgram.id, selectedClientToAssign);
                   setIsAssignModalOpen(false);

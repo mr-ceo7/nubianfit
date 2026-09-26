@@ -18,7 +18,7 @@ export default defineConfig(() => {
       host: '0.0.0.0',
       proxy: {
         '/api': {
-          target: 'http://127.0.0.1:8000',
+          target: process.env.API_PROXY_TARGET || 'http://127.0.0.1:8000',
           changeOrigin: true,
         },
       },
@@ -32,6 +32,8 @@ export default defineConfig(() => {
       globals: true,
       environment: 'jsdom',
       setupFiles: './src/test/setup.ts',
+      // Full-app tests load lazy portal chunks, which is slow in jsdom.
+      testTimeout: 20000,
     },
   };
 });

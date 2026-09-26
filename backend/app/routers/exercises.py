@@ -1,18 +1,43 @@
 """
 Exercise Library Router
+
+The library is the shared global catalogue (coach_id NULL) plus each coach's custom exercises.
+Clients see their own coach's library.
 """
 
-import time
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, or_
 
-from app.dependencies import get_db
+from app.dependencies import get_db, get_current_user, require_coach
+from app.models.client import Client
 from app.models.exercise import Exercise
+from app.models.user import User
 from app.schemas.exercise import ExerciseCreate, ExerciseUpdate, ExerciseResponse
+from app.services.activity import new_id
 
 router = APIRouter(prefix="/exercises", tags=["Exercises"])
+
+
+async def _library_owner_id(user: User, db: AsyncSession) -> Optional[str]:
+    if user.role == "coach":
+        return user.id
+    client = await db.get(Client, user.client_id) if user.client_id else None
+    return client.coach_id if client else None
+
+
+def _visible_to(owner_id: Optional[str]):
+    return or_(Exercise.coach_id.is_(None), Exercise.coach_id == owner_id)
+
+
+async def _get_own_exercise(exercise_id: str, coach: User, db: AsyncSession) -> Exercise:
+    ex = await db.get(Exercise, exercise_id)
+    if not ex or ex.coach_id not in (None, coach.id):
+        raise HTTPException(status_code=404, detail="Exercise not found")
+    if ex.coach_id is None:
+        raise HTTPException(status_code=403, detail="Library exercises can't be changed; create a custom copy instead")
+    return ex
 
 
 @router.get("", response_model=List[ExerciseResponse])
@@ -21,10 +46,10 @@ async def list_exercises(
     equipment: Optional[str] = None,
     difficulty: Optional[str] = None,
     search: Optional[str] = None,
-    db: AsyncSession = Depends(get_db)
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
-    """List all exercises with optional filtering by muscle, equipment, difficulty, or search term."""
-    query = select(Exercise)
+    query = select(Exercise).where(_visible_to(await _library_owner_id(user, db)))
     if muscle:
         query = query.where(Exercise.primary_muscle == muscle)
     if equipment:
@@ -32,34 +57,26 @@ async def list_exercises(
     if difficulty:
         query = query.where(Exercise.difficulty == difficulty)
     if search:
-        search_pattern = f"%{search.lower()}%"
-        query = query.where(Exercise.name.ilike(search_pattern))
-    
-    result = await db.execute(query)
+        query = query.where(Exercise.name.ilike(f"%{search.lower()}%"))
+    result = await db.execute(query.order_by(Exercise.name))
     return result.scalars().all()
 
 
 @router.get("/{exercise_id}", response_model=ExerciseResponse)
-async def get_exercise(exercise_id: str, db: AsyncSession = Depends(get_db)):
-    """Get single exercise details."""
-    result = await db.execute(select(Exercise).where(Exercise.id == exercise_id))
-    ex = result.scalar_one_or_none()
-    if not ex:
+async def get_exercise(exercise_id: str, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    ex = await db.get(Exercise, exercise_id)
+    if not ex or ex.coach_id not in (None, await _library_owner_id(user, db)):
         raise HTTPException(status_code=404, detail="Exercise not found")
     return ex
 
 
 @router.post("", response_model=ExerciseResponse, status_code=status.HTTP_201_CREATED)
-async def create_exercise(exercise_in: ExerciseCreate, db: AsyncSession = Depends(get_db)):
-    """Create a new custom exercise."""
-    ex_id = f"ex-{int(time.time() * 1000)}"
-    ex_dict = exercise_in.model_dump()
-    ex_dict["is_custom"] = True
-    new_ex = Exercise(id=ex_id, **ex_dict)
-    db.add(new_ex)
+async def create_exercise(exercise_in: ExerciseCreate, coach: User = Depends(require_coach), db: AsyncSession = Depends(get_db)):
+    ex = Exercise(id=new_id("ex"), coach_id=coach.id, **{**exercise_in.model_dump(), "is_custom": True})
+    db.add(ex)
     await db.commit()
-    await db.refresh(new_ex)
-    return new_ex
+    await db.refresh(ex)
+    return ex
 
 
 @router.patch("/{exercise_id}", response_model=ExerciseResponse)
@@ -67,31 +84,20 @@ async def create_exercise(exercise_in: ExerciseCreate, db: AsyncSession = Depend
 async def update_exercise(
     exercise_id: str,
     exercise_in: ExerciseUpdate,
-    db: AsyncSession = Depends(get_db)
+    coach: User = Depends(require_coach),
+    db: AsyncSession = Depends(get_db),
 ):
-    """Update exercise details."""
-    result = await db.execute(select(Exercise).where(Exercise.id == exercise_id))
-    ex = result.scalar_one_or_none()
-    if not ex:
-        raise HTTPException(status_code=404, detail="Exercise not found")
-    
-    update_data = exercise_in.model_dump(exclude_unset=True)
-    for field, val in update_data.items():
+    ex = await _get_own_exercise(exercise_id, coach, db)
+    for field, val in exercise_in.model_dump(exclude_unset=True).items():
         setattr(ex, field, val)
-        
     await db.commit()
     await db.refresh(ex)
     return ex
 
 
 @router.delete("/{exercise_id}")
-async def delete_exercise(exercise_id: str, db: AsyncSession = Depends(get_db)):
-    """Delete exercise."""
-    result = await db.execute(select(Exercise).where(Exercise.id == exercise_id))
-    ex = result.scalar_one_or_none()
-    if not ex:
-        raise HTTPException(status_code=404, detail="Exercise not found")
-    
+async def delete_exercise(exercise_id: str, coach: User = Depends(require_coach), db: AsyncSession = Depends(get_db)):
+    ex = await _get_own_exercise(exercise_id, coach, db)
     await db.delete(ex)
     await db.commit()
     return {"message": "Exercise deleted successfully", "id": exercise_id}

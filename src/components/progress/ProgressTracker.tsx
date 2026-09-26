@@ -19,10 +19,24 @@ import {
   Beef, 
   Scale
 } from 'lucide-react';
+import { ClientAvatar } from '../common/ClientAvatar';
+import { localDateStr } from '../../utils/dates';
 import { useApp } from '../../context/AppContext';
 import { MetricEntry, PersonalRecord, ProgressPhoto } from '../../types';
 
 export const ProgressTracker: React.FC = () => {
+  const { clients } = useApp();
+  if (clients.length === 0) {
+    return (
+      <div className="rounded-3xl bg-slate-900 border border-slate-800 p-10 text-center">
+        <p className="text-sm text-slate-300">Add a client to start tracking their progress.</p>
+      </div>
+    );
+  }
+  return <ProgressTrackerContent />;
+};
+
+const ProgressTrackerContent: React.FC = () => {
   const { 
     clients, 
     selectedClientId, 
@@ -113,7 +127,7 @@ export const ProgressTracker: React.FC = () => {
       weightKg: Number(formPrWeight),
       reps: Number(formPrReps),
       estimated1RmKg: est1Rm,
-      date: new Date().toISOString().split('T')[0]
+      date: localDateStr()
     });
 
     setIsPrModalOpen(false);
@@ -125,7 +139,7 @@ export const ProgressTracker: React.FC = () => {
 
     addProgressPhoto({
       clientId: activeClient.id,
-      date: new Date().toISOString().split('T')[0],
+      date: localDateStr(),
       view: formPhotoView,
       photoUrl: formPhotoUrl,
       weightKg: activeClient.currentWeightKg,
@@ -208,11 +222,7 @@ export const ProgressTracker: React.FC = () => {
       {activeClient && (
         <div className="p-6 rounded-3xl bg-gradient-to-r from-slate-950 via-slate-900 to-emerald-950/30 border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-xl">
           <div className="flex items-center gap-4">
-            <img 
-              src={activeClient.avatar} 
-              alt={activeClient.name} 
-              className="h-16 w-16 rounded-2xl object-cover border-2 border-emerald-500/40 shadow-lg" 
-            />
+            <ClientAvatar client={activeClient} className="h-16 w-16 rounded-2xl border-2 border-emerald-500/40 shadow-lg" />
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-lg font-extrabold text-white">{activeClient.name}</h3>
@@ -735,7 +745,7 @@ export const ProgressTracker: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsMetricModalOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 font-bold"
+                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-100 font-bold"
                 >
                   Cancel
                 </button>
@@ -803,7 +813,7 @@ export const ProgressTracker: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsPrModalOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 font-bold"
+                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-100 font-bold"
                 >
                   Cancel
                 </button>
@@ -871,7 +881,7 @@ export const ProgressTracker: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsPhotoModalOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 font-bold"
+                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-100 font-bold"
                 >
                   Cancel
                 </button>

@@ -1,11 +1,45 @@
+databases:
+  - name: nubianfit-db
+    plan: free
+    region: oregon
+    databaseName: nubianfit
+    user: nubianfit
+
 services:
   - type: web
     name: nubianfit-backend
     env: python
     plan: free
     region: oregon
-    buildCommand: pip install -r backend/requirements.txt && python backend/seed_data.py
-    startCommand: cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    # Apply migrations, then serve. (Free plan has no preDeployCommand.)
+    startCommand: alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips='*'
+    healthCheckPath: /api/health
     envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: PYTHON_VERSION
+        value: 3.11.9
       - key: DATABASE_URL
-        value: sqlite+aiosqlite:///./nubianfit.db
+        fromDatabase:
+          name: nubianfit-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: COACH_INVITE_CODE
+        generateValue: true
+      # Set these in the Render dashboard:
+      - key: RESEND_API_KEY
+        sync: false
+      - key: FROM_EMAIL
+        sync: false
+      - key: DEFAULT_COACH_EMAIL
+        sync: false
+      - key: DEFAULT_COACH_NAME
+        sync: false
+      - key: DEFAULT_COACH_PASSWORD
+        sync: false
+      # Set to "true" for the first deploy only, to create the head coach account.
+      - key: BOOTSTRAP_INITIAL_ADMIN
+        value: "false"

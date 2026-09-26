@@ -57,6 +57,8 @@ class CompleteWorkoutRequest(CamelModel):
     rating: Optional[int] = 5
     duration_min: Optional[int] = None
     exercises: Optional[List[Dict[str, Any]]] = None
+    total_volume_kg: Optional[float] = None
+    pr_count: Optional[int] = None
 
 
 class ScheduledWorkoutResponse(ScheduledWorkoutBase):

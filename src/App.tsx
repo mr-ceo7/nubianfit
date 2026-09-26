@@ -3,130 +3,95 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
-import { AnimatePresence } from 'motion/react';
-import { AppProvider, useApp } from './context/AppContext';
-import { Sidebar } from './components/layout/Sidebar';
-import { Header } from './components/layout/Header';
-import { CoachDashboard } from './components/dashboard/CoachDashboard';
-import { ClientRoster } from './components/clients/ClientRoster';
-import { ProgramBuilder } from './components/programs/ProgramBuilder';
-import { ExerciseLibrary } from './components/programs/ExerciseLibrary';
-import { CalendarScheduler } from './components/programs/CalendarScheduler';
-import { ProgressTracker } from './components/progress/ProgressTracker';
-import { CoachMessenger } from './components/messenger/CoachMessenger';
-import { WorkoutLoggerModal } from './components/programs/WorkoutLoggerModal';
-import { SplashScreen } from './components/common/SplashScreen';
-import { MobileBottomNav } from './components/layout/MobileBottomNav';
-import { PwaInstallPrompt } from './components/common/PwaInstallPrompt';
+import React, { lazy, Suspense, useEffect, useState } from 'react';
+import { AppProvider } from './context/AppContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { allowsPortalOverride, detectPortal, Portal, portalHref } from './config/portal';
+import { Loader } from './components/common/Loader';
+import { CoachLogin } from './components/auth/CoachLogin';
+import { ClientLogin } from './components/auth/ClientLogin';
+import { AuthShell } from './components/auth/AuthShell';
 
-const MainLayout: React.FC = () => {
-  const { activeTab, setActiveTab } = useApp();
-  const [isLoadingApp, setIsLoadingApp] = useState(true);
-  const [isAddClientModalOpen, setIsAddClientModalOpen] = useState(false);
-  const [isAddExerciseModalOpen, setIsAddExerciseModalOpen] = useState(false);
-  const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
+// Each hostname only ever shows one portal, so load them on demand.
+const LandingPage = lazy(() => import('./components/landing/LandingPage').then(m => ({ default: m.LandingPage })));
+const CoachLayout = lazy(() => import('./components/layout/CoachLayout').then(m => ({ default: m.CoachLayout })));
+const ClientApp = lazy(() => import('./components/clientApp/ClientApp').then(m => ({ default: m.ClientApp })));
 
-  // Allow ESC key to skip splash screen immediately
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isLoadingApp) {
-        setIsLoadingApp(false);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isLoadingApp]);
-
+/** Shown when someone signs in to the portal meant for the other role. */
+const WrongPortal: React.FC<{ target: Portal; message: string }> = ({ target, message }) => {
+  const { logout } = useAuth();
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex font-sans antialiased selection:bg-emerald-500 selection:text-slate-950">
-      {/* Initial App Load Splash Screen */}
-      <AnimatePresence>
-        {isLoadingApp && (
-          <SplashScreen
-            minDurationMs={2200}
-            onFinish={() => setIsLoadingApp(false)}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Collapsible Coach Sidebar (Desktop only) */}
-      <Sidebar 
-        onOpenAddClientModal={() => setIsAddClientModalOpen(true)}
-      />
-
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
-        {/* Global Header */}
-        <Header 
-          onOpenAddClientModal={() => setIsAddClientModalOpen(true)}
-          onOpenInstallModal={() => setIsInstallModalOpen(true)}
-        />
-
-        {/* Scrollable View Area with bottom padding for mobile bar */}
-        <main className="flex-1 overflow-y-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 pb-28 md:pb-6 touch-pan-y">
-          <div className="max-w-7xl mx-auto">
-            {activeTab === 'dashboard' && (
-              <CoachDashboard onOpenAddClientModal={() => setIsAddClientModalOpen(true)} />
-            )}
-
-            {activeTab === 'clients' && (
-              <ClientRoster
-                isAddModalOpen={isAddClientModalOpen}
-                onOpenAddModal={() => setIsAddClientModalOpen(true)}
-                onCloseAddModal={() => setIsAddClientModalOpen(false)}
-              />
-            )}
-
-            {activeTab === 'programs' && (
-              <ProgramBuilder />
-            )}
-
-            {activeTab === 'exercises' && (
-              <ExerciseLibrary
-                isAddModalOpen={isAddExerciseModalOpen}
-                onOpenAddModal={() => setIsAddExerciseModalOpen(true)}
-                onCloseAddModal={() => setIsAddExerciseModalOpen(false)}
-              />
-            )}
-
-            {activeTab === 'calendar' && (
-              <CalendarScheduler />
-            )}
-
-            {activeTab === 'progress' && (
-              <ProgressTracker />
-            )}
-
-            {activeTab === 'messenger' && (
-              <CoachMessenger />
-            )}
-          </div>
-        </main>
+    <AuthShell title="Wrong app" subtitle={message}>
+      <div className="space-y-3">
+        <a href={portalHref(target)} className="block text-center w-full rounded-xl bg-emerald-500 text-slate-950 font-bold text-sm py-2.5">
+          {target === 'client' ? 'Open the client app' : 'Open Coach OS'}
+        </a>
+        <button onClick={logout} className="w-full text-xs text-slate-400 hover:text-white">Sign out</button>
       </div>
-
-      {/* Native Mobile Bottom Navigation (Visible on mobile/tablets < md) */}
-      <MobileBottomNav 
-        onOpenNewClient={() => setIsAddClientModalOpen(true)}
-        onOpenInstallModal={() => setIsInstallModalOpen(true)}
-      />
-
-      {/* PWA Home Screen Installation Modal */}
-      <PwaInstallPrompt 
-        isOpen={isInstallModalOpen} 
-        onClose={() => setIsInstallModalOpen(false)} 
-      />
-
-      {/* Global Workout Logger Modal */}
-      <WorkoutLoggerModal />
-    </div>
+    </AuthShell>
   );
 };
 
+const FullScreenLoader: React.FC = () => (
+  <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+    <Loader text="NubianFit" size="md" />
+  </div>
+);
+
+const CoachPortal: React.FC = () => {
+  const { status, user } = useAuth();
+  if (status === 'loading') return <FullScreenLoader />;
+  if (status === 'signed_out') return <CoachLogin />;
+  if (user?.role !== 'coach') {
+    return <WrongPortal target="client" message="You're signed in with a client account. Your training lives in the client app." />;
+  }
+  return <CoachLayout />;
+};
+
+const ClientPortal: React.FC = () => {
+  const { status, user } = useAuth();
+  if (status === 'loading') return <FullScreenLoader />;
+  if (status === 'signed_out') return <ClientLogin />;
+  if (user?.role !== 'client') {
+    return <WrongPortal target="coach" message="You're signed in as a coach. Manage your clients in Coach OS." />;
+  }
+  return <ClientApp />;
+};
+
+/** Local/preview-only switcher, since those hosts can't tell the portals apart. */
+const DevPortalSwitcher: React.FC<{ current: Portal }> = ({ current }) => (
+  <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[70] flex gap-1 rounded-full bg-neutral-900 p-1 text-[10px] font-bold">
+    {(['landing', 'coach', 'client'] as Portal[]).map(p => (
+      <a key={p} href={portalHref(p)} className={`px-2 py-1 rounded-full ${p === current ? 'bg-neutral-100 text-neutral-900' : 'text-neutral-300'}`}>
+        {p}
+      </a>
+    ))}
+  </div>
+);
+
 export default function App() {
+  const [portal] = useState(detectPortal);
+
+  // Only the marketing site should be indexed by search engines.
+  useEffect(() => {
+    if (portal === 'landing') return;
+    const meta = document.createElement('meta');
+    meta.name = 'robots';
+    meta.content = 'noindex, nofollow';
+    document.head.appendChild(meta);
+    return () => meta.remove();
+  }, [portal]);
+
   return (
-    <AppProvider>
-      <MainLayout />
-    </AppProvider>
+    <AuthProvider>
+      <AppProvider>
+        <Suspense fallback={<FullScreenLoader />}>
+          {portal === 'landing' && <LandingPage />}
+          {portal === 'coach' && <CoachPortal />}
+          {portal === 'client' && <ClientPortal />}
+        </Suspense>
+        {allowsPortalOverride() && <DevPortalSwitcher current={portal} />}
+      </AppProvider>
+    </AuthProvider>
   );
 }

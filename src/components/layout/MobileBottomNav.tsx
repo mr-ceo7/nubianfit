@@ -14,6 +14,7 @@ import {
   Play
 } from 'lucide-react';
 
+import { localDateStr } from '../../utils/dates';
 import { useApp, NavigationTab } from '../../context/AppContext';
 
 interface MobileBottomNavProps {
@@ -30,9 +31,8 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
     setActiveTab, 
     messages, 
     scheduledWorkouts, 
-    programs,
     openWorkoutLogger,
-    toastMessage
+    showToast
   } = useApp();
 
   const [isActionSheetOpen, setIsActionSheetOpen] = useState(false);
@@ -41,7 +41,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   const unreadMessagesCount = messages.filter(m => m.sender === 'client' && !m.isRead).length;
 
   // Today's scheduled workouts count
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = localDateStr();
   const todayPendingCount = scheduledWorkouts.filter(w => w.date === todayStr && w.status === 'Scheduled').length;
 
   const triggerHaptic = () => {
@@ -67,20 +67,14 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   const handleQuickLogFirstWorkout = () => {
     setIsActionSheetOpen(false);
     triggerHaptic();
-    if (scheduledWorkouts.length > 0) {
-      openWorkoutLogger(scheduledWorkouts[0]);
-    } else if (programs.length > 0 && programs[0].weeks[0]?.days[0]?.workout) {
-      openWorkoutLogger({
-        id: 'quick-' + Date.now(),
-        clientId: 'c1',
-        programId: programs[0].id,
-        workout: programs[0].weeks[0].days[0].workout,
-        date: todayStr,
-        status: 'Scheduled'
-      });
+    const nextPending = scheduledWorkouts
+      .filter(w => w.status !== 'Completed' && w.date >= todayStr)
+      .sort((a, b) => a.date.localeCompare(b.date))[0];
+    if (nextPending) {
+      openWorkoutLogger(nextPending);
     } else {
-      toastMessage('Please create a workout or schedule first in Program Builder');
-      setActiveTab('programs');
+      showToast('No upcoming workouts. Assign a program or schedule one first.');
+      setActiveTab('calendar');
     }
   };
 
@@ -310,7 +304,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
                   </div>
                   <div>
                     <span className="text-xs font-bold text-white block">Exercise Catalog</span>
-                    <span className="text-[11px] text-slate-400">60+ movements & cues</span>
+                    <span className="text-[11px] text-slate-400">Movements & cues</span>
                   </div>
                 </button>
 

@@ -1,94 +1,97 @@
 """
 Training Programs Router
+
+Programs belong to a coach. A client can read only the program currently assigned to them.
 """
 
-import time
-from datetime import datetime, date, timedelta
+from datetime import date, timedelta
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from app.dependencies import get_db
-from app.models.program import TrainingProgram
+from app.dependencies import get_db, get_current_user, require_coach, get_accessible_client
 from app.models.client import Client
+from app.models.program import TrainingProgram
+from app.models.user import User
 from app.models.workout import ScheduledWorkout
-from app.models.activity import ActivityFeedItem
-from app.schemas.program import (
-    ProgramCreate,
-    ProgramUpdate,
-    ProgramResponse,
-    AssignProgramRequest
-)
+from app.schemas.program import ProgramCreate, ProgramUpdate, ProgramResponse, AssignProgramRequest
+from app.services.activity import new_id, log_activity
 
 router = APIRouter(prefix="/programs", tags=["Programs"])
+
+
+async def _get_own_program(program_id: str, coach: User, db: AsyncSession) -> TrainingProgram:
+    prog = await db.get(TrainingProgram, program_id)
+    if not prog or prog.coach_id != coach.id:
+        raise HTTPException(status_code=404, detail="Program not found")
+    return prog
+
+
+async def _client_program_id(user: User, db: AsyncSession) -> Optional[str]:
+    client = await db.get(Client, user.client_id) if user.client_id else None
+    return client.current_program_id if client else None
 
 
 @router.get("", response_model=List[ProgramResponse])
 async def list_programs(
     goal: Optional[str] = None,
     difficulty: Optional[str] = None,
-    db: AsyncSession = Depends(get_db)
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
-    """List all training programs."""
-    query = select(TrainingProgram)
+    if user.role == "client":
+        query = select(TrainingProgram).where(TrainingProgram.id == await _client_program_id(user, db))
+    else:
+        query = select(TrainingProgram).where(TrainingProgram.coach_id == user.id)
     if goal:
         query = query.where(TrainingProgram.goal == goal)
     if difficulty:
         query = query.where(TrainingProgram.difficulty == difficulty)
-    
-    result = await db.execute(query)
+    result = await db.execute(query.order_by(TrainingProgram.title))
     return result.scalars().all()
 
 
 @router.get("/{program_id}", response_model=ProgramResponse)
-async def get_program(program_id: str, db: AsyncSession = Depends(get_db)):
-    """Get single program details."""
-    result = await db.execute(select(TrainingProgram).where(TrainingProgram.id == program_id))
-    prog = result.scalar_one_or_none()
-    if not prog:
-        raise HTTPException(status_code=404, detail="Program not found")
-    return prog
+async def get_program(program_id: str, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    if user.role == "client":
+        prog = await db.get(TrainingProgram, program_id) if program_id == await _client_program_id(user, db) else None
+        if not prog:
+            raise HTTPException(status_code=404, detail="Program not found")
+        return prog
+    return await _get_own_program(program_id, user, db)
 
 
 @router.post("", response_model=ProgramResponse, status_code=status.HTTP_201_CREATED)
-async def save_or_create_program(program_in: ProgramCreate, db: AsyncSession = Depends(get_db)):
-    """Create or update a training program."""
-    now_str = date.today().isoformat()
-    prog_id = program_in.id or f"prog-{int(time.time() * 1000)}"
-    
-    # Check if program exists
-    result = await db.execute(select(TrainingProgram).where(TrainingProgram.id == prog_id))
-    existing = result.scalar_one_or_none()
-    
+async def save_or_create_program(
+    program_in: ProgramCreate,
+    coach: User = Depends(require_coach),
+    db: AsyncSession = Depends(get_db),
+):
+    """Create a program, or update it when an ID the coach owns is supplied."""
+    today = date.today().isoformat()
+    existing = await db.get(TrainingProgram, program_in.id) if program_in.id else None
+    if existing and existing.coach_id != coach.id:
+        raise HTTPException(status_code=404, detail="Program not found")
+
     if existing:
-        update_dict = program_in.model_dump(exclude_unset=True)
-        update_dict["updated_at"] = now_str
-        for k, v in update_dict.items():
+        for k, v in program_in.model_dump(exclude_unset=True, exclude={"id"}).items():
             setattr(existing, k, v)
+        existing.updated_at = today
         await db.commit()
         await db.refresh(existing)
         return existing
-    else:
-        new_prog = TrainingProgram(
-            id=prog_id,
-            title=program_in.title,
-            subtitle=program_in.subtitle,
-            description=program_in.description,
-            difficulty=program_in.difficulty,
-            goal=program_in.goal,
-            duration_weeks=program_in.duration_weeks,
-            days_per_week=program_in.days_per_week,
-            days=program_in.days,
-            tags=program_in.tags,
-            assigned_client_count=program_in.assigned_client_count,
-            created_at=program_in.created_at or now_str,
-            updated_at=now_str
-        )
-        db.add(new_prog)
-        await db.commit()
-        await db.refresh(new_prog)
-        return new_prog
+
+    data = program_in.model_dump(exclude={"id"})
+    prog = TrainingProgram(
+        **{**data, "created_at": data.get("created_at") or today, "updated_at": today},
+        id=new_id("prog"),
+        coach_id=coach.id,
+    )
+    db.add(prog)
+    await db.commit()
+    await db.refresh(prog)
+    return prog
 
 
 @router.patch("/{program_id}", response_model=ProgramResponse)
@@ -96,19 +99,13 @@ async def save_or_create_program(program_in: ProgramCreate, db: AsyncSession = D
 async def update_program(
     program_id: str,
     program_in: ProgramUpdate,
-    db: AsyncSession = Depends(get_db)
+    coach: User = Depends(require_coach),
+    db: AsyncSession = Depends(get_db),
 ):
-    """Update program details."""
-    result = await db.execute(select(TrainingProgram).where(TrainingProgram.id == program_id))
-    prog = result.scalar_one_or_none()
-    if not prog:
-        raise HTTPException(status_code=404, detail="Program not found")
-    
-    update_data = program_in.model_dump(exclude_unset=True)
-    update_data["updated_at"] = date.today().isoformat()
-    for field, val in update_data.items():
+    prog = await _get_own_program(program_id, coach, db)
+    for field, val in program_in.model_dump(exclude_unset=True).items():
         setattr(prog, field, val)
-        
+    prog.updated_at = date.today().isoformat()
     await db.commit()
     await db.refresh(prog)
     return prog
@@ -118,82 +115,50 @@ async def update_program(
 async def assign_program(
     program_id: str,
     req: AssignProgramRequest,
-    db: AsyncSession = Depends(get_db)
+    coach: User = Depends(require_coach),
+    db: AsyncSession = Depends(get_db),
 ):
-    """Assign training program to a client and auto-schedule upcoming workouts."""
-    prog_res = await db.execute(select(TrainingProgram).where(TrainingProgram.id == program_id))
-    program = prog_res.scalar_one_or_none()
-    if not program:
-        raise HTTPException(status_code=404, detail="Program not found")
-        
-    client_res = await db.execute(select(Client).where(Client.id == req.client_id))
-    client = client_res.scalar_one_or_none()
-    if not client:
-        raise HTTPException(status_code=404, detail="Client not found")
-        
-    # Update client
+    """Assign a program to a client and schedule its training days, every other day from today."""
+    program = await _get_own_program(program_id, coach, db)
+    client = await get_accessible_client(req.client_id, coach, db)
+
     client.current_program_id = program.id
     client.current_program_name = program.title
-    
-    # Update program assigned count
     program.assigned_client_count = (program.assigned_client_count or 0) + 1
-    
-    # Auto-schedule workouts
+
     today = date.today()
-    scheduled_workouts: List[ScheduledWorkout] = []
-    
-    for idx, day in enumerate(program.days or []):
-        workout_date = today + timedelta(days=idx * 2)
-        sched_id = f"sched-{int(time.time() * 1000)}-{idx}"
-        
-        sw = ScheduledWorkout(
-            id=sched_id,
+    days = program.days or []
+    for idx, day in enumerate(days):
+        db.add(ScheduledWorkout(
+            id=new_id("sched"),
             client_id=client.id,
             client_name=client.name,
             client_avatar=client.avatar,
             program_id=program.id,
             program_name=program.title,
-            workout_day_id=day.get("id", f"day-{idx+1}"),
-            workout_title=day.get("name", f"Day {idx+1} Workout"),
-            date=workout_date.isoformat(),
+            workout_day_id=day.get("id", f"day-{idx + 1}"),
+            workout_title=day.get("name", f"Day {idx + 1} Workout"),
+            date=(today + timedelta(days=idx * 2)).isoformat(),
             time="09:00 AM",
             status="Scheduled",
-            exercises=day.get("exercises", [])
-        )
-        db.add(sw)
-        scheduled_workouts.append(sw)
-        
-    # Activity feed
-    activity = ActivityFeedItem(
-        id=f"act-{int(time.time() * 1000)}",
-        type="check_in_submitted",
-        client_id=client.id,
-        client_name=client.name,
-        client_avatar=client.avatar,
-        title=f"Assigned: {program.title}",
-        description=f"Program assigned with {len(program.days or [])} training days",
-        timestamp="Just now",
-        metadata_json={"program_id": program.id}
-    )
-    db.add(activity)
-    
+            exercises=day.get("exercises", []),
+        ))
+    client.total_workouts_assigned = (client.total_workouts_assigned or 0) + len(days)
+
+    log_activity(db, client, "check_in_submitted", f"Assigned: {program.title}",
+                 f"Program assigned with {len(days)} training days", {"program_id": program.id})
     await db.commit()
     return {
         "message": f"Assigned '{program.title}' to {client.name}",
         "client_id": client.id,
         "program_id": program.id,
-        "scheduled_count": len(scheduled_workouts)
+        "scheduled_count": len(days),
     }
 
 
 @router.delete("/{program_id}")
-async def delete_program(program_id: str, db: AsyncSession = Depends(get_db)):
-    """Delete training program."""
-    result = await db.execute(select(TrainingProgram).where(TrainingProgram.id == program_id))
-    prog = result.scalar_one_or_none()
-    if not prog:
-        raise HTTPException(status_code=404, detail="Program not found")
-    
+async def delete_program(program_id: str, coach: User = Depends(require_coach), db: AsyncSession = Depends(get_db)):
+    prog = await _get_own_program(program_id, coach, db)
     await db.delete(prog)
     await db.commit()
     return {"message": "Program deleted successfully", "id": program_id}

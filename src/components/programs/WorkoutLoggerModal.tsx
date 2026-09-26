@@ -14,23 +14,66 @@ import {
   TrendingUp
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { ClientAvatar } from '../common/ClientAvatar';
 import { useApp } from '../../context/AppContext';
-import { ScheduledWorkout, WorkoutSet } from '../../types';
+import { useAuth } from '../../context/AuthContext';
+import { PersonalRecord, ScheduledWorkout, WorkoutExerciseItem, WorkoutSet } from '../../types';
+
+/** Epley estimated one-rep max. */
+const estimate1Rm = (weightKg: number, reps: number) => Math.round(weightKg * (1 + reps / 30));
+
+/** Sets in this session that beat the client's previous best estimated 1RM for that exercise. */
+export function findNewRecords(
+  workout: ScheduledWorkout,
+  exercises: WorkoutExerciseItem[],
+  history: PersonalRecord[]
+): Omit<PersonalRecord, 'id'>[] {
+  const records: Omit<PersonalRecord, 'id'>[] = [];
+  for (const ex of exercises) {
+    const previous = history
+      .filter(pr => pr.clientId === workout.clientId && pr.exerciseName === ex.exerciseName)
+      .sort((a, b) => b.estimated1RmKg - a.estimated1RmKg)[0];
+    let best: Omit<PersonalRecord, 'id'> | null = null;
+    for (const s of ex.sets) {
+      if (!s.isCompleted || !s.completedWeightKg || !s.completedReps) continue;
+      const e1rm = estimate1Rm(s.completedWeightKg, s.completedReps);
+      if (e1rm > (best?.estimated1RmKg ?? previous?.estimated1RmKg ?? 0)) {
+        best = {
+          clientId: workout.clientId,
+          exerciseName: ex.exerciseName,
+          weightKg: s.completedWeightKg,
+          reps: s.completedReps,
+          estimated1RmKg: e1rm,
+          date: workout.date,
+          previousWeightKg: previous?.weightKg,
+        };
+      }
+    }
+    if (best) records.push(best);
+  }
+  return records;
+}
 
 export const WorkoutLoggerModal: React.FC = () => {
-  const { 
-    isWorkoutLoggerOpen, 
-    closeWorkoutLogger, 
-    activeWorkoutToLog, 
-    completeWorkout, 
-    updateWorkoutLog,
-    addPersonalRecord
-  } = useApp();
-
+  const { isWorkoutLoggerOpen, activeWorkoutToLog } = useApp();
   if (!isWorkoutLoggerOpen || !activeWorkoutToLog) return null;
+  return <WorkoutLoggerSheet key={activeWorkoutToLog.id} workout={activeWorkoutToLog} />;
+};
 
-  // Local state for live editable exercises and sets
-  const [exercises, setExercises] = useState(activeWorkoutToLog.exercises || []);
+const WorkoutLoggerSheet: React.FC<{ workout: ScheduledWorkout }> = ({ workout: activeWorkoutToLog }) => {
+  const {
+    closeWorkoutLogger,
+    completeWorkout,
+    addPersonalRecord,
+    personalRecords
+  } = useApp();
+  const { user } = useAuth();
+  const isCoach = user?.role === 'coach';
+
+  // Local, deep-copied state so edits never touch the shared workout object
+  const [exercises, setExercises] = useState<WorkoutExerciseItem[]>(
+    () => structuredClone(activeWorkoutToLog.exercises || [])
+  );
   const [clientFeedback, setClientFeedback] = useState(activeWorkoutToLog.clientFeedback || '');
   const [coachFeedback, setCoachFeedback] = useState(activeWorkoutToLog.coachFeedback || '');
   const [rating, setRating] = useState(activeWorkoutToLog.rating || 5);
@@ -61,33 +104,31 @@ export const WorkoutLoggerModal: React.FC = () => {
     setIsTimerRunning(true);
   };
 
-  const handleToggleSetComplete = (exIdx: number, setIdx: number) => {
-    const updated = [...exercises];
-    const targetSet = updated[exIdx].sets[setIdx];
-    
-    // Toggle completed
-    const nextCompleted = !targetSet.isCompleted;
-    targetSet.isCompleted = nextCompleted;
-
-    if (nextCompleted) {
-      targetSet.completedWeightKg = targetSet.completedWeightKg || targetSet.targetWeightKg || 60;
-      targetSet.completedReps = targetSet.completedReps || Number(targetSet.targetReps.split('-')[0]) || 8;
-      targetSet.completedRpe = targetSet.completedRpe || targetSet.targetRpe || 8;
-      
-      // Auto trigger rest timer
-      startRestTimer(targetSet.restSeconds || 90);
-    }
-
-    setExercises(updated);
+  const updateSet = (exIdx: number, setIdx: number, changes: Partial<WorkoutSet>) => {
+    setExercises(prev => prev.map((ex, i) => i !== exIdx ? ex : {
+      ...ex,
+      sets: ex.sets.map((s, j) => (j === setIdx ? { ...s, ...changes } : s)),
+    }));
   };
 
-  const handleUpdateSetCompletedValue = (exIdx: number, setIdx: number, field: keyof WorkoutSet, val: any) => {
-    const updated = [...exercises];
-    updated[exIdx].sets[setIdx] = {
-      ...updated[exIdx].sets[setIdx],
-      [field]: val
-    };
-    setExercises(updated);
+  const handleToggleSetComplete = (exIdx: number, setIdx: number) => {
+    const targetSet = exercises[exIdx].sets[setIdx];
+    if (targetSet.isCompleted) {
+      updateSet(exIdx, setIdx, { isCompleted: false });
+      return;
+    }
+    // Prefill with the prescription when the athlete didn't type actual numbers.
+    updateSet(exIdx, setIdx, {
+      isCompleted: true,
+      completedWeightKg: targetSet.completedWeightKg ?? targetSet.targetWeightKg,
+      completedReps: targetSet.completedReps ?? (Number(targetSet.targetReps.split('-')[0]) || undefined),
+      completedRpe: targetSet.completedRpe ?? targetSet.targetRpe,
+    });
+    startRestTimer(targetSet.restSeconds || 90);
+  };
+
+  const handleUpdateSetCompletedValue = (exIdx: number, setIdx: number, field: keyof WorkoutSet, val: WorkoutSet[keyof WorkoutSet]) => {
+    updateSet(exIdx, setIdx, { [field]: val });
   };
 
   const totalVolume = exercises.reduce((acc, ex) => {
@@ -99,72 +140,39 @@ export const WorkoutLoggerModal: React.FC = () => {
     }, 0);
   }, 0);
 
+  const celebrate = () => {
+    const duration = 2500;
+    const animationEnd = Date.now() + duration;
+    const defaults = { startVelocity: 25, spread: 360, ticks: 50, zIndex: 100 };
+    const randomInRange = (min: number, max: number) => Math.random() * (max - min) + min;
+    const interval = setInterval(() => {
+      const timeLeft = animationEnd - Date.now();
+      if (timeLeft <= 0) return clearInterval(interval);
+      const particleCount = 40 * (timeLeft / duration);
+      confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }, colors: ['#22d3ee', '#10b981', '#06b6d4'] });
+      confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }, colors: ['#22d3ee', '#10b981', '#06b6d4'] });
+    }, 250);
+  };
+
   const handleFinishWorkout = async () => {
     setIsSubmitting(true);
     try {
-
-      // Play success confetti sound or visual effect
-      try {
-        const duration = 2.5 * 1000;
-        const animationEnd = Date.now() + duration;
-        const defaults = { startVelocity: 25, spread: 360, ticks: 50, zIndex: 100 };
-
-        const randomInRange = (min: number, max: number) => Math.random() * (max - min) + min;
-
-        const interval = setInterval(() => {
-          const timeLeft = animationEnd - Date.now();
-
-          if (timeLeft <= 0) {
-            return clearInterval(interval);
-          }
-
-          const particleCount = 40 * (timeLeft / duration);
-          confetti({
-            ...defaults,
-            particleCount,
-            origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
-            colors: ['#22d3ee', '#10b981', '#06b6d4']
-          });
-          confetti({
-            ...defaults,
-            particleCount,
-            origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
-            colors: ['#22d3ee', '#10b981', '#06b6d4']
-          });
-        }, 250);
-      } catch (e) {
-        // fallback
-      }
-
-      // Check for high weight sets to log as PR
-      exercises.forEach(ex => {
-        ex.sets.forEach(s => {
-          if (s.isCompleted && s.completedWeightKg && s.completedReps && s.completedWeightKg > 100) {
-            const est1Rm = Math.round(s.completedWeightKg * (1 + s.completedReps / 30));
-            addPersonalRecord({
-              clientId: activeWorkoutToLog.clientId,
-              exerciseName: ex.exerciseName,
-              weightKg: s.completedWeightKg,
-              reps: s.completedReps,
-              estimated1RmKg: est1Rm,
-              date: activeWorkoutToLog.date
-            });
-          }
-        });
-      });
-
-      await updateWorkoutLog(activeWorkoutToLog.id, {
+      const newRecords = findNewRecords(activeWorkoutToLog, exercises, personalRecords);
+      const saved = await completeWorkout(activeWorkoutToLog.id, {
         exercises,
         durationMin,
-        totalVolumeKg: totalVolume
-      });
-
-      await completeWorkout(activeWorkoutToLog.id, {
+        totalVolumeKg: totalVolume,
+        prCount: newRecords.length,
         clientFeedback,
-        coachFeedback,
+        coachFeedback: isCoach ? coachFeedback : undefined,
         rating
       });
-      
+      if (!saved) return;
+
+      for (const record of newRecords) {
+        await addPersonalRecord(record);
+      }
+      celebrate();
       closeWorkoutLogger();
     } finally {
       setIsSubmitting(false);
@@ -197,11 +205,7 @@ export const WorkoutLoggerModal: React.FC = () => {
         <div className="p-4 sm:p-5 bg-gradient-to-r from-slate-950 via-slate-900 to-emerald-950/40 border-b border-slate-800 flex items-center justify-between">
 
           <div className="flex items-center gap-3">
-            <img 
-              src={activeWorkoutToLog.clientAvatar} 
-              alt={activeWorkoutToLog.clientName} 
-              className="h-12 w-12 rounded-xl object-cover border border-slate-700" 
-            />
+            <ClientAvatar client={{ name: activeWorkoutToLog.clientName, avatar: activeWorkoutToLog.clientAvatar }} className="h-12 w-12 rounded-xl border border-slate-700" />
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-base font-extrabold text-white">{activeWorkoutToLog.workoutTitle}</h3>
@@ -257,19 +261,19 @@ export const WorkoutLoggerModal: React.FC = () => {
             <div className="flex gap-1 pl-1 border-l border-slate-800">
               <button 
                 onClick={() => startRestTimer(60)}
-                className="px-1.5 py-0.5 rounded bg-slate-800 text-[10px] text-slate-300 hover:text-white"
+                className="px-1.5 py-0.5 rounded bg-slate-800 text-[10px] text-slate-100 hover:text-white"
               >
                 60s
               </button>
               <button 
                 onClick={() => startRestTimer(90)}
-                className="px-1.5 py-0.5 rounded bg-slate-800 text-[10px] text-slate-300 hover:text-white"
+                className="px-1.5 py-0.5 rounded bg-slate-800 text-[10px] text-slate-100 hover:text-white"
               >
                 90s
               </button>
               <button 
                 onClick={() => startRestTimer(120)}
-                className="px-1.5 py-0.5 rounded bg-slate-800 text-[10px] text-slate-300 hover:text-white"
+                className="px-1.5 py-0.5 rounded bg-slate-800 text-[10px] text-slate-100 hover:text-white"
               >
                 120s
               </button>
@@ -397,16 +401,23 @@ export const WorkoutLoggerModal: React.FC = () => {
                 />
               </div>
 
-              <div>
-                <label className="block text-slate-400 font-bold uppercase text-[10px] mb-1">Coach Notes & Progressions</label>
-                <textarea
-                  rows={2}
-                  placeholder="e.g. Great velocity. Increase dumbbell load next week by 2kg..."
-                  value={coachFeedback}
-                  onChange={(e) => setCoachFeedback(e.target.value)}
-                  className="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white focus:outline-hidden"
-                />
-              </div>
+              {isCoach ? (
+                <div>
+                  <label className="block text-slate-400 font-bold uppercase text-[10px] mb-1">Coach Notes & Progressions</label>
+                  <textarea
+                    rows={2}
+                    placeholder="e.g. Great velocity. Increase dumbbell load next week by 2kg..."
+                    value={coachFeedback}
+                    onChange={(e) => setCoachFeedback(e.target.value)}
+                    className="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white focus:outline-hidden"
+                  />
+                </div>
+              ) : coachFeedback ? (
+                <div>
+                  <span className="block text-slate-400 font-bold uppercase text-[10px] mb-1">Coach Notes</span>
+                  <p className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-200">{coachFeedback}</p>
+                </div>
+              ) : null}
             </div>
 
             <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-slate-800">
@@ -444,7 +455,7 @@ export const WorkoutLoggerModal: React.FC = () => {
           <button
             onClick={closeWorkoutLogger}
             disabled={isSubmitting}
-            className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 font-bold text-xs hover:bg-slate-700 disabled:opacity-50 disabled:pointer-events-none"
+            className="px-4 py-2 rounded-xl bg-slate-800 text-slate-100 font-bold text-xs hover:bg-slate-700 disabled:opacity-50 disabled:pointer-events-none"
           >
             Cancel / Close
           </button>

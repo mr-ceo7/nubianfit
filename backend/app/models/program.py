@@ -13,6 +13,7 @@ class TrainingProgram(Base):
     __tablename__ = "programs"
 
     id: Mapped[str] = mapped_column(String(64), primary_key=True, index=True)
+    coach_id: Mapped[str] = mapped_column(String(64), index=True, nullable=False)
     title: Mapped[str] = mapped_column(String(255), index=True, nullable=False)
     subtitle: Mapped[str] = mapped_column(String(255), default="")
     description: Mapped[str] = mapped_column(Text, default="")

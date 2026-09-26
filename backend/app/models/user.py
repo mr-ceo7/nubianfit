@@ -1,8 +1,9 @@
 """
-User / Coach ORM Model
+User ORM Model (coaches and clients)
 """
 
 from datetime import datetime, timezone
+from typing import Optional
 from sqlalchemy import String, Boolean, DateTime
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -14,9 +15,12 @@ class User(Base):
 
     id: Mapped[str] = mapped_column(String(64), primary_key=True, index=True)
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
-    hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
+    # Clients sign in with email codes and may never set a password.
+    hashed_password: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     full_name: Mapped[str] = mapped_column(String(255), nullable=False)
-    role: Mapped[str] = mapped_column(String(50), default="coach", nullable=False)
-    avatar: Mapped[str] = mapped_column(String(512), default="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80")
+    role: Mapped[str] = mapped_column(String(50), default="coach", nullable=False)  # 'coach' | 'client'
+    # For role == 'client': the Client profile this login belongs to.
+    client_id: Mapped[Optional[str]] = mapped_column(String(64), index=True, nullable=True)
+    avatar: Mapped[str] = mapped_column(String(512), default="")
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))

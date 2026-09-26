@@ -8,21 +8,26 @@ import {
   TrendingUp, 
   MessageSquare, 
   ChevronLeft, 
-  ChevronRight
+  ChevronRight,
+  LogOut
 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { ClientAvatar } from '../common/ClientAvatar';
+import { localDateStr } from '../../utils/dates';
 import { useApp, NavigationTab } from '../../context/AppContext';
 import { NubianFitLogo } from '../common/NubianFitLogo';
 
 
 export const Sidebar: React.FC = () => {
   const { activeTab, setActiveTab, clients, messages, scheduledWorkouts, setSelectedClientId } = useApp();
+  const { user, logout } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   // Unread messages count
   const unreadCount = messages.filter(m => m.sender === 'client' && !m.isRead).length;
 
   // Today's pending workouts count
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = localDateStr();
   const todayPendingCount = scheduledWorkouts.filter(w => w.date === todayStr && w.status === 'Scheduled').length;
 
   const navItems: { id: NavigationTab; label: string; icon: React.FC<{ className?: string }>; badge?: number; badgeColor?: string }[] = [
@@ -116,7 +121,7 @@ export const Sidebar: React.FC = () => {
 
               {!isCollapsed && item.badge !== undefined && (
                 <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
-                  item.badgeColor || 'bg-slate-800 text-slate-300'
+                  item.badgeColor || 'bg-slate-800 text-slate-100'
                 } text-white shadow-xs`}>
                   {item.badge}
                 </span>
@@ -157,11 +162,7 @@ export const Sidebar: React.FC = () => {
                   }}
                   className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs hover:bg-slate-800/60 cursor-pointer text-slate-300 hover:text-white transition-colors"
                 >
-                  <img 
-                    src={client.avatar} 
-                    alt={client.name} 
-                    className="h-6 w-6 rounded-full object-cover border border-slate-700" 
-                  />
+                  <ClientAvatar client={client} className="h-6 w-6 rounded-full" />
                   <span className="truncate flex-1 font-medium">{client.name}</span>
                   <span className="text-[10px] text-emerald-400 font-bold">{client.complianceRate}%</span>
                 </div>
@@ -174,21 +175,17 @@ export const Sidebar: React.FC = () => {
       {/* Coach Profile Footer */}
       <div className="p-3 border-t border-slate-800/80 bg-slate-900/60">
         <div className="flex items-center gap-3">
-          <div className="relative">
-            <img 
-              src="https://images.unsplash.com/photo-1568602471122-7832951cc4c5?w=120&auto=format&fit=crop&q=80" 
-              alt="Coach Alex"
-              className="h-10 w-10 rounded-xl object-cover border-2 border-emerald-500/40"
-            />
-            <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-slate-950" />
-
-          </div>
-          
+          <ClientAvatar client={{ name: user?.fullName ?? 'Coach', avatar: user?.avatar }} className="h-10 w-10 rounded-xl" />
           {!isCollapsed && (
             <div className="flex flex-col min-w-0 flex-1">
-              <span className="text-xs font-bold text-white truncate">Coach Alex Rivers</span>
-              <span className="text-[11px] text-slate-400 truncate">Head Strength Coach (CSCS)</span>
+              <span className="text-xs font-bold text-white truncate">{user?.fullName}</span>
+              <span className="text-[11px] text-slate-400 truncate">{user?.email}</span>
             </div>
+          )}
+          {!isCollapsed && (
+            <button onClick={logout} title="Sign out" aria-label="Sign out" className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-slate-800">
+              <LogOut className="h-4 w-4" />
+            </button>
           )}
         </div>
       </div>

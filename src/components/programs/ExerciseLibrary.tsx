@@ -132,7 +132,7 @@ export const ExerciseLibrary: React.FC<{
                 className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${
                   selectedMuscle === m
                     ? 'bg-emerald-500 text-slate-950 font-bold'
-                    : 'bg-slate-800/80 text-slate-400 hover:text-white'
+                    : 'bg-slate-800/80 text-slate-200 hover:text-white'
                 }`}
               >
                 {m}
@@ -249,7 +249,7 @@ export const ExerciseLibrary: React.FC<{
                   <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold">
                     {viewingExercise.primaryMuscle} Target
                   </span>
-                  <span className="px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300 text-[10px] font-semibold">
+                  <span className="px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-100 text-[10px] font-semibold">
                     {viewingExercise.equipment}
                   </span>
                 </div>
@@ -402,7 +402,7 @@ export const ExerciseLibrary: React.FC<{
                 <button
                   type="button"
                   onClick={onCloseAddModal}
-                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 font-bold hover:bg-slate-700 transition-colors"
+                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-100 font-bold hover:bg-slate-700 transition-colors"
                 >
                   Cancel
                 </button>

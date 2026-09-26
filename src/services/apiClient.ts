@@ -1,6 +1,6 @@
 /**
  * NubianFit API Client Service
- * Connects frontend to the FastAPI backend with JWT authentication and fallback resiliency.
+ * Typed wrapper around the FastAPI backend, authenticated with a bearer JWT.
  */
 
 import {
@@ -18,13 +18,36 @@ import {
 
 export const API_BASE_URL = ((import.meta as unknown as { env?: { VITE_API_URL?: string } }).env?.VITE_API_URL) || '/api';
 
+const TOKEN_KEY = 'nubianfit_token';
+
+/** Fired when the server rejects our token; AuthContext listens and signs the user out. */
+export const SESSION_EXPIRED_EVENT = 'nubianfit:session_expired';
+
+export const tokenStore = {
+  get: (): string | null => {
+    try { return localStorage.getItem(TOKEN_KEY); } catch { return null; }
+  },
+  set: (token: string) => {
+    try { localStorage.setItem(TOKEN_KEY, token); } catch { /* storage unavailable */ }
+  },
+  clear: () => {
+    try { localStorage.removeItem(TOKEN_KEY); } catch { /* storage unavailable */ }
+  },
+};
+
+export class ApiError extends Error {
+  constructor(message: string, public status: number) {
+    super(message);
+  }
+}
+
 class ApiClient {
   private getHeaders(): HeadersInit {
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
     };
-    const token = localStorage.getItem('nubianfit_token');
+    const token = tokenStore.get();
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
@@ -42,16 +65,20 @@ class ApiClient {
     });
 
     if (!response.ok) {
-      let errorMsg = `API Error ${response.status}: ${response.statusText}`;
+      if (response.status === 401 && tokenStore.get()) {
+        tokenStore.clear();
+        window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
+      }
+      let errorMsg = `Request failed (${response.status})`;
       try {
         const errJson = await response.json();
         if (errJson.detail) {
-          errorMsg = typeof errJson.detail === 'string' ? errJson.detail : JSON.stringify(errJson.detail);
+          errorMsg = typeof errJson.detail === 'string' ? errJson.detail : 'Please check the details and try again.';
         }
       } catch {
         // use default error message
       }
-      throw new Error(errorMsg);
+      throw new ApiError(errorMsg, response.status);
     }
 
     return response.json();
@@ -103,30 +130,52 @@ class ApiClient {
 export const api = new ApiClient();
 
 // Auth Endpoints
+export interface AuthUser {
+  id: string;
+  email: string;
+  fullName: string;
+  role: 'coach' | 'client';
+  clientId: string | null;
+  avatar: string;
+  isActive: boolean;
+  hasPassword: boolean;
+}
+
+interface TokenResponse {
+  accessToken: string;
+  tokenType: string;
+  user: AuthUser;
+}
+
+const storeSession = (data: TokenResponse) => {
+  tokenStore.set(data.accessToken);
+  return data.user;
+};
+
 export const authApi = {
-  login: async (email: string, password: string) => {
-    const data = await api.post<{ access_token: string; token_type: string; user: any }>('/auth/login', {
-      email,
-      password,
-    });
-    if (data?.access_token) {
-      localStorage.setItem('nubianfit_token', data.access_token);
-      localStorage.setItem('nubianfit_user', JSON.stringify(data.user));
-    }
-    return data;
-  },
-  me: () => api.get<any>('/auth/me'),
-  logout: () => {
-    localStorage.removeItem('nubianfit_token');
-    localStorage.removeItem('nubianfit_user');
-  },
+  login: async (email: string, password: string) =>
+    storeSession(await api.post<TokenResponse>('/auth/login', { email, password })),
+  registerCoach: async (payload: { email: string; password: string; fullName: string; inviteCode: string }) =>
+    storeSession(await api.post<TokenResponse>('/auth/register-coach', payload)),
+  requestCode: (email: string) => api.post<{ message: string }>('/auth/otp/request', { email }),
+  verifyCode: async (email: string, code: string) =>
+    storeSession(await api.post<TokenResponse>('/auth/otp/verify', { email, code })),
+  me: () => api.get<AuthUser>('/auth/me'),
+  changePassword: (newPassword: string, currentPassword?: string) =>
+    api.post<AuthUser>('/auth/change-password', { newPassword, currentPassword }),
+  /** Dev builds only: the backend rejects this in production. */
+  devLogin: async (role: 'coach' | 'client') =>
+    storeSession(await api.post<TokenResponse>(`/auth/dev-login?role=${role}`)),
+  logout: () => tokenStore.clear(),
 };
 
 // Clients Endpoints
 export const clientsApi = {
   getAll: (params?: { status?: string; search?: string }) => api.get<Client[]>('/clients', params),
   getById: (id: string) => api.get<Client>(`/clients/${id}`),
-  create: (client: Partial<Client>) => api.post<Client>('/clients', client),
+  create: (client: Partial<Client>, sendInvite = false) =>
+    api.post<Client>(`/clients${sendInvite ? '?sendInvite=true' : ''}`, client),
+  invite: (id: string) => api.post<{ message: string }>(`/clients/${id}/invite`),
   update: (id: string, updates: Partial<Client>) => api.patch<Client>(`/clients/${id}`, updates),
   addNote: (id: string, note: string) => api.post<Client>(`/clients/${id}/notes`, { note }),
   delete: (id: string) => api.delete<{ message: string; id: string }>(`/clients/${id}`),
@@ -149,7 +198,7 @@ export const programsApi = {
   save: (program: TrainingProgram) => api.post<TrainingProgram>('/programs', program),
   update: (id: string, updates: Partial<TrainingProgram>) => api.patch<TrainingProgram>(`/programs/${id}`, updates),
   assign: (programId: string, clientId: string) =>
-    api.post<{ message: string; scheduled_count: number }>(`/programs/${programId}/assign`, { client_id: clientId }),
+    api.post<{ message: string; scheduled_count: number }>(`/programs/${programId}/assign`, { clientId }),
   delete: (id: string) => api.delete<{ message: string; id: string }>(`/programs/${id}`),
 };
 
@@ -162,7 +211,15 @@ export const workoutsApi = {
   update: (id: string, updates: Partial<ScheduledWorkout>) => api.patch<ScheduledWorkout>(`/workouts/${id}`, updates),
   complete: (
     id: string,
-    payload: { clientFeedback?: string; coachFeedback?: string; rating?: number; durationMin?: number; exercises?: any[] }
+    payload: {
+      clientFeedback?: string;
+      coachFeedback?: string;
+      rating?: number;
+      durationMin?: number;
+      exercises?: ScheduledWorkout['exercises'];
+      totalVolumeKg?: number;
+      prCount?: number;
+    }
   ) => api.post<ScheduledWorkout>(`/workouts/${id}/complete`, payload),
   delete: (id: string) => api.delete<{ message: string; id: string }>(`/workouts/${id}`),
 };
@@ -197,8 +254,9 @@ export const photosApi = {
 // Chat Messages Endpoints
 export const messagesApi = {
   getAll: (params?: { clientId?: string }) => api.get<ChatMessage[]>('/messages', params),
-  send: (clientId: string, text: string, attachment?: any) =>
-    api.post<ChatMessage>('/messages', { clientId, sender: 'coach', text, attachment }),
+  send: (clientId: string, text: string, attachment?: ChatMessage['attachment']) =>
+    api.post<ChatMessage>('/messages', { clientId, text, attachment }),
+  markRead: (clientId: string) => api.post<{ message: string }>(`/messages/read?clientId=${encodeURIComponent(clientId)}`),
 };
 
 // Activity Feed Endpoints

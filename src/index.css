@@ -1,5 +1,14 @@
 @import "tailwindcss";
 
+/* Bruno Ace (SIL Open Font License), used only for the logo wordmark. */
+@font-face {
+  font-family: "Bruno Ace";
+  src: url("/fonts/bruno-ace-latin.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   /* Light Cream Theme (Light Mode) */
   --brand-deep: #0D3A35;
@@ -15,23 +24,25 @@
   
   --app-fg: #0D3A35;
   --app-fg-secondary: #276152;
-  --app-muted: #6B7977;
+  --app-muted: #56645F;
   --app-muted-light: #9CA8A6;
   --app-white: #0D3A35; /* Remap white to deep bluish text in light mode */
 
   --app-accent: #276152;
   --app-accent-hover: #0D3A35;
   --app-accent-light: #E4ECEB;
+  /* Accent used for text/icons (links, active tabs) on page backgrounds */
+  --app-accent-text: #276152;
 
-  --app-amber-text: #B45309;
+  --app-amber-text: #9A4507;
   --app-amber-bg: #FEF3C7;
 
-  --app-cyan: #0891b2;
+  --app-cyan: #0B6A80;
   --app-cyan-light: #E0F7FA;
   --app-cyan-dark: #155E75;
 
   --logo-nubian: var(--app-fg);
-  --logo-fit: #0891b2; /* Deepened cyan for better contrast on light background */
+  --logo-fit: #0E7490; /* Deepened cyan for better contrast on light background */
 
   --loader-text: var(--app-fg);
   --loader-shadow: var(--brand-laurel);
@@ -62,9 +73,10 @@
   --app-muted-light: #566E6A;
   --app-white: #FFFFFF; /* Normal white in dark mode */
 
-  --app-accent: #276152;
-  --app-accent-hover: #327C69;
+  --app-accent: #3E9E7E;
+  --app-accent-hover: #4FB592;
   --app-accent-light: #0B2B25;
+  --app-accent-text: #5EC4A1;
 
   --app-amber-text: #FBBF24;
   --app-amber-bg: #78350F;
@@ -108,8 +120,8 @@
   --color-emerald-50: var(--app-accent-light);
   --color-emerald-100: var(--app-accent-light);
   --color-emerald-200: var(--app-accent-light);
-  --color-emerald-300: var(--app-accent);
-  --color-emerald-400: var(--app-accent);
+  --color-emerald-300: var(--app-accent-text);
+  --color-emerald-400: var(--app-accent-text);
   --color-emerald-500: var(--app-accent);
   --color-emerald-600: var(--app-accent-hover);
   --color-emerald-700: var(--app-accent-hover);

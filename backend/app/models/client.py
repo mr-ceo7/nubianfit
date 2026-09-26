@@ -13,6 +13,7 @@ class Client(Base):
     __tablename__ = "clients"
 
     id: Mapped[str] = mapped_column(String(64), primary_key=True, index=True)
+    coach_id: Mapped[str] = mapped_column(String(64), index=True, nullable=False)
     name: Mapped[str] = mapped_column(String(255), index=True, nullable=False)
     avatar: Mapped[str] = mapped_column(String(512), default="")
     email: Mapped[str] = mapped_column(String(255), index=True, default="")
