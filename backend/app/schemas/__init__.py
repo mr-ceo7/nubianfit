@@ -9,7 +9,7 @@ from app.schemas.program import ProgramCreate, ProgramUpdate, ProgramResponse, A
 from app.schemas.workout import ScheduledWorkoutCreate, ScheduledWorkoutUpdate, ScheduledWorkoutResponse, CompleteWorkoutRequest
 from app.schemas.metric import MetricEntryCreate, MetricEntryResponse
 from app.schemas.personal_record import PersonalRecordCreate, PersonalRecordResponse
-from app.schemas.habit import ClientDailyHabitLogCreate, ClientDailyHabitLogResponse, ToggleHabitRequest
+from app.schemas.habit import HabitCreate, HabitResponse, HabitCheckinUpsert, HabitCheckinResponse
 from app.schemas.photo import ProgressPhotoCreate, ProgressPhotoResponse
 from app.schemas.message import ChatMessageCreate, ChatMessageResponse
 from app.schemas.activity import ActivityFeedItemCreate, ActivityFeedItemResponse
@@ -38,9 +38,10 @@ __all__ = [
     "MetricEntryResponse",
     "PersonalRecordCreate",
     "PersonalRecordResponse",
-    "ClientDailyHabitLogCreate",
-    "ClientDailyHabitLogResponse",
-    "ToggleHabitRequest",
+    "HabitCreate",
+    "HabitResponse",
+    "HabitCheckinUpsert",
+    "HabitCheckinResponse",
     "ProgressPhotoCreate",
     "ProgressPhotoResponse",
     "ChatMessageCreate",

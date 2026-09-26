@@ -9,7 +9,10 @@ from app.models.program import TrainingProgram
 from app.models.workout import ScheduledWorkout
 from app.models.metric import MetricEntry
 from app.models.personal_record import PersonalRecord
-from app.models.habit import ClientDailyHabitLog
+from app.models.habit import Habit, HabitCheckin
+from app.models.nutrition import (
+    ClientGoals, CustomFood, DailyMetric, FoodLogEntry, MealPlan, MealPlanAssignment,
+)
 from app.models.photo import ProgressPhoto
 from app.models.message import ChatMessage
 from app.models.activity import ActivityFeedItem
@@ -24,7 +27,14 @@ __all__ = [
     "ScheduledWorkout",
     "MetricEntry",
     "PersonalRecord",
-    "ClientDailyHabitLog",
+    "Habit",
+    "HabitCheckin",
+    "CustomFood",
+    "FoodLogEntry",
+    "ClientGoals",
+    "DailyMetric",
+    "MealPlan",
+    "MealPlanAssignment",
     "ProgressPhoto",
     "ChatMessage",
     "ActivityFeedItem",

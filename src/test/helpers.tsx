@@ -3,6 +3,7 @@ import { render } from '@testing-library/react';
 import { vi } from 'vitest';
 import { AuthProvider } from '../context/AuthContext';
 import { AppProvider } from '../context/AppContext';
+import { NutritionProvider } from '../context/NutritionContext';
 
 type Handler = (body: unknown, url: URL) => { status?: number; json: unknown };
 
@@ -51,7 +52,9 @@ export const clientUser = {
 export function renderWithProviders(ui: React.ReactElement) {
   return render(
     <AuthProvider>
-      <AppProvider>{ui}</AppProvider>
+      <AppProvider>
+        <NutritionProvider>{ui}</NutritionProvider>
+      </AppProvider>
     </AuthProvider>
   );
 }

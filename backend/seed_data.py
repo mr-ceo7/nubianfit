@@ -24,7 +24,14 @@ from app.models import (
     ScheduledWorkout,
     MetricEntry,
     PersonalRecord,
-    ClientDailyHabitLog,
+    Habit,
+    HabitCheckin,
+    CustomFood,
+    FoodLogEntry,
+    ClientGoals,
+    DailyMetric,
+    MealPlan,
+    MealPlanAssignment,
     ProgressPhoto,
     ChatMessage,
     ActivityFeedItem,
@@ -103,6 +110,111 @@ async def seed_exercise_library() -> None:
         await session.commit()
         if added:
             print(f"-> Added {added} library exercises")
+
+
+# Approximate values for common Kenyan dishes (per 100 g), for demo data only.
+DEMO_FOODS = [
+    ("food-ugali", "Ugali (maize meal)", 110, 2.4, 24.0, 0.4, 1.2, [("1 portion", 250)]),
+    ("food-sukuma", "Sukuma wiki (sautéed kale)", 60, 2.9, 6.5, 3.0, 2.6, [("1 cup", 130)]),
+    ("food-chapati", "Chapati", 300, 8.0, 46.0, 9.0, 3.0, [("1 piece", 70)]),
+    ("food-githeri", "Githeri (maize & beans)", 130, 6.0, 22.0, 1.8, 5.0, [("1 cup", 200)]),
+    ("food-nyama", "Nyama choma (grilled goat)", 230, 27.0, 0.0, 13.0, 0.0, [("1 portion", 200)]),
+    ("food-mandazi", "Mandazi", 380, 6.5, 48.0, 18.0, 1.5, [("1 piece", 50)]),
+    ("food-chai", "Chai (milk tea with sugar)", 55, 1.8, 8.0, 1.7, 0.0, [("1 cup", 250)]),
+    ("food-eggs", "Boiled eggs", 155, 12.6, 1.1, 10.6, 0.0, [("1 egg", 50)]),
+]
+
+GOALS_BY_CLIENT_GOAL = {
+    "Hypertrophy": (2700, 180, 300, 80),
+    "Fat Loss": (1700, 130, 160, 55),
+    "Strength & Power": (3100, 200, 340, 100),
+    "Rehabilitation": (2000, 120, 220, 65),
+    "Athletic Conditioning": (2600, 160, 310, 75),
+    "Endurance": (2300, 110, 320, 65),
+}
+
+DEMO_HABITS = [
+    ("Hit protein target", None, "g", []),
+    ("Sleep 7.5+ hours", 7.5, "hrs", []),
+    ("Mobility / foam rolling", 10, "min", [1, 3, 5]),
+    ("No sugary drinks", None, "", []),
+]
+
+
+def _food_item(food_id: str, servings: float, serving_index: int = 0) -> dict:
+    """Diary/meal-plan snapshot for `servings` of a DEMO_FOODS entry's serving."""
+    fid, name, kcal, protein, carbs, fat, fiber, portions = next(f for f in DEMO_FOODS if f[0] == food_id)
+    label, grams = portions[serving_index]
+    factor = grams * servings / 100
+    return {
+        "source": "custom", "sourceId": fid, "name": name, "servingLabel": label, "servingGrams": grams,
+        "quantity": servings, "calories": round(kcal * factor, 1), "protein": round(protein * factor, 1),
+        "carbs": round(carbs * factor, 1), "fat": round(fat * factor, 1), "fiber": round(fiber * factor, 1),
+    }
+
+
+def _seed_nutrition_and_habits(session, clients: list, today: date) -> None:
+    for fid, name, kcal, protein, carbs, fat, fiber, portions in DEMO_FOODS:
+        session.add(CustomFood(
+            id=fid, coach_id=DEMO_COACH_ID, name=name, calories=kcal, protein=protein, carbs=carbs, fat=fat,
+            fiber=fiber, servings=[{"label": label, "grams": grams} for label, grams in portions],
+        ))
+
+    for c in clients:
+        kcal, protein, carbs, fat = GOALS_BY_CLIENT_GOAL.get(c.get("goal"), (2200, 140, 250, 70))
+        session.add(ClientGoals(
+            client_id=c["id"], calories=kcal, protein=protein, carbs=carbs, fat=fat,
+            rest_day_calories=kcal - 300, rest_day_carbs=carbs - 75, water_ml=3000, steps=10000,
+        ))
+        for order, (title, target, unit, days) in enumerate(DEMO_HABITS):
+            habit_id = f"habit-{c['id']}-{order}"
+            session.add(Habit(id=habit_id, client_id=c["id"], title=title, target_value=target, unit=unit,
+                              days_of_week=days, active=True, sort_order=order))
+            # A believable streak: most habits done on most of the last 6 days.
+            for back in range(1, 7):
+                d = today - timedelta(days=back)
+                if days and d.isoweekday() not in days:
+                    continue
+                if (back + order) % 4 != 0:
+                    session.add(HabitCheckin(id=f"chk-{habit_id}-{back}", habit_id=habit_id, client_id=c["id"],
+                                             date=d, completed=True))
+
+    # Marcus (client-1): a few days of diary, water and steps, and a meal plan.
+    days_of_food = {
+        1: [("breakfast", "food-chai", 1), ("breakfast", "food-eggs", 3), ("lunch", "food-ugali", 1), ("lunch", "food-sukuma", 1),
+            ("lunch", "food-nyama", 1), ("snack", "food-mandazi", 2), ("dinner", "food-githeri", 2)],
+        0: [("breakfast", "food-chai", 1), ("breakfast", "food-chapati", 2), ("breakfast", "food-eggs", 2),
+            ("lunch", "food-ugali", 1), ("lunch", "food-nyama", 1)],
+    }
+    for back, entries in days_of_food.items():
+        for n, (meal, food_id, servings) in enumerate(entries):
+            item = _food_item(food_id, servings)
+            session.add(FoodLogEntry(
+                id=f"food-log-demo-{back}-{n}", client_id="client-1", date=today - timedelta(days=back), meal=meal,
+                source=item["source"], source_id=item["sourceId"], name=item["name"], serving_label=item["servingLabel"],
+                serving_grams=item["servingGrams"], quantity=servings, calories=item["calories"], protein=item["protein"],
+                carbs=item["carbs"], fat=item["fat"], fiber=item["fiber"],
+            ))
+    for back, (water, steps) in enumerate([(1500, 4200), (3250, 11800), (2750, 9100), (3500, 12400), (2000, 7600)]):
+        session.add(DailyMetric(id=f"daily-demo-{back}", client_id="client-1", date=today - timedelta(days=back),
+                                water_ml=water, steps=steps))
+
+    plan_days = [
+        {"id": "mp-day-1", "dayNumber": 1, "meals": [
+            {"meal": "breakfast", "items": [_food_item("food-chai", 1), _food_item("food-eggs", 3), _food_item("food-chapati", 1)]},
+            {"meal": "lunch", "items": [_food_item("food-ugali", 1), _food_item("food-sukuma", 1), _food_item("food-nyama", 1)]},
+            {"meal": "dinner", "items": [_food_item("food-githeri", 2)]},
+        ]},
+        {"id": "mp-day-2", "dayNumber": 2, "meals": [
+            {"meal": "breakfast", "items": [_food_item("food-chai", 1), _food_item("food-mandazi", 1), _food_item("food-eggs", 2)]},
+            {"meal": "lunch", "items": [_food_item("food-githeri", 2), _food_item("food-sukuma", 1)]},
+            {"meal": "dinner", "items": [_food_item("food-ugali", 1), _food_item("food-nyama", 1)]},
+        ]},
+    ]
+    session.add(MealPlan(id="mealplan-demo", coach_id=DEMO_COACH_ID, title="Lean Bulk: Kenyan Staples",
+                         description="Two alternating days built around local staples.", days=plan_days))
+    session.add(MealPlanAssignment(client_id="client-1", meal_plan_id="mealplan-demo", start_date=today))
+    print("-> Seeded custom foods, goals, habits, food diary and a meal plan")
 
 
 async def seed_database(force: bool = False):
@@ -254,16 +366,7 @@ async def seed_database(force: bool = False):
             session.add(pr)
         print(f"-> Seeded {len(data.get('personalRecords', []))} personal records")
 
-        # Habits
-        for item in data.get("habitLogs", []):
-            h = ClientDailyHabitLog(
-                id=item["id"],
-                client_id=item["clientId"],
-                date=_shift(item.get("date", ""), offset),
-                habits=item.get("habits", []),
-            )
-            session.add(h)
-        print(f"-> Seeded {len(data.get('habitLogs', []))} habit logs")
+        _seed_nutrition_and_habits(session, data.get("clients", []), date.today())
 
         # Photos
         for item in data.get("photos", []):

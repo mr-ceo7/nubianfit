@@ -56,6 +56,10 @@ class Settings(BaseSettings):
     RESEND_API_KEY: Optional[str] = None
     FROM_EMAIL: str = "NubianFit <no-reply@nubianfit.com>"
 
+    # USDA FoodData Central (https://fdc.nal.usda.gov/api-key-signup). DEMO_KEY works for
+    # development but is limited to ~30 requests/hour per IP; set a real key in production.
+    FDC_API_KEY: str = "DEMO_KEY"
+
     # Public URLs of the three portals, used in emails and CORS.
     LANDING_URL: str = "https://nubianfit.xn--jhb4c.com"
     COACH_URL: str = "https://coach.nubianfit.xn--jhb4c.com"

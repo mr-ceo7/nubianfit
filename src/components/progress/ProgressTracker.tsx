@@ -1,26 +1,19 @@
 import React, { useState } from 'react';
-import { 
-  TrendingUp, 
-  Award, 
-  Calendar, 
-  Plus, 
-  CheckCircle2, 
-  Circle, 
-  Camera, 
-  Flame, 
-  Target, 
-  ArrowUpRight, 
-  ArrowDownRight, 
-  X, 
-  Droplets, 
-  Moon, 
-  Activity, 
-  Footprints, 
-  Beef, 
+import {
+  TrendingUp,
+  Award,
+  Plus,
+  CheckCircle2,
+  Camera,
+  Target,
+  X,
   Scale
 } from 'lucide-react';
 import { ClientAvatar } from '../common/ClientAvatar';
 import { localDateStr } from '../../utils/dates';
+import { useNutrition } from '../../context/NutritionContext';
+import { habitCompletionRate } from '../../utils/nutrition';
+import { HabitsManager } from '../nutrition/HabitsManager';
 import { useApp } from '../../context/AppContext';
 import { MetricEntry, PersonalRecord, ProgressPhoto } from '../../types';
 
@@ -44,12 +37,11 @@ const ProgressTrackerContent: React.FC = () => {
     metrics, 
     personalRecords, 
     photos, 
-    habitLogs, 
-    toggleHabitCompletion, 
     addMetricEntry,
     addPersonalRecord,
     addProgressPhoto
   } = useApp();
+  const { habits, checkins } = useNutrition();
 
   const [activeTab, setActiveTab] = useState<'metrics' | 'habits' | 'photos' | 'prs'>('metrics');
   const [selectedRange, setSelectedRange] = useState<'1M' | '3M' | '6M' | 'All'>('All');
@@ -60,15 +52,9 @@ const ProgressTrackerContent: React.FC = () => {
   const clientPRs = personalRecords.filter(pr => pr.clientId === activeClient?.id);
   const clientPhotos = photos.filter(p => p.clientId === activeClient?.id);
 
-  // Today's habit log
-  const todayStr = '2026-08-16';
-  const todayHabits = habitLogs.find(l => l.clientId === activeClient?.id && l.date === todayStr)?.habits || [
-    { habitId: 'h-1', title: 'Daily Water Intake', completed: true, currentValue: '3.5', targetValue: '3.5', unit: 'Liters' },
-    { habitId: 'h-2', title: 'Protein Target', completed: true, currentValue: '185', targetValue: '180', unit: 'Grams' },
-    { habitId: 'h-3', title: 'Daily Step Goal', completed: true, currentValue: '11,200', targetValue: '10,000', unit: 'Steps' },
-    { habitId: 'h-4', title: 'Sleep Duration', completed: true, currentValue: '8.0', targetValue: '7.5+', unit: 'Hours' },
-    { habitId: 'h-5', title: 'Mobility / Foam Rolling', completed: false, currentValue: '0', targetValue: '10', unit: 'Minutes' }
-  ];
+  const todayStr = localDateStr();
+  const clientHabits = habits.filter(h => h.clientId === activeClient?.id);
+  const habitRate = habitCompletionRate(clientHabits, checkins, todayStr, 7);
 
   // Photo comparison viewer state
   const [beforePhotoId, setBeforePhotoId] = useState<string>(clientPhotos[0]?.id || '');
@@ -179,16 +165,6 @@ const ProgressTrackerContent: React.FC = () => {
   const beforePhoto = clientPhotos.find(p => p.id === beforePhotoId) || clientPhotos[0];
   const afterPhoto = clientPhotos.find(p => p.id === afterPhotoId) || clientPhotos[clientPhotos.length - 1] || clientPhotos[0];
 
-  const getHabitIcon = (title: string) => {
-    if (title.includes('Water')) return <Droplets className="h-4 w-4 text-cyan-400" />;
-    if (title.includes('Protein')) return <Beef className="h-4 w-4 text-emerald-400" />;
-    if (title.includes('Step')) return <Footprints className="h-4 w-4 text-amber-400" />;
-    if (title.includes('Sleep')) return <Moon className="h-4 w-4 text-slate-300" />;
-    return <Activity className="h-4 w-4 text-emerald-400" />;
-  };
-
-  const completedHabitsCount = todayHabits.filter(h => h.completed).length;
-
   return (
     <div className="space-y-6 pb-12">
       {/* Header & Athlete Selector */}
@@ -257,9 +233,9 @@ const ProgressTrackerContent: React.FC = () => {
             <div className="p-3 rounded-2xl bg-slate-950/60 border border-slate-800">
               <span className="text-[10px] uppercase font-bold text-slate-400">Habit Adherence</span>
               <div className="text-base font-extrabold text-amber-400 mt-0.5">
-                {Math.round((completedHabitsCount / todayHabits.length) * 100)}%
+                {habitRate === null ? '—' : `${habitRate}%`}
               </div>
-              <span className="text-[10px] text-slate-400">{completedHabitsCount}/{todayHabits.length} today</span>
+              <span className="text-[10px] text-slate-400">{clientHabits.length ? 'Last 7 days' : 'No habits set'}</span>
             </div>
           </div>
         </div>
@@ -443,81 +419,8 @@ const ProgressTrackerContent: React.FC = () => {
         </div>
       )}
 
-      {/* Subtab 2: Daily Habit Tracker */}
-      {activeTab === 'habits' && (
-        <div className="space-y-6">
-          <div className="p-6 rounded-3xl bg-slate-900/90 border border-slate-800 space-y-5">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h3 className="text-base font-bold text-white flex items-center gap-2">
-                  <CheckCircle2 className="h-5 w-5 text-emerald-400" />
-                  Daily Non-Negotiable Habits ({todayStr})
-                </h3>
-                <p className="text-xs text-slate-400">
-                  Daily checklist for nutrition, hydration, sleep, and recovery routines.
-                </p>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                  {completedHabitsCount} / {todayHabits.length} Completed Today
-                </span>
-              </div>
-            </div>
-
-            {/* Habit Items Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {todayHabits.map((habit) => (
-                <div
-                  key={habit.habitId}
-                  onClick={() => activeClient && toggleHabitCompletion(activeClient.id, todayStr, habit.habitId)}
-                  className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between group ${
-                    habit.completed
-                      ? 'bg-emerald-950/30 border-emerald-500/40 shadow-sm'
-                      : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${
-                      habit.completed ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-900 text-slate-400'
-                    }`}>
-                      {getHabitIcon(habit.title)}
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-bold text-white group-hover:text-emerald-400 transition-colors">
-                        {habit.title}
-                      </h4>
-                      <p className="text-[11px] text-slate-400 mt-0.5">
-                        Target: <strong className="text-slate-200">{habit.targetValue} {habit.unit}</strong>
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className={`p-2 rounded-xl transition-colors ${
-                    habit.completed ? 'bg-emerald-500 text-slate-950' : 'bg-slate-900 text-slate-500'
-                  }`}>
-                    <CheckCircle2 className="h-4 w-4" />
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Weekly Habit Heatmap Strip */}
-            <div className="mt-6 pt-4 border-t border-slate-800 space-y-2">
-              <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-400">7-Day Consistency Streak</h4>
-              <div className="grid grid-cols-7 gap-2 text-center text-xs">
-                {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun (Today)'].map((day, idx) => (
-                  <div key={day} className="p-2.5 rounded-xl bg-slate-950 border border-slate-800">
-                    <span className="text-[10px] text-slate-400">{day}</span>
-                    <div className="h-2 w-full rounded-full bg-emerald-500 mt-1.5" />
-                    <span className="text-[10px] font-bold text-emerald-400 mt-1 block">100%</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Subtab 2: Habits */}
+      {activeTab === 'habits' && activeClient && <HabitsManager clientId={activeClient.id} />}
 
       {/* Subtab 3: Personal Records (PRs) */}
       {activeTab === 'prs' && (

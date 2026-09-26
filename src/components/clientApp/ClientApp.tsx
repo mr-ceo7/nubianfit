@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CalendarDays, Home, LogOut, MessageSquare, TrendingUp, User } from 'lucide-react';
+import { Apple, CalendarDays, Home, LogOut, MessageSquare, TrendingUp, User } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { ClientAvatar } from '../common/ClientAvatar';
@@ -10,17 +10,20 @@ import { ClientToday } from './ClientToday';
 import { ClientWorkouts } from './ClientWorkouts';
 import { ClientProgress } from './ClientProgress';
 import { ClientProfile } from './ClientProfile';
+import { ClientNutrition } from './ClientNutrition';
 import { Toast } from '../common/Toast';
 
-type ClientTab = 'today' | 'workouts' | 'progress' | 'chat' | 'profile';
+type ClientTab = 'today' | 'workouts' | 'nutrition' | 'progress' | 'chat' | 'profile';
 
 const TABS: { id: ClientTab; label: string; icon: React.FC<{ className?: string }> }[] = [
   { id: 'today', label: 'Today', icon: Home },
   { id: 'workouts', label: 'Workouts', icon: CalendarDays },
+  { id: 'nutrition', label: 'Nutrition', icon: Apple },
   { id: 'progress', label: 'Progress', icon: TrendingUp },
   { id: 'chat', label: 'Coach', icon: MessageSquare },
-  { id: 'profile', label: 'Me', icon: User },
 ];
+/** Desktop sidebar also lists the profile; on phones it's the header avatar. */
+const SIDEBAR_TABS = [...TABS, { id: 'profile' as ClientTab, label: 'Profile', icon: User }];
 
 /** The client (athlete) portal served at app.<domain>. */
 export const ClientApp: React.FC = () => {
@@ -48,6 +51,7 @@ export const ClientApp: React.FC = () => {
   const titles: Record<ClientTab, string> = {
     today: 'Today',
     workouts: 'Workouts',
+    nutrition: 'Nutrition',
     progress: 'Progress',
     chat: 'Messages with your coach',
     profile: 'Profile',
@@ -61,7 +65,7 @@ export const ClientApp: React.FC = () => {
           <Brand />
         </div>
         <nav className="flex-1 p-3 space-y-1">
-          {TABS.map(({ id, label, icon: Icon }) => (
+          {SIDEBAR_TABS.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
               onClick={() => setTab(id)}
@@ -71,7 +75,7 @@ export const ClientApp: React.FC = () => {
               }`}
             >
               <Icon className="h-5 w-5" />
-              <span className="flex-1 text-left">{id === 'chat' ? 'Coach' : id === 'profile' ? 'Profile' : label}</span>
+              <span className="flex-1 text-left">{label}</span>
               {id === 'chat' && unread > 0 && (
                 <span className="px-1.5 rounded-full bg-emerald-500 text-slate-950 text-[10px] font-bold">{unread}</span>
               )}
@@ -86,6 +90,9 @@ export const ClientApp: React.FC = () => {
         <header className="md:hidden sticky top-0 z-20 bg-slate-950/90 backdrop-blur border-b border-slate-800">
           <div className="px-4 h-14 flex items-center gap-2">
             <Brand />
+            <button onClick={() => setTab('profile')} aria-label="Profile" className="ml-auto rounded-xl">
+              <ClientAvatar client={me} className="h-8 w-8 rounded-xl" />
+            </button>
           </div>
         </header>
         {/* Desktop header */}
@@ -94,8 +101,11 @@ export const ClientApp: React.FC = () => {
         </header>
 
         <main className={`w-full max-w-6xl mx-auto ${tab === 'chat' ? 'md:px-8 md:py-6' : 'px-4 md:px-8 py-5 md:py-8'} pb-28 md:pb-8`}>
-          {tab === 'today' && <ClientToday client={me} onOpenWorkouts={() => setTab('workouts')} onOpenChat={() => setTab('chat')} />}
+          {tab === 'today' && (
+            <ClientToday client={me} onOpenWorkouts={() => setTab('workouts')} onOpenChat={() => setTab('chat')} onOpenNutrition={() => setTab('nutrition')} />
+          )}
           {tab === 'workouts' && <ClientWorkouts />}
+          {tab === 'nutrition' && <ClientNutrition clientId={me.id} />}
           {tab === 'progress' && <ClientProgress client={me} />}
           {tab === 'chat' && (
             <div className="h-[calc(100dvh-56px-88px)] md:h-[calc(100vh-64px-48px)] flex flex-col md:rounded-3xl md:border md:border-slate-800 md:bg-slate-900/60 md:overflow-hidden">

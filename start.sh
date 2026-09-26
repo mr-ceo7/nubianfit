@@ -63,7 +63,7 @@ export ENABLE_DEV_SEED=true
 if [ -f "backend/nubianfit.db" ] && ! ./backend/venv/bin/python - <<'PY'
 import sqlite3, sys
 db = sqlite3.connect("backend/nubianfit.db")
-required = [("clients", "coach_id"), ("scheduled_workouts", "groups"), ("exercises", "video_url"), ("workout_templates", "id")]
+required = [("clients", "coach_id"), ("scheduled_workouts", "groups"), ("exercises", "video_url"), ("workout_templates", "id"), ("habits", "id"), ("food_log_entries", "id")]
 ok = all(col in [r[1] for r in db.execute(f"PRAGMA table_info({table})")] for table, col in required)
 sys.exit(0 if ok else 1)
 PY

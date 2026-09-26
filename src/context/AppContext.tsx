@@ -9,7 +9,6 @@ import {
   ProgressPhoto,
   ChatMessage,
   ActivityFeedItem,
-  ClientDailyHabitLog,
   WorkoutTemplate
 } from '../types';
 import {
@@ -19,7 +18,6 @@ import {
   workoutsApi,
   metricsApi,
   prsApi,
-  habitsApi,
   photosApi,
   messagesApi,
   activityApi,
@@ -34,6 +32,7 @@ export type NavigationTab =
   | 'workouts'
   | 'exercises'
   | 'calendar'
+  | 'nutrition'
   | 'progress'
   | 'messenger';
 
@@ -63,7 +62,6 @@ interface AppContextType {
   photos: ProgressPhoto[];
   messages: ChatMessage[];
   activityFeed: ActivityFeedItem[];
-  habitLogs: ClientDailyHabitLog[];
   workoutTemplates: WorkoutTemplate[];
 
   // Selected state
@@ -98,7 +96,6 @@ interface AppContextType {
   addProgressPhoto: (photo: Omit<ProgressPhoto, 'id'>) => Promise<boolean>;
   sendMessage: (clientId: string, text: string, attachment?: ChatMessage['attachment']) => Promise<boolean>;
   markThreadRead: (clientId: string) => Promise<void>;
-  toggleHabitCompletion: (clientId: string, date: string, habitId: string) => Promise<boolean>;
 
   refreshData: () => Promise<void>;
   isLoading: boolean;
@@ -133,7 +130,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [photos, setPhotos] = useState<ProgressPhoto[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [activityFeed, setActivityFeed] = useState<ActivityFeedItem[]>([]);
-  const [habitLogs, setHabitLogs] = useState<ClientDailyHabitLog[]>([]);
   const [workoutTemplates, setWorkoutTemplates] = useState<WorkoutTemplate[]>([]);
 
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
@@ -177,7 +173,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setPhotos([]);
     setMessages([]);
     setActivityFeed([]);
-    setHabitLogs([]);
     setWorkoutTemplates([]);
     setSelectedClientId(null);
   }, []);
@@ -186,14 +181,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setIsLoading(true);
     setLoadError(null);
     try {
-      const [c, ex, prog, w, m, pr, h, ph, msg, act] = await Promise.all([
+      const [c, ex, prog, w, m, pr, ph, msg, act] = await Promise.all([
         clientsApi.getAll(),
         exercisesApi.getAll(),
         programsApi.getAll(),
         workoutsApi.getAll(),
         metricsApi.getAll(),
         prsApi.getAll(),
-        habitsApi.getAll(),
         photosApi.getAll(),
         messagesApi.getAll(),
         activityApi.getAll(),
@@ -204,7 +198,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setScheduledWorkouts(w);
       setMetrics(m);
       setPersonalRecords(pr);
-      setHabitLogs(h);
       setPhotos(ph);
       setMessages(msg);
       setActivityFeed(act);
@@ -451,15 +444,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const toggleHabitCompletion = async (clientId: string, date: string, habitId: string) => {
-    const log = await mutate(async () => {
-      const updated = await habitsApi.toggle(clientId, date, habitId);
-      setHabitLogs(prev => [updated, ...prev.filter(l => l.id !== updated.id)]);
-      return updated;
-    });
-    return log !== null;
-  };
-
   return (
     <AppContext.Provider
       value={{
@@ -474,7 +458,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         photos,
         messages,
         activityFeed,
-        habitLogs,
         workoutTemplates,
         selectedClientId,
         setSelectedClientId,
@@ -503,7 +486,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addProgressPhoto,
         sendMessage,
         markThreadRead,
-        toggleHabitCompletion,
         refreshData,
         isLoading,
         loadError,

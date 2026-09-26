@@ -80,6 +80,7 @@ export const Header: React.FC<HeaderProps> = ({
       case 'workouts': return 'Workout Library';
       case 'exercises': return 'Exercise Database';
       case 'calendar': return 'Workout Schedule';
+      case 'nutrition': return 'Nutrition & Habits';
       case 'progress': return 'Metric Tracking';
       case 'messenger': return 'Coach Messenger';
       default: return 'NubianFit';

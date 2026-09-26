@@ -1,24 +1,21 @@
 import React from 'react';
-import { CheckCircle2, Circle, Dumbbell, MessageSquare, Play } from 'lucide-react';
+import { Dumbbell, MessageSquare, Play } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { Client } from '../../types';
 import { localDateStr, formatDay } from '../../utils/dates';
+import { useNutrition } from '../../context/NutritionContext';
+import { isTrainingDay, sumNutrients, targetsFor } from '../../utils/nutrition';
+import { HabitChecklist } from '../nutrition/HabitChecklist';
+import { MacroSummary } from '../nutrition/MacroSummary';
 
-// Mirrors DEFAULT_HABITS in backend/app/routers/habits.py; the server creates the day's log on first toggle.
-const DEFAULT_HABITS = [
-  { habitId: 'h-1', title: 'Hit 180g+ Protein', completed: false },
-  { habitId: 'h-2', title: 'Drink 3.5L Water', completed: false },
-  { habitId: 'h-3', title: '10,000 Steps', completed: false },
-  { habitId: 'h-4', title: '8 Hours Sleep', completed: false },
-  { habitId: 'h-5', title: 'Post-Workout Mobility', completed: false },
-];
-
-export const ClientToday: React.FC<{ client: Client; onOpenWorkouts: () => void; onOpenChat: () => void }> = ({
-  client,
-  onOpenWorkouts,
-  onOpenChat,
-}) => {
-  const { scheduledWorkouts, habitLogs, toggleHabitCompletion, openWorkoutLogger, messages } = useApp();
+export const ClientToday: React.FC<{
+  client: Client;
+  onOpenWorkouts: () => void;
+  onOpenChat: () => void;
+  onOpenNutrition: () => void;
+}> = ({ client, onOpenWorkouts, onOpenChat, onOpenNutrition }) => {
+  const { scheduledWorkouts, openWorkoutLogger, messages } = useApp();
+  const { foodLog, goals } = useNutrition();
   const today = localDateStr();
 
   const upcoming = scheduledWorkouts
@@ -29,7 +26,8 @@ export const ClientToday: React.FC<{ client: Client; onOpenWorkouts: () => void;
   const weekAgo = localDateStr(new Date(Date.now() - 6 * 86400000));
   const doneThisWeek = scheduledWorkouts.filter(w => w.status === 'Completed' && w.date >= weekAgo && w.date <= today).length;
 
-  const todayLog = habitLogs.find(l => l.date === today);
+  const totals = sumNutrients(foodLog.filter(e => e.clientId === client.id && e.date === today));
+  const targets = targetsFor(goals.find(g => g.clientId === client.id), isTrainingDay(today, scheduledWorkouts));
   const lastCoachMessage = [...messages].reverse().find(m => m.sender === 'coach');
 
   const card = 'rounded-2xl bg-slate-900 border border-slate-800 p-4 md:p-5';
@@ -106,22 +104,15 @@ export const ClientToday: React.FC<{ client: Client; onOpenWorkouts: () => void;
           )}
         </div>
 
-        <section className={`min-w-0 ${card}`}>
-          <h2 className={heading}>Today's habits</h2>
-          <ul className="space-y-1">
-            {(todayLog?.habits ?? DEFAULT_HABITS).map(h => (
-              <li key={h.habitId}>
-                <button
-                  onClick={() => toggleHabitCompletion(client.id, today, h.habitId)}
-                  className="w-full flex items-center gap-3 py-2 text-left"
-                >
-                  {h.completed ? <CheckCircle2 className="h-5 w-5 text-emerald-400" /> : <Circle className="h-5 w-5 text-slate-500" />}
-                  <span className={`text-sm ${h.completed ? 'text-slate-400 line-through' : 'text-white'}`}>{h.title}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </section>
+        <div className="space-y-5 min-w-0">
+          <button onClick={onOpenNutrition} className="block w-full text-left" aria-label="Open nutrition diary">
+            <MacroSummary totals={totals} targets={targets} compact />
+          </button>
+          <section className={card}>
+            <h2 className={heading}>Today's habits</h2>
+            <HabitChecklist clientId={client.id} date={today} today={today} />
+          </section>
+        </div>
       </div>
     </div>
   );

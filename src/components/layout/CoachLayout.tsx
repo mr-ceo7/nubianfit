@@ -7,6 +7,7 @@ import { CoachDashboard } from '../dashboard/CoachDashboard';
 const ClientRoster = lazy(() => import('../clients/ClientRoster').then(m => ({ default: m.ClientRoster })));
 const ProgramBuilder = lazy(() => import('../programs/ProgramBuilder').then(m => ({ default: m.ProgramBuilder })));
 const WorkoutLibrary = lazy(() => import('../training/WorkoutLibrary').then(m => ({ default: m.WorkoutLibrary })));
+const NutritionHub = lazy(() => import('../nutrition/NutritionHub').then(m => ({ default: m.NutritionHub })));
 const ExerciseLibrary = lazy(() => import('../programs/ExerciseLibrary').then(m => ({ default: m.ExerciseLibrary })));
 const CalendarScheduler = lazy(() => import('../programs/CalendarScheduler').then(m => ({ default: m.CalendarScheduler })));
 const ProgressTracker = lazy(() => import('../progress/ProgressTracker').then(m => ({ default: m.ProgressTracker })));
@@ -85,6 +86,7 @@ export const CoachLayout: React.FC = () => {
                   />
                 )}
                 {activeTab === 'calendar' && <CalendarScheduler />}
+                {activeTab === 'nutrition' && <NutritionHub />}
                 {activeTab === 'progress' && <ProgressTracker />}
                 {activeTab === 'messenger' && <CoachMessenger />}
               </Suspense>

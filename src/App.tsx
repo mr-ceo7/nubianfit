@@ -6,6 +6,7 @@
 import React, { lazy, Suspense, useEffect, useState } from 'react';
 import { AppProvider } from './context/AppContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { NutritionProvider } from './context/NutritionContext';
 import { allowsPortalOverride, detectPortal, Portal, portalHref } from './config/portal';
 import { Loader } from './components/common/Loader';
 import { CoachLogin } from './components/auth/CoachLogin';
@@ -85,12 +86,14 @@ export default function App() {
   return (
     <AuthProvider>
       <AppProvider>
-        <Suspense fallback={<FullScreenLoader />}>
-          {portal === 'landing' && <LandingPage />}
-          {portal === 'coach' && <CoachPortal />}
-          {portal === 'client' && <ClientPortal />}
-        </Suspense>
-        {allowsPortalOverride() && <DevPortalSwitcher current={portal} />}
+        <NutritionProvider>
+          <Suspense fallback={<FullScreenLoader />}>
+            {portal === 'landing' && <LandingPage />}
+            {portal === 'coach' && <CoachPortal />}
+            {portal === 'client' && <ClientPortal />}
+          </Suspense>
+          {allowsPortalOverride() && <DevPortalSwitcher current={portal} />}
+        </NutritionProvider>
       </AppProvider>
     </AuthProvider>
   );

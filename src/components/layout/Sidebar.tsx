@@ -10,7 +10,8 @@ import {
   ChevronLeft, 
   ChevronRight,
   LogOut,
-  ListChecks
+  ListChecks,
+  Apple
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { ClientAvatar } from '../common/ClientAvatar';
@@ -38,6 +39,7 @@ export const Sidebar: React.FC = () => {
     { id: 'workouts', label: 'Workout Library', icon: ListChecks },
     { id: 'exercises', label: 'Exercise Library', icon: BookOpen },
     { id: 'calendar', label: 'Schedule', icon: CalendarDays, badge: todayPendingCount > 0 ? todayPendingCount : undefined, badgeColor: 'bg-emerald-500' },
+    { id: 'nutrition', label: 'Nutrition & Habits', icon: Apple },
     { id: 'progress', label: 'Metric Tracker', icon: TrendingUp },
     { id: 'messenger', label: '1-on-1 Messenger', icon: MessageSquare, badge: unreadCount > 0 ? unreadCount : undefined, badgeColor: 'bg-cyan-500' }
   ];

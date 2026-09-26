@@ -4,6 +4,7 @@ from app.config import settings
 from app.services import email
 
 PROTECTED_LISTS = [
+    "/api/nutrition/log", "/api/nutrition/goals", "/api/nutrition/daily", "/api/meal-plans", "/api/foods/custom", "/api/habits/checkins",
     "/api/clients", "/api/exercises", "/api/programs", "/api/workouts", "/api/metrics",
     "/api/prs", "/api/habits", "/api/photos", "/api/messages", "/api/activity",
 ]

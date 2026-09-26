@@ -80,6 +80,28 @@ Programs are weekly calendars. `WorkoutDay.dayNumber` counts from the start of t
 
 Exercise videos are YouTube or Vimeo links, validated on both sides and embedded with `VideoEmbed`. The CSP `frame-src` in `vercel.json` allows exactly those two players.
 
+### Nutrition and habits
+This state lives in `context/NutritionContext.tsx` (`useNutrition()`), separate from `AppContext`. It loads about the last 35 days of history; `loadRange()` fetches older dates when the diary navigates back.
+
+**Foods.** `GET /foods/search` returns the coach's `CustomFood`s first, then USDA FoodData Central results. The USDA client (`backend/app/services/usda.py`):
+- caches responses in memory
+- normalises every food to `per100g` plus `servings`
+- degrades to a `usdaError` message on rate limits
+
+`FDC_API_KEY` defaults to `DEMO_KEY`, which allows about 30 requests an hour.
+
+**Diary entries and meal-plan items** store a nutrition snapshot: totals for `quantity` × serving, computed on the frontend by `portionOf()` in `src/utils/nutrition.ts`. Editing a food never rewrites history.
+
+**Goals.** `ClientGoals` holds training-day targets plus optional `restDay*` overrides. A day counts as a training day if it has any scheduled workout (`targetsFor()`).
+
+**Meal plans** are N days × meals × food items. `MealPlanAssignment` places day 1 on its start date, and the plan repeats (`mealPlanDayFor()`).
+
+**Habits** are per-client `Habit` rows. `daysOfWeek` holds ISO weekdays, and an empty list means every day. Check-ins are one row per habit per day, upserted with `PUT /habits/checkins`. Streaks and completion rates are computed on the frontend.
+
+**Water and steps** are entered manually into `DailyMetric`; the PWA can't read Apple Health or Google Fit.
+
+Watch out: the camelCase alias generator turns `per100g` into `per100G`, so fields with digits need an explicit `Field(alias=...)`.
+
 ### Theming
 Tailwind colors are remapped to CSS variables in `src/index.css`. `slate-*` and `emerald-*` follow light and dark mode, and `text-white` becomes dark green in light mode. For text on an accent background, use `bg-emerald-500 text-slate-950`.
 

@@ -29,6 +29,8 @@ from app.routers import (
     messages_router,
     activity_router,
     workout_templates_router,
+    foods_router,
+    nutrition_router,
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
@@ -118,6 +120,8 @@ for router in (
     messages_router,
     activity_router,
     workout_templates_router,
+    foods_router,
+    nutrition_router,
 ):
     app.include_router(router, prefix=settings.API_PREFIX)
 

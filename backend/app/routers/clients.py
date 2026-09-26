@@ -10,7 +10,8 @@ from sqlalchemy import select, func, delete
 from app.dependencies import get_db, get_current_user, require_coach, get_accessible_client
 from app.models.client import Client
 from app.models.activity import ActivityFeedItem
-from app.models.habit import ClientDailyHabitLog
+from app.models.habit import Habit, HabitCheckin
+from app.models.nutrition import ClientGoals, DailyMetric, FoodLogEntry, MealPlanAssignment
 from app.models.message import ChatMessage
 from app.models.metric import MetricEntry
 from app.models.personal_record import PersonalRecord
@@ -23,8 +24,8 @@ from app.services.email import EmailDeliveryError, send_client_invite
 
 # Tables holding per-client data, removed together with the client.
 CLIENT_OWNED_MODELS = (
-    ScheduledWorkout, MetricEntry, PersonalRecord, ClientDailyHabitLog,
-    ProgressPhoto, ChatMessage, ActivityFeedItem,
+    ScheduledWorkout, MetricEntry, PersonalRecord, Habit, HabitCheckin,
+    ProgressPhoto, ChatMessage, ActivityFeedItem, FoodLogEntry, DailyMetric, ClientGoals, MealPlanAssignment,
 )
 
 router = APIRouter(prefix="/clients", tags=["Clients"])

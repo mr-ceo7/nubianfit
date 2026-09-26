@@ -13,7 +13,16 @@ import {
   ProgressPhoto,
   ChatMessage,
   ActivityFeedItem,
-  ClientDailyHabitLog,
+  Habit,
+  HabitCheckin,
+  FoodResult,
+  FoodLogEntry,
+  ClientGoals,
+  DailyMetric,
+  MealPlan,
+  MealPlanAssignment,
+  Nutrients,
+  Serving,
   WorkoutTemplate
 } from '../types';
 
@@ -250,11 +259,51 @@ export const prsApi = {
   create: (pr: Partial<PersonalRecord>) => api.post<PersonalRecord>('/prs', pr),
 };
 
-// Habit Logs Endpoints
+// Habits Endpoints
 export const habitsApi = {
-  getAll: (params?: { clientId?: string; date?: string }) => api.get<ClientDailyHabitLog[]>('/habits', params),
-  toggle: (clientId: string, date: string, habitId: string) =>
-    api.post<ClientDailyHabitLog>('/habits/toggle', { clientId, date, habitId }),
+  getAll: (params?: { clientId?: string }) => api.get<Habit[]>('/habits', params),
+  create: (habit: Omit<Habit, 'id' | 'active'>) => api.post<Habit>('/habits', habit),
+  update: (id: string, updates: Partial<Habit>) => api.patch<Habit>(`/habits/${id}`, updates),
+  delete: (id: string) => api.delete<{ message: string; id: string }>(`/habits/${id}`),
+  checkins: (params?: { clientId?: string; from?: string; to?: string }) => api.get<HabitCheckin[]>('/habits/checkins', params),
+  checkIn: (habitId: string, date: string, completed: boolean, value?: number | null) =>
+    api.put<HabitCheckin>('/habits/checkins', { habitId, date, completed, value }),
+};
+
+// Foods (USDA + custom) Endpoints
+export const foodsApi = {
+  search: (q: string) => api.get<{ results: FoodResult[]; usdaError: string | null }>('/foods/search', { q }),
+  usda: (fdcId: string) => api.get<FoodResult>(`/foods/usda/${fdcId}`),
+  custom: () => api.get<FoodResult[]>('/foods/custom'),
+  createCustom: (food: { name: string; brand?: string; per100g: Nutrients; servings: Serving[] }) =>
+    api.post<FoodResult>('/foods/custom', food),
+  updateCustom: (id: string, food: { name?: string; brand?: string; per100g?: Nutrients; servings?: Serving[] }) =>
+    api.patch<FoodResult>(`/foods/custom/${id}`, food),
+  deleteCustom: (id: string) => api.delete<{ message: string; id: string }>(`/foods/custom/${id}`),
+};
+
+// Nutrition Endpoints
+export const nutritionApi = {
+  goals: (params?: { clientId?: string }) => api.get<ClientGoals[]>('/nutrition/goals', params),
+  setGoals: (clientId: string, goals: Omit<ClientGoals, 'clientId'>) => api.put<ClientGoals>(`/nutrition/goals/${clientId}`, goals),
+  log: (params?: { clientId?: string; from?: string; to?: string }) => api.get<FoodLogEntry[]>('/nutrition/log', params),
+  addFood: (entry: Omit<FoodLogEntry, 'id' | 'createdAt'>) => api.post<FoodLogEntry>('/nutrition/log', entry),
+  updateFood: (id: string, updates: Partial<Pick<FoodLogEntry, 'meal' | 'quantity'>>) => api.patch<FoodLogEntry>(`/nutrition/log/${id}`, updates),
+  deleteFood: (id: string) => api.delete<{ message: string; id: string }>(`/nutrition/log/${id}`),
+  daily: (params?: { clientId?: string; from?: string; to?: string }) => api.get<DailyMetric[]>('/nutrition/daily', params),
+  setDaily: (body: { clientId: string; date: string; waterMl?: number; steps?: number }) => api.put<DailyMetric>('/nutrition/daily', body),
+};
+
+// Meal Plan Endpoints
+export const mealPlansApi = {
+  getAll: () => api.get<MealPlan[]>('/meal-plans'),
+  create: (plan: Pick<MealPlan, 'title' | 'description' | 'days'>) => api.post<MealPlan>('/meal-plans', plan),
+  update: (id: string, plan: Pick<MealPlan, 'title' | 'description' | 'days'>) => api.put<MealPlan>(`/meal-plans/${id}`, plan),
+  delete: (id: string) => api.delete<{ message: string; id: string }>(`/meal-plans/${id}`),
+  assignments: () => api.get<MealPlanAssignment[]>('/meal-plans/assignments'),
+  assign: (planId: string, clientId: string, startDate: string) =>
+    api.post<MealPlanAssignment>(`/meal-plans/${planId}/assign`, { clientId, startDate }),
+  unassign: (clientId: string) => api.delete<{ message: string }>(`/meal-plans/assignments/${clientId}`),
 };
 
 // Progress Photos Endpoints

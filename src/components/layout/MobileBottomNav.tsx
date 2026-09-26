@@ -12,7 +12,8 @@ import {
   Download,
   UserPlus,
   Play,
-  ListChecks
+  ListChecks,
+  Apple
 } from 'lucide-react';
 
 import { localDateStr } from '../../utils/dates';
@@ -323,6 +324,23 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
                   <div>
                     <span className="text-xs font-bold text-white block">Exercise Catalog</span>
                     <span className="text-[11px] text-slate-400">Movements & videos</span>
+                  </div>
+                </button>
+
+                {/* Nutrition & Habits */}
+                <button
+                  onClick={() => {
+                    setIsActionSheetOpen(false);
+                    handleTabClick('nutrition');
+                  }}
+                  className="p-3.5 rounded-2xl bg-slate-800/50 border border-slate-700/40 flex flex-col items-start gap-2 text-left active:scale-[0.97] transition-transform"
+                >
+                  <div className="p-2 rounded-xl bg-emerald-900/50 text-emerald-400">
+                    <Apple className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-white block">Nutrition</span>
+                    <span className="text-[11px] text-slate-400">Targets, diary, habits</span>
                   </div>
                 </button>
 

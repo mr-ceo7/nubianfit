@@ -231,27 +231,116 @@ export interface PersonalRecord {
   previousWeightKg?: number;
 }
 
-export interface HabitItem {
-  id: string;
-  title: string;
-  targetValue: string;
-  unit: string;
-  iconName: string;
-  category: 'Nutrition' | 'Recovery' | 'Activity' | 'Mindset';
-}
-
-export interface ClientDailyHabitLog {
+/** A habit the coach sets for one client. */
+export interface Habit {
   id: string;
   clientId: string;
+  title: string;
+  targetValue?: number | null;
+  unit: string;
+  /** ISO weekdays (1 = Mon … 7 = Sun); empty = every day. */
+  daysOfWeek: number[];
+  active: boolean;
+  sortOrder: number;
+}
+
+export interface HabitCheckin {
+  id: string;
+  habitId: string;
+  clientId: string;
   date: string; // YYYY-MM-DD
-  habits: {
-    habitId: string;
-    title: string;
-    completed: boolean;
-    currentValue?: number | string;
-    targetValue: string;
-    unit: string;
-  }[];
+  completed: boolean;
+  value?: number | null;
+}
+
+// --- Nutrition ---------------------------------------------------------------
+
+export type Meal = 'breakfast' | 'lunch' | 'dinner' | 'snack';
+export type FoodSource = 'usda' | 'custom' | 'quick';
+
+export interface Nutrients {
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  fiber: number;
+}
+
+export interface Serving {
+  label: string;
+  grams: number;
+}
+
+/** A searchable food (USDA or the coach's custom list), nutrition per 100 g. */
+export interface FoodResult {
+  source: 'usda' | 'custom';
+  sourceId: string;
+  name: string;
+  brand: string;
+  per100g: Nutrients;
+  servings: Serving[];
+}
+
+/** A food with a portion; nutrient fields are totals for that portion. */
+export interface FoodItem extends Nutrients {
+  source: FoodSource;
+  sourceId?: string | null;
+  name: string;
+  servingLabel: string;
+  servingGrams?: number | null;
+  quantity: number;
+}
+
+export interface FoodLogEntry extends FoodItem {
+  id: string;
+  clientId: string;
+  date: string;
+  meal: Meal;
+  createdAt: string;
+}
+
+export interface ClientGoals {
+  clientId: string;
+  calories?: number | null;
+  protein?: number | null;
+  carbs?: number | null;
+  fat?: number | null;
+  restDayCalories?: number | null;
+  restDayProtein?: number | null;
+  restDayCarbs?: number | null;
+  restDayFat?: number | null;
+  waterMl?: number | null;
+  steps?: number | null;
+  notes: string;
+}
+
+export interface DailyMetric {
+  id: string;
+  clientId: string;
+  date: string;
+  waterMl: number;
+  steps: number;
+}
+
+export interface MealPlanDay {
+  id: string;
+  dayNumber: number;
+  meals: { meal: Meal; items: FoodItem[] }[];
+}
+
+export interface MealPlan {
+  id: string;
+  title: string;
+  description: string;
+  days: MealPlanDay[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MealPlanAssignment {
+  clientId: string;
+  mealPlanId: string;
+  startDate: string;
 }
 
 export interface ProgressPhoto {

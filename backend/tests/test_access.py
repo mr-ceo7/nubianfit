@@ -11,7 +11,8 @@ async def test_coach_sees_only_own_clients(api, coach, other_coach):
 
 
 async def test_other_coach_cannot_touch_foreign_data(api, other_coach):
-    for path in ("/api/workouts", "/api/metrics", "/api/messages", "/api/prs", "/api/photos", "/api/habits"):
+    for path in ("/api/workouts", "/api/metrics", "/api/messages", "/api/prs", "/api/photos", "/api/habits",
+                 "/api/nutrition/log", "/api/nutrition/daily", "/api/habits/checkins", "/api/nutrition/goals"):
         assert (await api.get(path, headers=other_coach)).json() == [], path
         res = await api.get(path, params={"clientId": DEMO_CLIENT_ID}, headers=other_coach)
         assert res.status_code == 404, path
