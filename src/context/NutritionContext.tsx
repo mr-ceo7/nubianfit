@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import {
   ClientGoals, DailyMetric, FoodLogEntry, FoodResult, Habit, HabitCheckin, MealPlan, MealPlanAssignment, Nutrients, Serving,
 } from '../types';
@@ -21,6 +21,8 @@ interface NutritionContextType {
   mealPlans: MealPlan[];
   assignments: MealPlanAssignment[];
   isLoading: boolean;
+  /** Starts the initial load if nothing has yet; called by useNutrition. */
+  ensureLoaded: () => void;
 
   /** Fetch diary, water/steps and check-ins for a date range (merged into what's loaded). */
   loadRange: (from: string, to: string, clientId?: string) => Promise<void>;
@@ -106,9 +108,23 @@ export const NutritionProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   }, []);
 
+  // Loaded on first use (see useNutrition) rather than at sign-in, so screens that
+  // show no nutrition data (e.g. the coach dashboard) don't pay for it.
+  const requested = useRef(false);
+  const ensureLoaded = useCallback(() => {
+    if (status !== 'signed_in' || requested.current) return;
+    requested.current = true;
+    loadAll();
+  }, [status, loadAll]);
+
   useEffect(() => {
-    if (status === 'signed_in') loadAll();
-    else if (status === 'signed_out') reset();
+    if (status === 'signed_in') {
+      // A different account signed in: reload if anything on screen already asked for data.
+      if (requested.current) loadAll();
+    } else if (status === 'signed_out') {
+      requested.current = false;
+      reset();
+    }
   }, [status, user?.id, loadAll, reset]);
 
   const run = async <T,>(action: () => Promise<T>, success?: string): Promise<T | null> => {
@@ -131,7 +147,7 @@ export const NutritionProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const value: NutritionContextType = {
-    goals, foodLog, daily, habits, checkins, customFoods, mealPlans, assignments, isLoading, loadRange,
+    goals, foodLog, daily, habits, checkins, customFoods, mealPlans, assignments, isLoading, ensureLoaded, loadRange,
 
     setGoals: async (clientId, body) =>
       (await run(async () => {
@@ -247,5 +263,9 @@ export const NutritionProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 export const useNutrition = () => {
   const context = useContext(NutritionContext);
   if (!context) throw new Error('useNutrition must be used within a NutritionProvider');
+  const { ensureLoaded } = context;
+  useEffect(() => {
+    ensureLoaded();
+  }, [ensureLoaded]);
   return context;
 };

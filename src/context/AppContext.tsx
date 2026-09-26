@@ -194,7 +194,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setIsLoading(true);
     setLoadError(null);
     try {
-      const [c, ex, prog, w, m, pr, ph, msg, act] = await Promise.all([
+      const [c, ex, prog, w, m, pr, ph, msg, act, tpl] = await Promise.all([
         clientsApi.getAll(),
         exercisesApi.getAll(),
         programsApi.getAll(),
@@ -204,6 +204,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         photosApi.getAll(),
         messagesApi.getAll(),
         activityApi.getAll(),
+        // The workout library is coach-only.
+        user?.role === 'coach' ? workoutTemplatesApi.getAll() : Promise.resolve([]),
       ]);
       setClients(c);
       setExercises(ex);
@@ -214,8 +216,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setPhotos(ph);
       setMessages(msg);
       setActivityFeed(act);
-      // The workout library is coach-only.
-      setWorkoutTemplates(user?.role === 'coach' ? await workoutTemplatesApi.getAll() : []);
+      setWorkoutTemplates(tpl);
       setSelectedClientId(prev => (prev && c.some(x => x.id === prev) ? prev : c[0]?.id ?? null));
     } catch (err) {
       setLoadError(errorMessage(err));

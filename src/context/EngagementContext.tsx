@@ -142,22 +142,29 @@ export const EngagementProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
     let cancelled = false;
     (async () => {
-      await loadNotifications();
-      try {
-        const loads: Promise<unknown>[] = [
-          communityApi.groups().then(g => !cancelled && setGroups(g)),
-          loadCheckins(),
-          notificationsApi.preferences().then(p => !cancelled && setEmailDigestState(p.emailDigest)),
-          currentPushSubscription().then(s => !cancelled && setPushOn(!!s)).catch(() => undefined),
-        ];
-        if (isCoach) {
-          loads.push(autoflowsApi.list().then(f => !cancelled && setAutoflows(f)));
-          loads.push(autoflowsApi.assignments().then(a => !cancelled && setAutoflowAssignments(a)));
-        }
-        await Promise.all(loads);
-      } catch {
-        // individual features show empty states
-      }
+      // Fetch in parallel and apply in one render; a failed feature just shows its empty state.
+      const none = Promise.resolve(null);
+      const [n, g, f, a, r, p, s, af, afa] = await Promise.allSettled([
+        notificationsApi.list(),
+        communityApi.groups(),
+        checkinsApi.forms(),
+        checkinsApi.assignments(),
+        checkinsApi.responses(),
+        notificationsApi.preferences(),
+        currentPushSubscription(),
+        isCoach ? autoflowsApi.list() : none,
+        isCoach ? autoflowsApi.assignments() : none,
+      ]);
+      if (cancelled) return;
+      if (n.status === 'fulfilled') { setNotifications(n.value.items); setUnreadCount(n.value.unreadCount); }
+      if (g.status === 'fulfilled') setGroups(g.value);
+      if (f.status === 'fulfilled') setForms(f.value);
+      if (a.status === 'fulfilled') setCheckinAssignments(a.value);
+      if (r.status === 'fulfilled') setCheckinResponses(r.value);
+      if (p.status === 'fulfilled') setEmailDigestState(p.value.emailDigest);
+      if (s.status === 'fulfilled') setPushOn(!!s.value);
+      if (af.status === 'fulfilled' && af.value) setAutoflows(af.value);
+      if (afa.status === 'fulfilled' && afa.value) setAutoflowAssignments(afa.value);
     })();
 
     let firstConnect = true;

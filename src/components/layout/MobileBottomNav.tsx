@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
 import { 
   LayoutDashboard, 
   Users, 
@@ -102,10 +101,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
             }`}>
               <LayoutDashboard className="w-5 h-5" />
               {activeTab === 'dashboard' && (
-                <motion.div 
-                  layoutId="mobileNavIndicator"
-                  className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-emerald-400 rounded-full"
-                />
+                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-emerald-400 rounded-full" />
               )}
             </div>
             <span className={`text-[10px] font-medium tracking-tight mt-0.5 ${
@@ -126,10 +122,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
             }`}>
               <Users className="w-5 h-5" />
               {activeTab === 'clients' && (
-                <motion.div 
-                  layoutId="mobileNavIndicator"
-                  className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-emerald-400 rounded-full"
-                />
+                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-emerald-400 rounded-full" />
               )}
             </div>
             <span className={`text-[10px] font-medium tracking-tight mt-0.5 ${
@@ -170,10 +163,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
                 <span className="absolute top-0.5 right-0 w-2 h-2 rounded-full bg-emerald-400 ring-2 ring-slate-950" />
               )}
               {activeTab === 'calendar' && (
-                <motion.div 
-                  layoutId="mobileNavIndicator"
-                  className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-emerald-400 rounded-full"
-                />
+                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-emerald-400 rounded-full" />
               )}
             </div>
             <span className={`text-[10px] font-medium tracking-tight mt-0.5 ${
@@ -199,10 +189,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
                 </span>
               )}
               {activeTab === 'messenger' && (
-                <motion.div 
-                  layoutId="mobileNavIndicator"
-                  className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-emerald-400 rounded-full"
-                />
+                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-emerald-400 rounded-full" />
               )}
             </div>
             <span className={`text-[10px] font-medium tracking-tight mt-0.5 ${
@@ -215,23 +202,14 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
       </nav>
 
       {/* Mobile Quick Action Sheet Modal */}
-      <AnimatePresence>
-        {isActionSheetOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="md:hidden fixed inset-0 bottom-[76px] z-50 flex items-end justify-center bg-slate-950/85 backdrop-blur-xs cursor-pointer"
+      {isActionSheetOpen && (
+          <div
+            className="nf-fade-in md:hidden fixed inset-0 bottom-[76px] z-50 flex items-end justify-center bg-slate-950/85 backdrop-blur-xs cursor-pointer"
             onClick={() => setIsActionSheetOpen(false)}
           >
             {/* Action Sheet Card */}
-            <motion.div
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 28, stiffness: 320 }}
-              className="relative w-full bg-slate-900 border-t border-slate-800 rounded-t-3xl p-5 pb-6 z-10 shadow-2xl space-y-4 max-h-[70vh] overflow-y-auto cursor-default"
+            <div
+              className="nf-slide-up relative w-full bg-slate-900 border-t border-slate-800 rounded-t-3xl p-5 pb-6 z-10 shadow-2xl space-y-4 max-h-[70vh] overflow-y-auto cursor-default"
               onClick={(e) => e.stopPropagation()}
             >
 
@@ -382,10 +360,9 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
 
 
 
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </div>
+          </div>
+      )}
     </>
   );
 };

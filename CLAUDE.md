@@ -81,7 +81,7 @@ Programs are weekly calendars. `WorkoutDay.dayNumber` counts from the start of t
 Exercise videos are YouTube or Vimeo links, validated on both sides and embedded with `VideoEmbed`. The CSP `frame-src` in `vercel.json` allows exactly those two players.
 
 ### Nutrition and habits
-This state lives in `context/NutritionContext.tsx` (`useNutrition()`), separate from `AppContext`. It loads about the last 35 days of history; `loadRange()` fetches older dates when the diary navigates back.
+This state lives in `context/NutritionContext.tsx` (`useNutrition()`), separate from `AppContext`. It loads lazily: the first component that calls `useNutrition()` triggers the load, so screens without nutrition data, such as the coach dashboard, never fetch it. It loads about the last 35 days of history; `loadRange()` fetches older dates when the diary navigates back.
 
 **Foods.** `GET /foods/search` returns the coach's `CustomFood`s first, then USDA FoodData Central results. The USDA client (`backend/app/services/usda.py`):
 - caches responses in memory
