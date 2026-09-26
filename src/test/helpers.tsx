@@ -38,6 +38,7 @@ export const coachUser = {
   avatar: '',
   isActive: true,
   hasPassword: true,
+  isAdmin: false,
 };
 
 export const clientUser = {

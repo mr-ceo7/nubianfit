@@ -37,6 +37,9 @@ from app.routers import (
     community_router,
     checkins_router,
     autoflows_router,
+    billing_router,
+    pay_router,
+    admin_router,
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
@@ -137,6 +140,9 @@ for router in (
     community_router,
     checkins_router,
     autoflows_router,
+    billing_router,
+    pay_router,
+    admin_router,
 ):
     app.include_router(router, prefix=settings.API_PREFIX)
 

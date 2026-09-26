@@ -50,8 +50,13 @@ const CoachPortal: React.FC = () => {
   return <CoachLayout />;
 };
 
+const PayPage = lazy(() => import('./components/business/PayPage').then(m => ({ default: m.PayPage })));
+
 const ClientPortal: React.FC = () => {
   const { status, user } = useAuth();
+  // Payment links work without signing in.
+  const payToken = new URLSearchParams(window.location.search).get('pay');
+  if (payToken) return <PayPage token={payToken} />;
   if (status === 'loading') return <FullScreenLoader />;
   if (status === 'signed_out') return <ClientLogin />;
   if (user?.role !== 'client') {

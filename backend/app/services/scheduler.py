@@ -27,6 +27,7 @@ from app.models.message import ChatMessage
 from app.models.user import User
 from app.services.activity import new_id
 from app.services.checkins import pending_due_date
+from app.services.billing import run_renewals
 from app.services.email import EmailDeliveryError, layout, send_email
 from app.services.events import broker
 from app.services.notify import client_user_ids, notify
@@ -160,6 +161,7 @@ async def run_tick(today: Optional[date] = None) -> Dict[str, int]:
             "autoflowSteps": await run_autoflows(db, today),
             "checkinReminders": await send_checkin_reminders(db, today),
             "digests": await send_email_digests(db),
+            "renewals": await run_renewals(db, today),
         }
 
 

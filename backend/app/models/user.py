@@ -4,7 +4,7 @@ User ORM Model (coaches and clients)
 
 from datetime import datetime, timezone
 from typing import Optional
-from sqlalchemy import String, Boolean, DateTime, true
+from sqlalchemy import String, Boolean, DateTime, false, true
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
@@ -23,6 +23,8 @@ class User(Base):
     client_id: Mapped[Optional[str]] = mapped_column(String(64), index=True, nullable=True)
     avatar: Mapped[str] = mapped_column(String(512), default="")
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    # Platform admin (see settings.ADMIN_EMAILS); can view all coaches and suspend accounts.
+    is_admin: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
     # Email a summary of unread notifications the user hasn't seen in the app.
     email_digest: Mapped[bool] = mapped_column(Boolean, default=True, server_default=true())
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))

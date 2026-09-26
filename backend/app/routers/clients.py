@@ -5,13 +5,14 @@ Clients Management Router
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, delete
+from sqlalchemy import select, func, delete, update
 
 from app.dependencies import get_db, get_current_user, require_coach, get_accessible_client
 from app.models.client import Client
 from app.models.activity import ActivityFeedItem
 from app.models.habit import Habit, HabitCheckin
 from app.models.nutrition import ClientGoals, DailyMetric, FoodLogEntry, MealPlanAssignment
+from app.models.business import PaymentRequest, Subscription
 from app.models.engagement import AutoflowAssignment, CheckinAssignment, CheckinResponse, GroupMember, StoredFile
 from app.models.message import ChatMessage
 from app.models.metric import MetricEntry
@@ -169,6 +170,11 @@ async def delete_client(client_id: str, coach: User = Depends(require_coach), db
         login.client_id = None
     for model in CLIENT_OWNED_MODELS:
         await db.execute(delete(model).where(model.client_id == client.id))
+    # Billing: stop renewals and open links, but keep payment records for the books.
+    await db.execute(update(Subscription).where(Subscription.client_id == client.id, Subscription.status.in_(("active", "past_due")))
+                     .values(status="cancelled", cancel_at_period_end=True))
+    await db.execute(update(PaymentRequest).where(PaymentRequest.client_id == client.id, PaymentRequest.status == "pending")
+                     .values(status="cancelled"))
     await db.delete(client)
     await db.commit()
     return {"message": "Client deleted successfully", "id": client_id}

@@ -1,6 +1,7 @@
 import React, { lazy, Suspense, useEffect, useState } from 'react';
 import { isNavigationTab, useApp } from '../../context/AppContext';
 import { consumeDeepLink } from '../../utils/deepLink';
+import { useAuth } from '../../context/AuthContext';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { CoachDashboard } from '../dashboard/CoachDashboard';
@@ -12,6 +13,8 @@ const NutritionHub = lazy(() => import('../nutrition/NutritionHub').then(m => ({
 const CommunityView = lazy(() => import('../engagement/CommunityView').then(m => ({ default: m.CommunityView })));
 const CheckinsHub = lazy(() => import('../engagement/CheckinsHub').then(m => ({ default: m.CheckinsHub })));
 const AutoflowHub = lazy(() => import('../engagement/AutoflowHub').then(m => ({ default: m.AutoflowHub })));
+const BusinessHub = lazy(() => import('../business/BusinessHub').then(m => ({ default: m.BusinessHub })));
+const AdminHub = lazy(() => import('../business/AdminHub').then(m => ({ default: m.AdminHub })));
 const ExerciseLibrary = lazy(() => import('../programs/ExerciseLibrary').then(m => ({ default: m.ExerciseLibrary })));
 const CalendarScheduler = lazy(() => import('../programs/CalendarScheduler').then(m => ({ default: m.CalendarScheduler })));
 const ProgressTracker = lazy(() => import('../progress/ProgressTracker').then(m => ({ default: m.ProgressTracker })));
@@ -26,6 +29,7 @@ import { Loader } from '../common/Loader';
 export const CoachLayout: React.FC = () => {
   const { activeTab, setActiveTab, isLoading, loadError, refreshData, clients, setSelectedClientId } = useApp();
   const [deepLinkGroup, setDeepLinkGroup] = useState<string | null>(null);
+  const { user } = useAuth();
 
   // Notification taps (push or email) open the app with ?open=<tab>&clientId=…&groupId=…
   useEffect(() => {
@@ -107,6 +111,8 @@ export const CoachLayout: React.FC = () => {
                 {activeTab === 'community' && <CommunityView initialGroupId={deepLinkGroup} />}
                 {activeTab === 'checkins' && <CheckinsHub />}
                 {activeTab === 'autoflow' && <AutoflowHub />}
+                {activeTab === 'business' && <BusinessHub />}
+                {activeTab === 'admin' && user?.isAdmin && <AdminHub />}
               </Suspense>
             )}
           </div>

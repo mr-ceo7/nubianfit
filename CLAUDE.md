@@ -124,8 +124,27 @@ On the frontend, `src/services/realtime.ts` fetches a fresh ticket on every reco
 
 **Deep links.** Notification links look like `{tab, clientId?, groupId?}`. Push taps open `/?open=<tab>&…`, which `utils/deepLink.ts` reads and then clears.
 
+### Business: marketplace billing and admin
+Coaches are independent sellers. Each coach links a payout account, which creates a Paystack subaccount (`PayoutAccount`). Payments split at checkout: `subaccount=<coach>` and `bearer=subaccount`, so the coach pays Paystack's fee. `PLATFORM_FEE_PERCENT` is NubianFit's cut, currently 0. The Paystack client is `services/paystack.py`, and money is stored in minor units (KES cents).
+
+**Payment flow** (`services/billing.py`):
+1. The coach sends a `PaymentRequest`, which is emailed to the client as `CLIENT_URL/?pay=<token>`.
+2. The public pay page (`PayPage`, no login) calls `/pay/{token}/checkout`, which creates a pending `Payment` and redirects to Paystack.
+3. Paystack confirms the payment in two ways: the `charge.success` webhook (the signature is HMAC-SHA512 of the raw body, and the transaction is re-verified), and `/pay/{token}/verify` when the client returns.
+4. Both call `fulfil()`, which is idempotent through `Payment.fulfilled`. It rejects amount or currency mismatches, then creates or extends the `Subscription`.
+
+On first purchase, `fulfil()` also applies the package's program, Autoflow and onboarding form.
+
+**Renewals** (`run_renewals`, from the scheduler):
+- If a reusable card authorization is saved, it's charged with `charge_authorization` (same split).
+- Otherwise (M-Pesa etc.) the client gets a renewal `PaymentRequest` `RENEWAL_NOTICE_DAYS` before the end.
+- Unpaid subscriptions become `past_due`.
+- One-time packages become `completed`, and ones set to cancel at period end become `cancelled`.
+
+**Admin.** Admins are users with `is_admin` or an email in `ADMIN_EMAILS`; in dev the demo coach is an admin. The `/admin/*` endpoints list coaches and can suspend one, which sets `is_active`. That blocks the coach's login and their pay links.
+
 ### Theming
-Tailwind colors are remapped to CSS variables in `src/index.css`. `slate-*` and `emerald-*` follow light and dark mode, and `text-white` becomes dark green in light mode. For text on an accent background, use `bg-emerald-500 text-slate-950`.
+Chart marks use `--chart-1`, validated with the dataviz palette checks against both card surfaces. Tailwind colors are remapped to CSS variables in `src/index.css`. `slate-*` and `emerald-*` follow light and dark mode, and `text-white` becomes dark green in light mode. For text on an accent background, use `bg-emerald-500 text-slate-950`.
 
 ## Deployment
 

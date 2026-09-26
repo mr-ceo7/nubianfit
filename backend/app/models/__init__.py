@@ -10,6 +10,7 @@ from app.models.workout import ScheduledWorkout
 from app.models.metric import MetricEntry
 from app.models.personal_record import PersonalRecord
 from app.models.habit import Habit, HabitCheckin
+from app.models.business import Package, Payment, PaymentRequest, PayoutAccount, Subscription
 from app.models.engagement import (
     Autoflow, AutoflowAssignment, CheckinAssignment, CheckinForm, CheckinResponse, CommunityGroup, GroupMember,
     GroupMessage, GroupPost, Notification, PostComment, PostLike, PushSubscription, StoredFile,
@@ -53,6 +54,11 @@ __all__ = [
     "StoredFile",
     "Autoflow",
     "AutoflowAssignment",
+    "PayoutAccount",
+    "Package",
+    "Subscription",
+    "PaymentRequest",
+    "Payment",
     "ProgressPhoto",
     "ChatMessage",
     "ActivityFeedItem",

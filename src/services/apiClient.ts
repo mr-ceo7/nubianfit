@@ -30,6 +30,13 @@ import {
   CheckinAnswer,
   Autoflow,
   AutoflowAssignment,
+  PayoutAccount,
+  Package,
+  PaymentRequest,
+  Subscription,
+  Payment,
+  BusinessAnalytics,
+  PublicPaymentRequest,
   MealPlan,
   MealPlanAssignment,
   Nutrients,
@@ -157,6 +164,7 @@ export interface AuthUser {
   avatar: string;
   isActive: boolean;
   hasPassword: boolean;
+  isAdmin: boolean;
 }
 
 interface TokenResponse {
@@ -377,6 +385,65 @@ export const autoflowsApi = {
   assign: (id: string, clientId: string, startDate: string) =>
     api.post<AutoflowAssignment>(`/autoflows/${id}/assign`, { clientId, startDate }),
   cancel: (assignmentId: string) => api.delete<{ message: string }>(`/autoflows/assignments/${assignmentId}`),
+};
+
+// Billing Endpoints
+type PackageBody = Omit<Package, 'id' | 'currency' | 'createdAt'>;
+export const billingApi = {
+  banks: () => api.get<{ name: string; code: string; type: string }[]>('/billing/banks'),
+  payoutAccount: () => api.get<PayoutAccount | null>('/billing/payout-account'),
+  setPayoutAccount: (body: { businessName: string; bankCode: string; accountNumber: string }) =>
+    api.put<PayoutAccount>('/billing/payout-account', body),
+  packages: () => api.get<Package[]>('/billing/packages'),
+  createPackage: (p: PackageBody) => api.post<Package>('/billing/packages', p),
+  updatePackage: (id: string, p: PackageBody) => api.put<Package>(`/billing/packages/${id}`, p),
+  paymentRequests: () => api.get<PaymentRequest[]>('/billing/payment-requests'),
+  sendPaymentLink: (clientId: string, packageId: string) => api.post<PaymentRequest>('/billing/payment-requests', { clientId, packageId }),
+  cancelPaymentLink: (id: string) => api.post<PaymentRequest>(`/billing/payment-requests/${id}/cancel`),
+  subscriptions: () => api.get<Subscription[]>('/billing/subscriptions'),
+  cancelSubscription: (id: string) => api.post<Subscription>(`/billing/subscriptions/${id}/cancel`),
+  resumeSubscription: (id: string) => api.post<Subscription>(`/billing/subscriptions/${id}/resume`),
+  payments: () => api.get<Payment[]>('/billing/payments'),
+  analytics: () => api.get<BusinessAnalytics>('/billing/analytics'),
+  mine: () => api.get<{
+    subscriptions: Subscription[];
+    paymentRequests: PaymentRequest[];
+    payments: Payment[];
+    packages: Record<string, { title: string; billing: string; interval?: string | null }>;
+  }>('/billing/me'),
+};
+
+// Public pay page (no login)
+export const payApi = {
+  view: (token: string) => api.get<PublicPaymentRequest>(`/pay/${encodeURIComponent(token)}`),
+  checkout: (token: string) => api.post<{ authorizationUrl: string }>(`/pay/${encodeURIComponent(token)}/checkout`),
+  verify: (token: string, reference: string) =>
+    api.post<{ status: string; failureReason: string }>(`/pay/${encodeURIComponent(token)}/verify`, { reference }),
+};
+
+// Platform admin
+export interface AdminCoach {
+  id: string;
+  name: string;
+  email: string;
+  active: boolean;
+  isAdmin: boolean;
+  clients: number;
+  volume30d: number;
+  payoutReady: boolean;
+  joinedAt: string | null;
+}
+export const adminApi = {
+  summary: () => api.get<{
+    coaches: number; clients: number; activeSubscriptions: number; volume30d: number; volumeAllTime: number;
+    platformFeePercent: number; platformFees30d: number; currency: string;
+  }>('/admin/summary'),
+  coaches: () => api.get<AdminCoach[]>('/admin/coaches'),
+  setCoachActive: (id: string, active: boolean) => api.patch<{ id: string; active: boolean }>(`/admin/coaches/${id}`, { active }),
+  payments: () => api.get<{
+    id: string; reference: string; coachName: string; amount: number; fees: number; currency: string;
+    status: string; channel: string; paidAt: string | null; createdAt: string;
+  }[]>('/admin/payments'),
 };
 
 // Progress Photos Endpoints

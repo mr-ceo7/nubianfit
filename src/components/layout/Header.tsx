@@ -85,6 +85,8 @@ export const Header: React.FC<HeaderProps> = ({
       case 'community': return 'Community';
       case 'checkins': return 'Check-ins';
       case 'autoflow': return 'Autoflow';
+      case 'business': return 'Business';
+      case 'admin': return 'Platform admin';
       default: return 'NubianFit';
     }
   };

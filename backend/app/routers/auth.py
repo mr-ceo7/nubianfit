@@ -57,6 +57,7 @@ def user_response(user: User) -> UserResponse:
         avatar=user.avatar or "",
         is_active=user.is_active,
         has_password=bool(user.hashed_password),
+        is_admin=user.is_admin or user.email.lower() in settings.admin_emails,
     )
 
 

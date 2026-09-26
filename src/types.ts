@@ -523,3 +523,106 @@ export interface AutoflowAssignment {
   active: boolean;
   completedStepIds: string[];
 }
+
+// --- Business / billing -----------------------------------------------------------
+
+export type Billing = 'one_time' | 'recurring';
+export type BillingInterval = 'monthly' | 'quarterly' | 'yearly';
+
+export interface PayoutAccount {
+  businessName: string;
+  bankCode: string;
+  bankName: string;
+  accountLast4: string;
+  subaccountCode: string;
+  active: boolean;
+}
+
+export interface Package {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  currency: string;
+  billing: Billing;
+  interval?: BillingInterval | null;
+  durationWeeks?: number | null;
+  programId?: string | null;
+  autoflowId?: string | null;
+  onboardingFormId?: string | null;
+  active: boolean;
+  createdAt: string;
+}
+
+export interface PaymentRequest {
+  id: string;
+  clientId: string;
+  packageId: string;
+  subscriptionId?: string | null;
+  purpose: 'purchase' | 'renewal';
+  amount: number;
+  currency: string;
+  status: 'pending' | 'paid' | 'cancelled';
+  url: string;
+  createdAt: string;
+  paidAt?: string | null;
+}
+
+export interface Subscription {
+  id: string;
+  clientId: string;
+  packageId: string;
+  status: 'active' | 'past_due' | 'cancelled' | 'completed';
+  currentPeriodStart: string;
+  currentPeriodEnd: string;
+  cancelAtPeriodEnd: boolean;
+  autoRenew: boolean;
+  cardLabel: string;
+}
+
+export interface Payment {
+  id: string;
+  reference: string;
+  clientId: string;
+  packageId: string;
+  subscriptionId?: string | null;
+  amount: number;
+  fees: number;
+  currency: string;
+  status: 'pending' | 'success' | 'failed';
+  channel: string;
+  failureReason: string;
+  createdAt: string;
+  paidAt?: string | null;
+}
+
+export interface BusinessAnalytics {
+  revenue30d: number;
+  revenuePrev30d: number;
+  mrr: number;
+  activeSubscriptions: number;
+  pastDueSubscriptions: number;
+  cancelled30d: number;
+  pendingRequests: number;
+  revenueByMonth: { month: string; revenue: number }[];
+  activeClients: number;
+  totalClients: number;
+  avgCompliance: number;
+  workoutsCompleted30d: number;
+  checkinsSubmitted30d: number;
+}
+
+export interface PublicPaymentRequest {
+  status: 'pending' | 'paid' | 'cancelled';
+  purpose: 'purchase' | 'renewal';
+  coachName: string;
+  clientFirstName: string;
+  packageTitle: string;
+  packageDescription: string;
+  billing: Billing;
+  interval?: BillingInterval | null;
+  durationWeeks?: number | null;
+  amount: number;
+  currency: string;
+  paymentsEnabled: boolean;
+}

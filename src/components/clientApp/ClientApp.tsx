@@ -18,7 +18,7 @@ import { AppNotification } from '../../types';
 const CommunityView = lazy(() => import('../engagement/CommunityView').then(m => ({ default: m.CommunityView })));
 
 /** Where a notification's link.tab should take a client. */
-const CLIENT_TAB_FOR: Record<string, ClientTab> = { chat: 'chat', messenger: 'chat', community: 'chat', today: 'today', progress: 'progress', nutrition: 'nutrition', workouts: 'workouts' };
+const CLIENT_TAB_FOR: Record<string, ClientTab> = { chat: 'chat', messenger: 'chat', community: 'chat', today: 'today', progress: 'progress', nutrition: 'nutrition', workouts: 'workouts', profile: 'profile' };
 import { Toast } from '../common/Toast';
 
 type ClientTab = 'today' | 'workouts' | 'nutrition' | 'progress' | 'chat' | 'profile';

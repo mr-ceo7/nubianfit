@@ -14,7 +14,9 @@ import {
   Apple,
   UsersRound,
   ClipboardCheck,
-  Sparkles
+  Sparkles,
+  Wallet,
+  ShieldCheck
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useEngagement } from '../../context/EngagementContext';
@@ -50,7 +52,9 @@ export const Sidebar: React.FC = () => {
     { id: 'messenger', label: '1-on-1 Messenger', icon: MessageSquare, badge: unreadCount > 0 ? unreadCount : undefined, badgeColor: 'bg-cyan-500' },
     { id: 'community', label: 'Community', icon: UsersRound },
     { id: 'checkins', label: 'Check-ins', icon: ClipboardCheck, badge: unreviewedCheckins > 0 ? unreviewedCheckins : undefined, badgeColor: 'bg-amber-500' },
-    { id: 'autoflow', label: 'Autoflow', icon: Sparkles }
+    { id: 'autoflow', label: 'Autoflow', icon: Sparkles },
+    { id: 'business', label: 'Business', icon: Wallet },
+    ...(user?.isAdmin ? [{ id: 'admin' as NavigationTab, label: 'Platform admin', icon: ShieldCheck }] : [])
   ];
 
   return (

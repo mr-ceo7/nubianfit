@@ -6,6 +6,7 @@ import { authApi } from '../../services/apiClient';
 import { Client } from '../../types';
 import { ClientAvatar } from '../common/ClientAvatar';
 import { NotificationSettings } from '../engagement/NotificationSettings';
+import { ClientBilling } from './ClientBilling';
 
 export const ClientProfile: React.FC<{ client: Client }> = ({ client }) => {
   const { theme, toggleTheme, showToast } = useApp();
@@ -63,6 +64,9 @@ export const ClientProfile: React.FC<{ client: Client }> = ({ client }) => {
             {saving ? 'Saving…' : 'Save password'}
           </button>
         </form>
+
+        <ClientBilling />
+        <NotificationSettings />
 
         <div className="grid grid-cols-2 gap-3">
           <button onClick={toggleTheme} className="rounded-2xl bg-slate-900 border border-slate-800 p-3.5 flex items-center justify-center gap-2 text-sm font-semibold text-white">

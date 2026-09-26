@@ -33,6 +33,8 @@
   --app-accent-light: #E4ECEB;
   /* Accent used for text/icons (links, active tabs) on page backgrounds */
   --app-accent-text: #276152;
+  /* Chart marks (validated with the dataviz palette checks against --app-card) */
+  --chart-1: #1F8A63;
 
   --app-amber-text: #9A4507;
   --app-amber-bg: #FEF3C7;
@@ -77,6 +79,7 @@
   --app-accent-hover: #4FB592;
   --app-accent-light: #0B2B25;
   --app-accent-text: #5EC4A1;
+  --chart-1: #3E9E7E;
 
   --app-amber-text: #FBBF24;
   --app-amber-bg: #78350F;

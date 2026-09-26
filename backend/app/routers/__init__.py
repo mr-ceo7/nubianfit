@@ -20,6 +20,9 @@ from app.routers.engagement import router as engagement_router
 from app.routers.community import router as community_router
 from app.routers.checkins import router as checkins_router
 from app.routers.autoflows import router as autoflows_router
+from app.routers.billing import router as billing_router
+from app.routers.pay import router as pay_router
+from app.routers.admin import router as admin_router
 
 __all__ = [
     "auth_router",
@@ -40,4 +43,7 @@ __all__ = [
     "community_router",
     "checkins_router",
     "autoflows_router",
+    "billing_router",
+    "pay_router",
+    "admin_router",
 ]

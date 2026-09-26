@@ -42,6 +42,7 @@ class UserResponse(CamelModel):
     avatar: str
     is_active: bool
     has_password: bool = False
+    is_admin: bool = False
 
 
 class TokenResponse(CamelModel):

@@ -18,6 +18,7 @@ from app.models.workout import ScheduledWorkout
 from app.schemas.program import ProgramCreate, ProgramUpdate, ProgramResponse, AssignProgramRequest
 from app.schemas.training import validate_program_days
 from app.services.activity import new_id, log_activity
+from app.services.programs import assign_program_to_client
 
 router = APIRouter(prefix="/programs", tags=["Programs"])
 
@@ -129,38 +130,13 @@ async def assign_program(
     client = await get_accessible_client(req.client_id, coach, db)
     start = req.start_date or date.today()
 
-    client.current_program_id = program.id
-    client.current_program_name = program.title
-    program.assigned_client_count = (program.assigned_client_count or 0) + 1
-
-    days = sorted(program.days or [], key=lambda d: d.get("dayNumber", 1))
-    for idx, day in enumerate(days):
-        db.add(ScheduledWorkout(
-            id=new_id("sched"),
-            client_id=client.id,
-            client_name=client.name,
-            client_avatar=client.avatar,
-            program_id=program.id,
-            program_name=program.title,
-            workout_day_id=day.get("id", f"day-{idx + 1}"),
-            workout_title=day.get("name") or f"Day {day.get('dayNumber', idx + 1)}",
-            description=day.get("description", ""),
-            date=(start + timedelta(days=day.get("dayNumber", idx + 1) - 1)).isoformat(),
-            time=None,
-            status="Scheduled",
-            exercises=day.get("exercises", []),
-            groups=day.get("groups", []),
-        ))
-    client.total_workouts_assigned = (client.total_workouts_assigned or 0) + len(days)
-
-    log_activity(db, client, "check_in_submitted", f"Assigned: {program.title}",
-                 f"{program.duration_weeks}-week program starting {start.isoformat()}", {"program_id": program.id})
+    scheduled = assign_program_to_client(db, program, client, start)
     await db.commit()
     return {
         "message": f"Assigned '{program.title}' to {client.name} starting {start.isoformat()}",
         "client_id": client.id,
         "program_id": program.id,
-        "scheduled_count": len(days),
+        "scheduled_count": scheduled,
     }
 
 

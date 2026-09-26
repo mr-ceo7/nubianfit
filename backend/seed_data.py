@@ -44,6 +44,11 @@ from app.models import (
     PostComment,
     GroupMessage,
     Autoflow,
+    PayoutAccount,
+    Package,
+    Subscription,
+    Payment,
+    PaymentRequest,
 )
 
 
@@ -279,6 +284,33 @@ def _seed_engagement(session, today: date) -> None:
     print("-> Seeded a check-in form, community group and onboarding Autoflow")
 
 
+def _seed_billing(session, today: date) -> None:
+    """Demo packages, a subscription with payment history, and an open payment link.
+    The payout account is fake: real checkouts need PAYSTACK_SECRET_KEY and a real subaccount."""
+    session.add(PayoutAccount(coach_id=DEMO_COACH_ID, business_name="Head Coach Fitness", bank_code="DEMO",
+                              bank_name="Demo Bank", account_last4="4321", subaccount_code="ACCT_demo", active=True))
+    session.add(Package(id="pkg-monthly", coach_id=DEMO_COACH_ID, title="Monthly Coaching",
+                        description="Custom program, weekly check-ins and unlimited messaging.",
+                        price_minor=800000, currency="KES", billing="recurring", interval="monthly",
+                        onboarding_form_id="form-weekly", active=True))
+    session.add(Package(id="pkg-12wk", coach_id=DEMO_COACH_ID, title="12-Week Transformation",
+                        description="A complete 12-week block with nutrition targets.",
+                        price_minor=2000000, currency="KES", billing="one_time", duration_weeks=12, program_id="prog-1", active=True))
+    period_start = today - timedelta(days=10)
+    session.add(Subscription(id="sub-demo", coach_id=DEMO_COACH_ID, client_id="client-1", package_id="pkg-monthly",
+                             status="active", current_period_start=period_start,
+                             current_period_end=period_start + timedelta(days=30), authorization_code="AUTH_demo",
+                             card_label="Visa •••• 4081", email="marcus.vance@example.com"))
+    for n in range(5):
+        paid = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=10 + 30 * n)
+        session.add(Payment(id=f"pay-demo-{n}", reference=f"nf_demo_{n}", coach_id=DEMO_COACH_ID, client_id="client-1",
+                            package_id="pkg-monthly", subscription_id="sub-demo", amount_minor=800000, fees_minor=12000,
+                            currency="KES", status="success", channel="card", fulfilled=True, paid_at=paid, created_at=paid))
+    session.add(PaymentRequest(id="payreq-demo", token="demo-pay-link-damon", coach_id=DEMO_COACH_ID, client_id="client-3",
+                               package_id="pkg-12wk", purpose="purchase", amount_minor=2000000, currency="KES", status="pending"))
+    print("-> Seeded demo packages, a subscription with payment history and a payment link")
+
+
 async def seed_database(force: bool = False):
     """Seed demo data (dev and tests only): a demo coach, their clients and sample history.
     With force=True all tables are dropped and recreated first."""
@@ -430,6 +462,7 @@ async def seed_database(force: bool = False):
 
         _seed_nutrition_and_habits(session, data.get("clients", []), date.today())
         _seed_engagement(session, date.today())
+        _seed_billing(session, date.today())
 
         # Photos
         for item in data.get("photos", []):

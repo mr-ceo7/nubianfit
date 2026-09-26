@@ -37,11 +37,13 @@ export type NavigationTab =
   | 'messenger'
   | 'community'
   | 'checkins'
-  | 'autoflow';
+  | 'autoflow'
+  | 'business'
+  | 'admin';
 
 const NAV_TABS: NavigationTab[] = [
   'dashboard', 'clients', 'programs', 'workouts', 'exercises', 'calendar', 'nutrition', 'progress', 'messenger',
-  'community', 'checkins', 'autoflow',
+  'community', 'checkins', 'autoflow', 'business', 'admin',
 ];
 export const isNavigationTab = (tab: string): tab is NavigationTab => (NAV_TABS as string[]).includes(tab);
 

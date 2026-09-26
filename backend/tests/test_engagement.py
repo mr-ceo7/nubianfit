@@ -222,4 +222,4 @@ async def test_cron_endpoint_requires_token(api, monkeypatch):
     monkeypatch.setattr(settings, "CRON_TOKEN", "secret-token")
     assert (await api.post("/api/internal/tick", headers={"X-Cron-Token": "wrong"})).status_code == 404
     res = await api.post("/api/internal/tick", headers={"X-Cron-Token": "secret-token"})
-    assert res.status_code == 200 and set(res.json()) == {"autoflowSteps", "checkinReminders", "digests"}
+    assert res.status_code == 200 and set(res.json()) == {"autoflowSteps", "checkinReminders", "digests", "renewals"}
