@@ -9,7 +9,8 @@ import {
   MessageSquare, 
   ChevronLeft, 
   ChevronRight,
-  LogOut
+  LogOut,
+  ListChecks
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { ClientAvatar } from '../common/ClientAvatar';
@@ -34,6 +35,7 @@ export const Sidebar: React.FC = () => {
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'clients', label: 'Clients & CRM', icon: Users, badge: clients.filter(c => c.status === 'Active').length },
     { id: 'programs', label: 'Program Builder', icon: Dumbbell },
+    { id: 'workouts', label: 'Workout Library', icon: ListChecks },
     { id: 'exercises', label: 'Exercise Library', icon: BookOpen },
     { id: 'calendar', label: 'Schedule', icon: CalendarDays, badge: todayPendingCount > 0 ? todayPendingCount : undefined, badgeColor: 'bg-emerald-500' },
     { id: 'progress', label: 'Metric Tracker', icon: TrendingUp },

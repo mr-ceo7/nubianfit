@@ -13,6 +13,7 @@ from app.routers.habits import router as habits_router
 from app.routers.photos import router as photos_router
 from app.routers.messages import router as messages_router
 from app.routers.activity import router as activity_router
+from app.routers.workout_templates import router as workout_templates_router
 
 __all__ = [
     "auth_router",
@@ -26,4 +27,5 @@ __all__ = [
     "photos_router",
     "messages_router",
     "activity_router",
+    "workout_templates_router",
 ]

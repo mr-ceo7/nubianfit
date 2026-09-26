@@ -9,7 +9,8 @@ import {
   ProgressPhoto,
   ChatMessage,
   ActivityFeedItem,
-  ClientDailyHabitLog
+  ClientDailyHabitLog,
+  WorkoutTemplate
 } from '../types';
 import {
   clientsApi,
@@ -22,6 +23,7 @@ import {
   photosApi,
   messagesApi,
   activityApi,
+  workoutTemplatesApi,
 } from '../services/apiClient';
 import { useAuth } from './AuthContext';
 
@@ -29,6 +31,7 @@ export type NavigationTab =
   | 'dashboard'
   | 'clients'
   | 'programs'
+  | 'workouts'
   | 'exercises'
   | 'calendar'
   | 'progress'
@@ -41,9 +44,12 @@ type WorkoutFeedback = {
   rating?: number;
   durationMin?: number;
   exercises?: ScheduledWorkout['exercises'];
+  groups?: ScheduledWorkout['groups'];
   totalVolumeKg?: number;
   prCount?: number;
 };
+
+type NewWorkoutTemplate = Omit<WorkoutTemplate, 'id' | 'createdAt' | 'updatedAt'>;
 
 interface AppContextType {
   activeTab: NavigationTab;
@@ -58,6 +64,7 @@ interface AppContextType {
   messages: ChatMessage[];
   activityFeed: ActivityFeedItem[];
   habitLogs: ClientDailyHabitLog[];
+  workoutTemplates: WorkoutTemplate[];
 
   // Selected state
   selectedClientId: string | null;
@@ -78,9 +85,13 @@ interface AppContextType {
   addExercise: (exercise: Omit<Exercise, 'id'>) => Promise<boolean>;
   saveProgram: (program: TrainingProgram) => Promise<TrainingProgram | null>;
   deleteProgram: (id: string) => Promise<boolean>;
-  assignProgramToClient: (programId: string, clientId: string) => Promise<boolean>;
+  assignProgramToClient: (programId: string, clientId: string, startDate?: string) => Promise<boolean>;
+  unassignProgram: (programId: string, clientId: string) => Promise<boolean>;
+  saveWorkoutTemplate: (template: NewWorkoutTemplate & { id?: string }) => Promise<WorkoutTemplate | null>;
+  deleteWorkoutTemplate: (id: string) => Promise<boolean>;
   scheduleWorkout: (workout: Omit<ScheduledWorkout, 'id'>) => Promise<boolean>;
   updateWorkoutLog: (workoutId: string, updates: Partial<ScheduledWorkout>) => Promise<boolean>;
+  deleteWorkout: (workoutId: string) => Promise<boolean>;
   completeWorkout: (workoutId: string, feedback: WorkoutFeedback) => Promise<boolean>;
   addMetricEntry: (entry: Omit<MetricEntry, 'id'>) => Promise<boolean>;
   addPersonalRecord: (pr: Omit<PersonalRecord, 'id'>) => Promise<boolean>;
@@ -123,6 +134,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [activityFeed, setActivityFeed] = useState<ActivityFeedItem[]>([]);
   const [habitLogs, setHabitLogs] = useState<ClientDailyHabitLog[]>([]);
+  const [workoutTemplates, setWorkoutTemplates] = useState<WorkoutTemplate[]>([]);
 
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [isWorkoutLoggerOpen, setIsWorkoutLoggerOpen] = useState<boolean>(false);
@@ -166,6 +178,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setMessages([]);
     setActivityFeed([]);
     setHabitLogs([]);
+    setWorkoutTemplates([]);
     setSelectedClientId(null);
   }, []);
 
@@ -195,13 +208,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setPhotos(ph);
       setMessages(msg);
       setActivityFeed(act);
+      // The workout library is coach-only.
+      setWorkoutTemplates(user?.role === 'coach' ? await workoutTemplatesApi.getAll() : []);
       setSelectedClientId(prev => (prev && c.some(x => x.id === prev) ? prev : c[0]?.id ?? null));
     } catch (err) {
       setLoadError(errorMessage(err));
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [user?.role]);
 
   // Load everything once signed in; drop it all on sign-out so nothing leaks between accounts.
   useEffect(() => {
@@ -301,17 +316,47 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return res !== null;
   };
 
-  const assignProgramToClient = async (programId: string, clientId: string) => {
+  const reloadTraining = async () => {
+    const [c, prog, w] = await Promise.all([clientsApi.getAll(), programsApi.getAll(), workoutsApi.getAll()]);
+    setClients(c);
+    setPrograms(prog);
+    setScheduledWorkouts(w);
+    await reloadActivity();
+  };
+
+  const assignProgramToClient = async (programId: string, clientId: string, startDate?: string) => {
     const res = await mutate(async () => {
-      const r = await programsApi.assign(programId, clientId);
-      const [c, prog, w] = await Promise.all([clientsApi.getAll(), programsApi.getAll(), workoutsApi.getAll()]);
-      setClients(c);
-      setPrograms(prog);
-      setScheduledWorkouts(w);
-      await reloadActivity();
+      const r = await programsApi.assign(programId, clientId, startDate);
+      await reloadTraining();
       return r;
     });
     if (res) showToast(res.message);
+    return res !== null;
+  };
+
+  const unassignProgram = async (programId: string, clientId: string) => {
+    const res = await mutate(async () => {
+      const r = await programsApi.unassign(programId, clientId);
+      await reloadTraining();
+      return r;
+    });
+    if (res) showToast(res.message);
+    return res !== null;
+  };
+
+  const saveWorkoutTemplate = async ({ id, ...template }: NewWorkoutTemplate & { id?: string }) =>
+    mutate(async () => {
+      const saved = id ? await workoutTemplatesApi.update(id, template) : await workoutTemplatesApi.create(template);
+      setWorkoutTemplates(prev => (id ? prev.map(t => (t.id === id ? saved : t)) : [saved, ...prev]));
+      return saved;
+    }, `Workout "${template.title}" saved.`);
+
+  const deleteWorkoutTemplate = async (id: string) => {
+    const res = await mutate(async () => {
+      await workoutTemplatesApi.delete(id);
+      setWorkoutTemplates(prev => prev.filter(t => t.id !== id));
+      return true;
+    }, 'Workout deleted.');
     return res !== null;
   };
 
@@ -332,6 +377,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return w;
     });
     return updated !== null;
+  };
+
+  const deleteWorkout = async (workoutId: string) => {
+    const res = await mutate(async () => {
+      await workoutsApi.delete(workoutId);
+      setScheduledWorkouts(prev => prev.filter(w => w.id !== workoutId));
+      await reloadClients();
+      return true;
+    }, 'Workout removed from the calendar.');
+    return res !== null;
   };
 
   const completeWorkout = async (workoutId: string, feedback: WorkoutFeedback) => {
@@ -420,6 +475,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         messages,
         activityFeed,
         habitLogs,
+        workoutTemplates,
         selectedClientId,
         setSelectedClientId,
         selectedClient,
@@ -435,8 +491,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         saveProgram,
         deleteProgram,
         assignProgramToClient,
+        unassignProgram,
+        saveWorkoutTemplate,
+        deleteWorkoutTemplate,
         scheduleWorkout,
         updateWorkoutLog,
+        deleteWorkout,
         completeWorkout,
         addMetricEntry,
         addPersonalRecord,

@@ -77,6 +77,7 @@ export const Header: React.FC<HeaderProps> = ({
       case 'dashboard': return 'Coach Overview';
       case 'clients': return 'Athletes & Roster';
       case 'programs': return 'Program Builder';
+      case 'workouts': return 'Workout Library';
       case 'exercises': return 'Exercise Database';
       case 'calendar': return 'Workout Schedule';
       case 'progress': return 'Metric Tracking';

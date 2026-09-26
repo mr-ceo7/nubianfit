@@ -6,6 +6,7 @@ import { CoachDashboard } from '../dashboard/CoachDashboard';
 // The dashboard loads with the shell; other tabs load when first opened.
 const ClientRoster = lazy(() => import('../clients/ClientRoster').then(m => ({ default: m.ClientRoster })));
 const ProgramBuilder = lazy(() => import('../programs/ProgramBuilder').then(m => ({ default: m.ProgramBuilder })));
+const WorkoutLibrary = lazy(() => import('../training/WorkoutLibrary').then(m => ({ default: m.WorkoutLibrary })));
 const ExerciseLibrary = lazy(() => import('../programs/ExerciseLibrary').then(m => ({ default: m.ExerciseLibrary })));
 const CalendarScheduler = lazy(() => import('../programs/CalendarScheduler').then(m => ({ default: m.CalendarScheduler })));
 const ProgressTracker = lazy(() => import('../progress/ProgressTracker').then(m => ({ default: m.ProgressTracker })));
@@ -15,7 +16,6 @@ import { WorkoutLoggerModal } from '../programs/WorkoutLoggerModal';
 import { MobileBottomNav } from './MobileBottomNav';
 import { PwaInstallPrompt } from '../common/PwaInstallPrompt';
 import { Loader } from '../common/Loader';
-import { Toast } from '../common/Toast';
 
 /** Coach OS, served at coach.<domain>. */
 export const CoachLayout: React.FC = () => {
@@ -76,6 +76,7 @@ export const CoachLayout: React.FC = () => {
                   />
                 )}
                 {activeTab === 'programs' && <ProgramBuilder />}
+                {activeTab === 'workouts' && <WorkoutLibrary />}
                 {activeTab === 'exercises' && (
                   <ExerciseLibrary
                     isAddModalOpen={isAddExerciseModalOpen}
@@ -98,7 +99,6 @@ export const CoachLayout: React.FC = () => {
       />
       <PwaInstallPrompt isOpen={isInstallModalOpen} onClose={() => setIsInstallModalOpen(false)} />
       <WorkoutLoggerModal />
-      <Toast />
     </div>
   );
 };

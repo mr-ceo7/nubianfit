@@ -39,6 +39,28 @@ DEMO_COACH_ID = "coach-1"
 SEED_ANCHOR_DATE = date(2026, 8, 16)
 
 
+# Weekday slots (1 = Monday) used to spread a program's training days across each week.
+WEEKLY_PATTERNS = {1: [1], 2: [1, 4], 3: [1, 3, 5], 4: [1, 2, 4, 5], 5: [1, 2, 3, 4, 5], 6: [1, 2, 3, 4, 5, 6]}
+
+
+def _weekly_program_days(program: dict) -> list:
+    """seed_data.json lists one week's training days; lay them out on the calendar for every week."""
+    templates = program.get("days", [])
+    weeks = int(program.get("durationWeeks", 8))
+    slots = WEEKLY_PATTERNS.get(len(templates), list(range(1, len(templates) + 1)))
+    days = []
+    for week in range(weeks):
+        for template, weekday in zip(templates, slots):
+            days.append({
+                **template,
+                "id": f"{template['id']}-w{week + 1}",
+                "dayNumber": week * 7 + weekday,
+                "exercises": [{"section": "main", "trackingType": "reps_weight", **ex} for ex in template.get("exercises", [])],
+                "groups": template.get("groups", []),
+            })
+    return days
+
+
 def _shift(value: str, offset: timedelta) -> str:
     """Shift a YYYY-MM-DD string by offset; leave anything else untouched."""
     try:
@@ -161,7 +183,7 @@ async def seed_database(force: bool = False):
                 goal=item.get("goal", "Hypertrophy"),
                 duration_weeks=int(item.get("durationWeeks", 8)),
                 days_per_week=int(item.get("daysPerWeek", 4)),
-                days=item.get("days", []),
+                days=_weekly_program_days(item),
                 tags=item.get("tags", []),
                 assigned_client_count=int(item.get("assignedClientCount", 0)),
                 created_at=_shift(item.get("createdAt", ""), offset),
@@ -174,7 +196,7 @@ async def seed_database(force: bool = False):
         program_days = {
             (prog["id"], day["id"]): day.get("exercises", [])
             for prog in data.get("programs", [])
-            for day in prog.get("days", [])
+            for day in _weekly_program_days(prog)
         }
         for item in data.get("scheduledWorkouts", []):
             sw = ScheduledWorkout(
@@ -195,7 +217,7 @@ async def seed_database(force: bool = False):
                 coach_feedback=item.get("coachFeedback"),
                 total_volume_kg=item.get("totalVolumeKg"),
                 pr_count=item.get("prCount"),
-                exercises=item.get("exercises") or program_days.get((item.get("programId"), item.get("workoutDayId")), []),
+                exercises=item.get("exercises") or program_days.get((item.get("programId"), f"{item.get('workoutDayId')}-w1"), []),
             )
             session.add(sw)
         print(f"-> Seeded {len(data.get('scheduledWorkouts', []))} scheduled workouts")

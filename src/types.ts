@@ -78,9 +78,33 @@ export interface Exercise {
   instructions: string[];
   formCues: string[];
   demoVideoPlaceholderUrl?: string;
+  /** YouTube or Vimeo link. */
+  videoUrl?: string | null;
+  /** Default tracking when the exercise is added to a workout. */
+  trackingType?: TrackingType;
   thumbnailUrl: string;
   category: 'Strength' | 'Hypertrophy' | 'Cardio' | 'Mobility' | 'Olympic';
   isCustom?: boolean;
+}
+
+/** What the athlete records for an exercise. */
+export type TrackingType = 'reps_weight' | 'reps' | 'time' | 'distance' | 'time_distance';
+export type WorkoutSection = 'warmup' | 'main' | 'cooldown';
+export type GroupKind = 'superset' | 'circuit' | 'amrap' | 'emom';
+
+/** Exercises sharing a groupId are performed together as one block. */
+export interface ExerciseGroup {
+  id: string;
+  kind: GroupKind;
+  /** Superset / circuit rounds. */
+  rounds?: number;
+  /** AMRAP time cap. */
+  timeCapMin?: number;
+  /** EMOM interval (usually 60s) and total minutes via timeCapMin. */
+  intervalSec?: number;
+  notes?: string;
+  /** Logged by the athlete for AMRAP/EMOM blocks. */
+  completedRounds?: number;
 }
 
 export interface WorkoutSet {
@@ -89,10 +113,14 @@ export interface WorkoutSet {
   targetReps: string; // e.g. "8-10" or "12"
   targetRpe?: number; // e.g. 8
   targetWeightKg?: number;
+  targetDurationSec?: number;
+  targetDistanceM?: number;
   restSeconds?: number;
   completedReps?: number;
   completedWeightKg?: number;
   completedRpe?: number;
+  completedDurationSec?: number;
+  completedDistanceM?: number;
   isCompleted?: boolean;
   notes?: string;
 }
@@ -107,17 +135,39 @@ export interface WorkoutExerciseItem {
   tempo?: string; // e.g. "3-0-1-0"
   coachNotes?: string;
   isSupersetWithNext?: boolean;
+  section?: WorkoutSection; // default 'main'
+  trackingType?: TrackingType; // default 'reps_weight'
+  groupId?: string;
+  videoUrl?: string | null;
 }
 
-export interface WorkoutDay {
+/** The structured content every workout carries (library, program day, scheduled). */
+export interface WorkoutContent {
+  exercises: WorkoutExerciseItem[];
+  groups?: ExerciseGroup[];
+}
+
+/** A workout placed in a program. dayNumber is absolute: 1 = week 1 Monday, 8 = week 2 Monday. */
+export interface WorkoutDay extends WorkoutContent {
   id: string;
   dayNumber: number;
-  name: string; // e.g. "Day 1: Upper Body Power"
+  name: string; // e.g. "Upper Body Power"
+  description?: string;
   focus: string;
   estimatedDurationMin: number;
   warmupNotes?: string;
   cooldownNotes?: string;
-  exercises: WorkoutExerciseItem[];
+}
+
+/** Reusable workout in the coach's library. */
+export interface WorkoutTemplate extends WorkoutContent {
+  id: string;
+  title: string;
+  description: string;
+  estimatedDurationMin: number;
+  tags: string[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface TrainingProgram {
@@ -136,7 +186,7 @@ export interface TrainingProgram {
   updatedAt: string;
 }
 
-export interface ScheduledWorkout {
+export interface ScheduledWorkout extends WorkoutContent {
   id: string;
   clientId: string;
   clientName: string;
@@ -154,7 +204,7 @@ export interface ScheduledWorkout {
   coachFeedback?: string;
   totalVolumeKg?: number;
   prCount?: number;
-  exercises: WorkoutExerciseItem[];
+  description?: string;
 }
 
 export interface MetricEntry {

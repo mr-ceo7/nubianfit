@@ -62,6 +62,24 @@ Startup (`app/main.py`) depends on the environment:
 
 Email (`app/services/email.py`) goes through Resend. Without a key, messages are logged and collected in `email.outbox`, which the tests read to get login codes. Auth endpoints are rate-limited in memory (`app/rate_limiter.py`, single instance).
 
+### Training content (workouts, programs, library)
+All workout JSON has the same shape: `WorkoutContent` in `src/types.ts`, validated server-side by `backend/app/schemas/training.py`. Three places store it:
+- library workouts (`WorkoutTemplate`)
+- program days (`TrainingProgram.days`)
+- client calendar entries (`ScheduledWorkout`)
+
+The shape:
+- `exercises` is one ordered list. Each item has a `section` (`warmup`, `main` or `cooldown`) and a `trackingType`: `reps_weight`, `reps`, `time`, `distance` or `time_distance`.
+- Items sharing a `groupId` form one block (`superset`, `circuit`, `amrap` or `emom`). The block itself is defined in `groups`.
+
+Edits go through the pure functions in `src/utils/workoutEdit.ts`. They keep a group's exercises contiguous and in one section, dissolve groups left with fewer than two exercises, and keep a superset or circuit's rounds equal to its exercises' set counts. For display, `buildSections()` in `src/utils/workout.ts` arranges the flat list into sections and blocks.
+
+When content moves between the library, programs and calendars, it is copied with `cloneContent()`, which assigns fresh ids and clears logged results. Nothing is shared by reference.
+
+Programs are weekly calendars. `WorkoutDay.dayNumber` counts from the start of the program (1 = week 1 Monday, 8 = week 2 Monday), and empty days are rest days. `POST /programs/{id}/assign` takes `startDate` and places day N on `startDate + N - 1`. `DELETE /programs/{id}/assign/{clientId}` removes only future workouts that haven't been completed.
+
+Exercise videos are YouTube or Vimeo links, validated on both sides and embedded with `VideoEmbed`. The CSP `frame-src` in `vercel.json` allows exactly those two players.
+
 ### Theming
 Tailwind colors are remapped to CSS variables in `src/index.css`. `slate-*` and `emerald-*` follow light and dark mode, and `text-white` becomes dark green in light mode. For text on an accent background, use `bg-emerald-500 text-slate-950`.
 

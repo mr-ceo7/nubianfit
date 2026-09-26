@@ -14,6 +14,7 @@ from app.models.photo import ProgressPhoto
 from app.models.message import ChatMessage
 from app.models.activity import ActivityFeedItem
 from app.models.otp import EmailOTP
+from app.models.workout_template import WorkoutTemplate
 
 __all__ = [
     "User",
@@ -28,4 +29,5 @@ __all__ = [
     "ChatMessage",
     "ActivityFeedItem",
     "EmailOTP",
+    "WorkoutTemplate",
 ]

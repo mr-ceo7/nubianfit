@@ -3,7 +3,7 @@ Scheduled Workout / Workout Log ORM Model
 """
 
 from typing import List, Dict, Any, Optional
-from sqlalchemy import String, Integer, Float, Text, JSON
+from sqlalchemy import String, Integer, Float, Text, JSON, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
@@ -29,4 +29,7 @@ class ScheduledWorkout(Base):
     coach_feedback: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     total_volume_kg: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     pr_count: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    description: Mapped[str] = mapped_column(Text, default="", server_default="")
     exercises: Mapped[List[Dict[str, Any]]] = mapped_column(JSON, default=list)
+    # Superset / circuit / AMRAP / EMOM definitions referenced by exercises[].groupId
+    groups: Mapped[List[Dict[str, Any]]] = mapped_column(JSON, default=list, server_default=text("'[]'"))

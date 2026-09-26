@@ -56,13 +56,16 @@ if [ ! -d "backend/venv" ]; then
   ./backend/venv/bin/pip install -r backend/requirements.txt
 fi
 
-# Seed demo data (dev only). Reseed if the local DB predates the current schema
-# (no clients.coach_id column); dev uses create_all, which never alters existing tables.
+# Seed demo data (dev only). Reseed if the local DB predates the current schema;
+# dev uses create_all, which never alters existing tables. Add a (table, column) here
+# whenever a migration adds one.
 export ENABLE_DEV_SEED=true
 if [ -f "backend/nubianfit.db" ] && ! ./backend/venv/bin/python - <<'PY'
 import sqlite3, sys
-cols = [r[1] for r in sqlite3.connect("backend/nubianfit.db").execute("PRAGMA table_info(clients)")]
-sys.exit(0 if "coach_id" in cols else 1)
+db = sqlite3.connect("backend/nubianfit.db")
+required = [("clients", "coach_id"), ("scheduled_workouts", "groups"), ("exercises", "video_url"), ("workout_templates", "id")]
+ok = all(col in [r[1] for r in db.execute(f"PRAGMA table_info({table})")] for table, col in required)
+sys.exit(0 if ok else 1)
 PY
 then
   echo "Local database uses an old schema; reseeding demo data..."

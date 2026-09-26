@@ -13,7 +13,8 @@ import {
   ProgressPhoto,
   ChatMessage,
   ActivityFeedItem,
-  ClientDailyHabitLog
+  ClientDailyHabitLog,
+  WorkoutTemplate
 } from '../types';
 
 export const API_BASE_URL = ((import.meta as unknown as { env?: { VITE_API_URL?: string } }).env?.VITE_API_URL) || '/api';
@@ -197,9 +198,20 @@ export const programsApi = {
   getById: (id: string) => api.get<TrainingProgram>(`/programs/${id}`),
   save: (program: TrainingProgram) => api.post<TrainingProgram>('/programs', program),
   update: (id: string, updates: Partial<TrainingProgram>) => api.patch<TrainingProgram>(`/programs/${id}`, updates),
-  assign: (programId: string, clientId: string) =>
-    api.post<{ message: string; scheduled_count: number }>(`/programs/${programId}/assign`, { clientId }),
+  assign: (programId: string, clientId: string, startDate?: string) =>
+    api.post<{ message: string; scheduled_count: number }>(`/programs/${programId}/assign`, { clientId, startDate }),
+  unassign: (programId: string, clientId: string) =>
+    api.delete<{ message: string; removed: number }>(`/programs/${programId}/assign/${clientId}`),
   delete: (id: string) => api.delete<{ message: string; id: string }>(`/programs/${id}`),
+};
+
+// Workout Library Endpoints (coach only)
+export const workoutTemplatesApi = {
+  getAll: () => api.get<WorkoutTemplate[]>('/workout-templates'),
+  create: (template: Omit<WorkoutTemplate, 'id' | 'createdAt' | 'updatedAt'>) =>
+    api.post<WorkoutTemplate>('/workout-templates', template),
+  update: (id: string, updates: Partial<WorkoutTemplate>) => api.patch<WorkoutTemplate>(`/workout-templates/${id}`, updates),
+  delete: (id: string) => api.delete<{ message: string; id: string }>(`/workout-templates/${id}`),
 };
 
 // Scheduled Workouts Endpoints
@@ -217,6 +229,7 @@ export const workoutsApi = {
       rating?: number;
       durationMin?: number;
       exercises?: ScheduledWorkout['exercises'];
+      groups?: ScheduledWorkout['groups'];
       totalVolumeKg?: number;
       prCount?: number;
     }

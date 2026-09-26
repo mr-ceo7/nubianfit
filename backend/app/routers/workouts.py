@@ -18,12 +18,13 @@ from app.models.workout import ScheduledWorkout
 from app.schemas.workout import (
     ScheduledWorkoutCreate, ScheduledWorkoutUpdate, ScheduledWorkoutResponse, CompleteWorkoutRequest,
 )
+from app.schemas.training import validate_workout_content
 from app.services.activity import new_id, log_activity
 
 router = APIRouter(prefix="/workouts", tags=["Workouts"])
 
 # Fields a client may change when logging their own workout.
-CLIENT_EDITABLE_FIELDS = {"status", "duration_min", "rating", "client_feedback", "total_volume_kg", "pr_count", "exercises"}
+CLIENT_EDITABLE_FIELDS = {"status", "duration_min", "rating", "client_feedback", "total_volume_kg", "pr_count", "exercises", "groups"}
 
 
 async def _get_workout(workout_id: str, user: User, db: AsyncSession) -> ScheduledWorkout:
@@ -91,6 +92,12 @@ async def update_workout(
     elif "client_id" in update_data and update_data["client_id"] != w.client_id:
         await get_accessible_client(update_data["client_id"], user, db)
 
+    if "exercises" in update_data or "groups" in update_data:
+        try:
+            validate_workout_content(update_data.get("exercises", w.exercises or []), update_data.get("groups", w.groups or []))
+        except ValueError as e:
+            raise HTTPException(status_code=422, detail=str(e))
+
     for field, val in update_data.items():
         setattr(w, field, val)
     await db.commit()
@@ -117,8 +124,15 @@ async def complete_workout(
         w.client_feedback = req.client_feedback
     if req.coach_feedback and user.role == "coach":
         w.coach_feedback = req.coach_feedback
+    if req.exercises or req.groups:
+        try:
+            validate_workout_content(req.exercises or w.exercises or [], req.groups if req.groups is not None else (w.groups or []))
+        except ValueError as e:
+            raise HTTPException(status_code=422, detail=str(e))
     if req.exercises:
         w.exercises = req.exercises
+    if req.groups is not None:
+        w.groups = req.groups
     if req.total_volume_kg is not None:
         w.total_volume_kg = req.total_volume_kg
     if req.pr_count is not None:

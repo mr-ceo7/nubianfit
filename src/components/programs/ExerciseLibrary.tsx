@@ -11,10 +11,13 @@ import {
   CheckCircle2, 
   Activity,
   ChevronRight,
-  Flame
+  Flame,
+  PlayCircle,
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
-import { Exercise, MuscleGroup, Equipment, Difficulty } from '../../types';
+import { Exercise, MuscleGroup, Equipment, Difficulty, TrackingType } from '../../types';
+import { TRACKING, videoEmbedUrl } from '../../utils/workout';
+import { VideoEmbed } from '../training/VideoEmbed';
 
 export const ExerciseLibrary: React.FC<{
   isAddModalOpen: boolean;
@@ -38,6 +41,9 @@ export const ExerciseLibrary: React.FC<{
   const [formDescription, setFormDescription] = useState('');
   const [formInstructions, setFormInstructions] = useState('');
   const [formCues, setFormCues] = useState('');
+  const [formVideoUrl, setFormVideoUrl] = useState('');
+  const [formTracking, setFormTracking] = useState<TrackingType>('reps_weight');
+  const [formError, setFormError] = useState<string | null>(null);
 
   const muscles: (MuscleGroup | 'All')[] = [
     'All', 'Chest', 'Back', 'Quads', 'Hamstrings', 'Glutes', 'Shoulders', 'Biceps', 'Triceps', 'Core', 'Cardio'
@@ -57,28 +63,38 @@ export const ExerciseLibrary: React.FC<{
     return matchesSearch && matchesMuscle && matchesEquip && matchesDiff;
   });
 
-  const handleCreateExercise = (e: React.FormEvent) => {
+  const handleCreateExercise = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formName.trim()) return;
+    const videoUrl = formVideoUrl.trim();
+    if (videoUrl && !videoEmbedUrl(videoUrl)) {
+      setFormError('Paste a YouTube or Vimeo link (e.g. https://youtu.be/…).');
+      return;
+    }
+    setFormError(null);
 
-    addExercise({
+    const ok = await addExercise({
       name: formName.trim(),
       primaryMuscle: formMuscle,
-      secondaryMuscles: ['Core'],
+      secondaryMuscles: [],
       equipment: formEquipment,
       difficulty: formDifficulty,
       category: formCategory,
-      description: formDescription.trim() || 'Custom exercise added to coach movement catalog.',
-      instructions: formInstructions.trim() 
-        ? formInstructions.split('\n').map(s => s.trim()).filter(Boolean)
-        : ['Execute with controlled eccentric tempo and full range of motion.'],
-      formCues: formCues.trim() 
-        ? formCues.split(',').map(s => s.trim()).filter(Boolean)
-        : ['Maintain neutral spine', 'Engage primary target muscle'],
-      thumbnailUrl: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=400&auto=format&fit=crop&q=80'
+      description: formDescription.trim(),
+      instructions: formInstructions.split('\n').map(s => s.trim()).filter(Boolean),
+      formCues: formCues.split(',').map(s => s.trim()).filter(Boolean),
+      thumbnailUrl: '',
+      videoUrl: videoUrl || null,
+      trackingType: formTracking,
     });
-
-    onCloseAddModal();
+    if (ok) {
+      setFormName('');
+      setFormDescription('');
+      setFormInstructions('');
+      setFormCues('');
+      setFormVideoUrl('');
+      onCloseAddModal();
+    }
   };
 
   return (
@@ -176,11 +192,23 @@ export const ExerciseLibrary: React.FC<{
           >
             {/* Image Thumbnail */}
             <div className="relative h-36 w-full overflow-hidden bg-slate-950">
-              <img
-                src={exercise.thumbnailUrl}
-                alt={exercise.name}
-                className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300 opacity-85 group-hover:opacity-100"
-              />
+              {exercise.thumbnailUrl ? (
+                <img
+                  src={exercise.thumbnailUrl}
+                  alt=""
+                  loading="lazy"
+                  className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300 opacity-85 group-hover:opacity-100"
+                />
+              ) : (
+                <div className="h-full w-full flex items-center justify-center">
+                  <Dumbbell className="h-10 w-10 text-slate-700" />
+                </div>
+              )}
+              {exercise.videoUrl && (
+                <span className="absolute bottom-2 right-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/70 text-[10px] font-bold text-white">
+                  <PlayCircle className="h-3 w-3" /> Video
+                </span>
+              )}
               <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent" />
               
               <div className="absolute top-2.5 left-2.5 flex gap-1.5">
@@ -229,13 +257,15 @@ export const ExerciseLibrary: React.FC<{
       {viewingExercise && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
           <div className="relative w-full max-w-2xl max-h-[90vh] rounded-3xl bg-slate-900 border border-slate-700 shadow-2xl overflow-hidden flex flex-col">
-            <div className="relative h-48 w-full bg-slate-950 overflow-hidden">
-              <img
-                src={viewingExercise.thumbnailUrl}
-                alt={viewingExercise.name}
-                className="h-full w-full object-cover opacity-90"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent" />
+            <div className={`relative w-full bg-slate-950 overflow-hidden ${viewingExercise.videoUrl ? '' : 'h-48'}`}>
+              {viewingExercise.videoUrl ? (
+                <VideoEmbed url={viewingExercise.videoUrl} title={viewingExercise.name} className="rounded-none" />
+              ) : viewingExercise.thumbnailUrl ? (
+                <img src={viewingExercise.thumbnailUrl} alt="" className="h-full w-full object-cover opacity-90" />
+              ) : (
+                <div className="h-full w-full flex items-center justify-center"><Dumbbell className="h-12 w-12 text-slate-700" /></div>
+              )}
+              {!viewingExercise.videoUrl && <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent" />}
               
               <button
                 onClick={() => setViewingExercise(null)}
@@ -397,6 +427,33 @@ export const ExerciseLibrary: React.FC<{
                   className="w-full h-9 px-3 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-hidden"
                 />
               </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-[1fr_170px] gap-3">
+                <div>
+                  <label htmlFor="exercise-video" className="block text-slate-400 font-bold uppercase text-[10px] mb-1">Demo video (YouTube or Vimeo link)</label>
+                  <input
+                    id="exercise-video"
+                    type="url"
+                    placeholder="https://youtu.be/…"
+                    value={formVideoUrl}
+                    onChange={(e) => setFormVideoUrl(e.target.value)}
+                    className="w-full h-9 px-3 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-hidden"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="exercise-tracking" className="block text-slate-400 font-bold uppercase text-[10px] mb-1">Tracked as</label>
+                  <select
+                    id="exercise-tracking"
+                    value={formTracking}
+                    onChange={(e) => setFormTracking(e.target.value as TrackingType)}
+                    className="w-full h-9 px-3 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white"
+                  >
+                    {(Object.keys(TRACKING) as TrackingType[]).map(t => <option key={t} value={t}>{TRACKING[t].label}</option>)}
+                  </select>
+                </div>
+              </div>
+              {formVideoUrl && videoEmbedUrl(formVideoUrl) && <VideoEmbed url={formVideoUrl} title="Preview" />}
+              {formError && <p role="alert" className="text-xs text-red-400">{formError}</p>}
 
               <div className="pt-3 border-t border-slate-800 flex justify-end gap-2">
                 <button

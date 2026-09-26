@@ -3,8 +3,9 @@ Workout / Scheduled Workout Pydantic Schemas
 """
 
 from typing import List, Dict, Any, Optional
-from pydantic import Field
+from pydantic import Field, model_validator
 from app.schemas.common import CamelModel
+from app.schemas.training import validate_workout_content
 
 
 class ScheduledWorkoutBase(CamelModel):
@@ -24,11 +25,18 @@ class ScheduledWorkoutBase(CamelModel):
     coach_feedback: Optional[str] = None
     total_volume_kg: Optional[float] = None
     pr_count: Optional[int] = None
+    description: str = ""
     exercises: List[Dict[str, Any]] = Field(default_factory=list)
+    groups: List[Dict[str, Any]] = Field(default_factory=list)
 
 
 class ScheduledWorkoutCreate(ScheduledWorkoutBase):
     id: Optional[str] = None
+
+    @model_validator(mode="after")
+    def check_content(self):
+        validate_workout_content(self.exercises, self.groups)
+        return self
 
 
 class ScheduledWorkoutUpdate(CamelModel):
@@ -48,7 +56,9 @@ class ScheduledWorkoutUpdate(CamelModel):
     coach_feedback: Optional[str] = None
     total_volume_kg: Optional[float] = None
     pr_count: Optional[int] = None
+    description: Optional[str] = None
     exercises: Optional[List[Dict[str, Any]]] = None
+    groups: Optional[List[Dict[str, Any]]] = None
 
 
 class CompleteWorkoutRequest(CamelModel):
@@ -57,6 +67,7 @@ class CompleteWorkoutRequest(CamelModel):
     rating: Optional[int] = 5
     duration_min: Optional[int] = None
     exercises: Optional[List[Dict[str, Any]]] = None
+    groups: Optional[List[Dict[str, Any]]] = None
     total_volume_kg: Optional[float] = None
     pr_count: Optional[int] = None
 

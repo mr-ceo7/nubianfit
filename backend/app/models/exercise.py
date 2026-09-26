@@ -26,4 +26,8 @@ class Exercise(Base):
     form_cues: Mapped[List[str]] = mapped_column(JSON, default=list)
     demo_video_placeholder_url: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
     thumbnail_url: Mapped[str] = mapped_column(String(512), default="")
+    # YouTube or Vimeo link played in the exercise library and workout logger.
+    video_url: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
+    # Default tracking type when the exercise is added to a workout.
+    tracking_type: Mapped[str] = mapped_column(String(32), default="reps_weight", server_default="reps_weight")
     is_custom: Mapped[bool] = mapped_column(Boolean, default=False)
