@@ -29,12 +29,21 @@ services:
         generateValue: true
       - key: COACH_INVITE_CODE
         generateValue: true
+      - key: CRON_TOKEN
+        generateValue: true
       # Set these in the Render dashboard:
       - key: RESEND_API_KEY
         sync: false
       - key: FROM_EMAIL
         sync: false
       - key: FDC_API_KEY
+        sync: false
+      # Web push keys: run `python scripts/generate_vapid_keys.py` once and paste both values.
+      - key: VAPID_PUBLIC_KEY
+        sync: false
+      - key: VAPID_PRIVATE_KEY
+        sync: false
+      - key: VAPID_SUBJECT
         sync: false
       - key: DEFAULT_COACH_EMAIL
         sync: false

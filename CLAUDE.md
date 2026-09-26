@@ -102,6 +102,28 @@ This state lives in `context/NutritionContext.tsx` (`useNutrition()`), separate 
 
 Watch out: the camelCase alias generator turns `per100g` into `per100G`, so fields with digits need an explicit `Field(alias=...)`.
 
+### Engagement: notifications, live events, community, check-ins, Autoflow
+**Live events.** `backend/app/services/events.py` is an in-memory pub/sub, so it only works with a single server process. Clients open the stream in two steps:
+1. `POST /api/events/ticket` returns a one-time ticket.
+2. `GET /api/events/stream?ticket=` opens the SSE stream. `EventSource` can't send an auth header, which is why the ticket exists.
+
+On the frontend, `src/services/realtime.ts` fetches a fresh ticket on every reconnect. `context/EngagementContext.tsx` handles the `notification`, `message`, `group_message` and `community` events, and catches up when a reconnect succeeds.
+
+**Notifications.** `services/notify.notify()` stores a `Notification`, commits, publishes it to the live stream, and sends a web push (pywebpush; push is off unless the VAPID keys are set). Email digests go to users with unread, un-emailed notifications older than `DIGEST_DELAY_MINUTES`, except users who are currently connected or have opted out.
+
+**Scheduled jobs.** `services/scheduler.run_tick()` runs Autoflow steps, "check-in due" notifications and email digests. It runs from a loop in the app lifespan (disabled when `TESTING`), and from `POST /api/internal/tick` with the header `X-Cron-Token: $CRON_TOKEN`, for hosts that sleep. It's idempotent.
+
+**Check-ins.**
+- A `CheckinAssignment` is a form scheduled for a client: `once` on its start date, or `weekly` on the start date's weekday.
+- Due dates are computed, not stored (`services/checkins.py`). A `CheckinResponse` snapshots the questions it answered.
+- A `weight` answer also writes a `MetricEntry`. A `photo` answer also writes a `ProgressPhoto` whose `photo_url` is `file:<StoredFile id>`.
+
+**Uploaded photos.** Photos live in Postgres (`StoredFile`) and are compressed in the browser first (`utils/image.ts`). They're served only via HMAC-signed URLs (`sign_file`, valid 24 h), because `<img>` tags can't send the bearer token. Never hand out a `file:` reference without checking that the file's `client_id` matches.
+
+**Autoflow.** An Autoflow's steps are `{day, type: message|checkin|habit}`, where day 1 is the assignment's start date. Completed step ids are stored on the assignment, and assigning runs any step already due.
+
+**Deep links.** Notification links look like `{tab, clientId?, groupId?}`. Push taps open `/?open=<tab>&…`, which `utils/deepLink.ts` reads and then clears.
+
 ### Theming
 Tailwind colors are remapped to CSS variables in `src/index.css`. `slate-*` and `emerald-*` follow light and dark mode, and `text-white` becomes dark green in light mode. For text on an accent background, use `bg-emerald-500 text-slate-950`.
 
@@ -109,7 +131,8 @@ Tailwind colors are remapped to CSS variables in `src/index.css`. `slate-*` and 
 
 - Frontend: Vercel. `vercel.json` rewrites `/api/*` to `https://nubianfit-backend.onrender.com` (same-origin, so no CORS) and sets a strict CSP; add any new external host to the CSP. All three subdomains point at the same Vercel project.
 - Backend: Render blueprint `render.yaml` (Postgres plus web service). The start command runs `alembic upgrade head` before uvicorn.
-- PWA: `public/sw.js` never caches `/api/`. It registers in production builds only.
+- PWA: `public/sw.js` never caches `/api/`. It registers in production builds only, so web push works only in production builds. The worker also handles `push` and `notificationclick`.
+- Live events pass through the Vercel `/api` rewrite. The server sends a keep-alive every 20 s, and the client reconnects if the proxy cuts the stream.
 
 <!-- imported-from: gemini:project:instructions -->
 # Workspace Design Guidelines

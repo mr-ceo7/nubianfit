@@ -3,7 +3,7 @@
  * Provides offline resilience, static asset caching, and instantaneous loads.
  */
 
-const CACHE_NAME = 'nubianfit-cache-v2';
+const CACHE_NAME = 'nubianfit-cache-v3';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -76,6 +76,47 @@ self.addEventListener('fetch', (event) => {
       });
 
       return cachedResponse || fetchPromise;
+    })
+  );
+});
+
+// Web push: show the notification sent by the server.
+self.addEventListener('push', (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch (e) {
+    data = { title: 'NubianFit', body: event.data ? event.data.text() : '' };
+  }
+  event.waitUntil(
+    self.registration.showNotification(data.title || 'NubianFit', {
+      body: data.body || '',
+      icon: '/icon.png',
+      badge: '/icon.png',
+      tag: data.tag,
+      data: { link: data.link || {} },
+    })
+  );
+});
+
+// Open (or focus) the app on the screen the notification is about.
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const link = (event.notification.data && event.notification.data.link) || {};
+  const params = new URLSearchParams();
+  if (link.tab) params.set('open', link.tab);
+  if (link.clientId) params.set('clientId', link.clientId);
+  if (link.groupId) params.set('groupId', link.groupId);
+  const url = '/' + (params.toString() ? '?' + params.toString() : '');
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windows) => {
+      for (const client of windows) {
+        if ('focus' in client) {
+          client.navigate(url);
+          return client.focus();
+        }
+      }
+      return self.clients.openWindow(url);
     })
   );
 });

@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { authApi } from '../../services/apiClient';
 import { Client } from '../../types';
 import { ClientAvatar } from '../common/ClientAvatar';
+import { NotificationSettings } from '../engagement/NotificationSettings';
 
 export const ClientProfile: React.FC<{ client: Client }> = ({ client }) => {
   const { theme, toggleTheme, showToast } = useApp();
@@ -83,3 +84,4 @@ const Row: React.FC<{ label: string; value: string }> = ({ label, value }) => (
     <dd className="text-white font-medium text-right truncate">{value}</dd>
   </div>
 );
+

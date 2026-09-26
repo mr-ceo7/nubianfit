@@ -34,7 +34,16 @@ export type NavigationTab =
   | 'calendar'
   | 'nutrition'
   | 'progress'
-  | 'messenger';
+  | 'messenger'
+  | 'community'
+  | 'checkins'
+  | 'autoflow';
+
+const NAV_TABS: NavigationTab[] = [
+  'dashboard', 'clients', 'programs', 'workouts', 'exercises', 'calendar', 'nutrition', 'progress', 'messenger',
+  'community', 'checkins', 'autoflow',
+];
+export const isNavigationTab = (tab: string): tab is NavigationTab => (NAV_TABS as string[]).includes(tab);
 
 type NewClient = Omit<Client, 'id' | 'workoutsCompleted' | 'totalWorkoutsAssigned' | 'complianceRate' | 'lastActive'>;
 type WorkoutFeedback = {
@@ -96,6 +105,8 @@ interface AppContextType {
   addProgressPhoto: (photo: Omit<ProgressPhoto, 'id'>) => Promise<boolean>;
   sendMessage: (clientId: string, text: string, attachment?: ChatMessage['attachment']) => Promise<boolean>;
   markThreadRead: (clientId: string) => Promise<void>;
+  /** Re-fetch chat messages (called when a live event says there's something new). */
+  reloadMessages: () => Promise<void>;
 
   refreshData: () => Promise<void>;
   isLoading: boolean;
@@ -432,6 +443,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return sent !== null;
   };
 
+  const reloadMessages = useCallback(async () => {
+    try {
+      setMessages(await messagesApi.getAll());
+    } catch {
+      // next event or refresh will catch up
+    }
+  }, []);
+
   const markThreadRead = async (clientId: string) => {
     const other = user?.role === 'coach' ? 'client' : 'coach';
     const hasUnread = messages.some(m => m.clientId === clientId && m.sender === other && !m.isRead);
@@ -486,6 +505,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addProgressPhoto,
         sendMessage,
         markThreadRead,
+        reloadMessages,
         refreshData,
         isLoading,
         loadError,

@@ -19,6 +19,17 @@ import {
   FoodLogEntry,
   ClientGoals,
   DailyMetric,
+  AppNotification,
+  CommunityGroup,
+  GroupPost,
+  PostComment,
+  GroupMessage,
+  CheckinForm,
+  CheckinAssignment,
+  CheckinResponse,
+  CheckinAnswer,
+  Autoflow,
+  AutoflowAssignment,
   MealPlan,
   MealPlanAssignment,
   Nutrients,
@@ -66,13 +77,10 @@ class ApiClient {
 
   async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        ...this.getHeaders(),
-        ...(options.headers || {}),
-      },
-    });
+    const headers: Record<string, string> = { ...(this.getHeaders() as Record<string, string>), ...((options.headers as Record<string, string>) || {}) };
+    // Let the browser set the multipart boundary for uploads.
+    if (options.body instanceof FormData) delete headers['Content-Type'];
+    const response = await fetch(url, { ...options, headers });
 
     if (!response.ok) {
       if (response.status === 401 && tokenStore.get()) {
@@ -304,6 +312,71 @@ export const mealPlansApi = {
   assign: (planId: string, clientId: string, startDate: string) =>
     api.post<MealPlanAssignment>(`/meal-plans/${planId}/assign`, { clientId, startDate }),
   unassign: (clientId: string) => api.delete<{ message: string }>(`/meal-plans/assignments/${clientId}`),
+};
+
+// Notifications, live events, push and preferences
+export const notificationsApi = {
+  list: () => api.get<{ items: AppNotification[]; unreadCount: number }>('/notifications'),
+  markRead: (ids?: string[]) => api.post<{ message: string }>('/notifications/read', ids ? { ids } : {}),
+  eventTicket: () => api.post<{ ticket: string }>('/events/ticket'),
+  pushKey: () => api.get<{ publicKey: string | null }>('/push/public-key'),
+  pushSubscribe: (sub: PushSubscriptionJSON) => api.post<{ message: string }>('/push/subscribe', sub),
+  pushUnsubscribe: (sub: PushSubscriptionJSON) => api.post<{ message: string }>('/push/unsubscribe', sub),
+  preferences: () => api.get<{ emailDigest: boolean }>('/preferences'),
+  setPreferences: (prefs: { emailDigest: boolean }) => api.put<{ emailDigest: boolean }>('/preferences', prefs),
+};
+
+// Community Endpoints
+export const communityApi = {
+  groups: () => api.get<CommunityGroup[]>('/community/groups'),
+  createGroup: (g: { name: string; description: string; clientIds: string[] }) => api.post<CommunityGroup>('/community/groups', g),
+  updateGroup: (id: string, g: Partial<{ name: string; description: string; clientIds: string[] }>) =>
+    api.patch<CommunityGroup>(`/community/groups/${id}`, g),
+  deleteGroup: (id: string) => api.delete<{ message: string }>(`/community/groups/${id}`),
+  posts: (groupId: string) => api.get<GroupPost[]>(`/community/groups/${groupId}/posts`),
+  createPost: (groupId: string, body: string) => api.post<GroupPost>(`/community/groups/${groupId}/posts`, { body }),
+  deletePost: (postId: string) => api.delete<{ message: string }>(`/community/posts/${postId}`),
+  togglePin: (postId: string) => api.post<GroupPost>(`/community/posts/${postId}/pin`),
+  toggleLike: (postId: string) => api.post<GroupPost>(`/community/posts/${postId}/like`),
+  comment: (postId: string, body: string) => api.post<PostComment>(`/community/posts/${postId}/comments`, { body }),
+  deleteComment: (commentId: string) => api.delete<{ message: string }>(`/community/comments/${commentId}`),
+  messages: (groupId: string) => api.get<GroupMessage[]>(`/community/groups/${groupId}/messages`),
+  sendMessage: (groupId: string, text: string) => api.post<GroupMessage>(`/community/groups/${groupId}/messages`, { text }),
+};
+
+// Check-in Endpoints
+export const checkinsApi = {
+  forms: () => api.get<CheckinForm[]>('/checkin-forms'),
+  createForm: (f: Pick<CheckinForm, 'title' | 'description' | 'questions'>) => api.post<CheckinForm>('/checkin-forms', f),
+  updateForm: (id: string, f: Pick<CheckinForm, 'title' | 'description' | 'questions'>) => api.put<CheckinForm>(`/checkin-forms/${id}`, f),
+  deleteForm: (id: string) => api.delete<{ message: string }>(`/checkin-forms/${id}`),
+  assignments: () => api.get<CheckinAssignment[]>('/checkin-assignments'),
+  assign: (body: { formId: string; clientId: string; frequency: 'once' | 'weekly'; startDate: string }) =>
+    api.post<CheckinAssignment>('/checkin-assignments', body),
+  setActive: (id: string, active: boolean) => api.patch<CheckinAssignment>(`/checkin-assignments/${id}?active=${active}`),
+  deleteAssignment: (id: string) => api.delete<{ message: string }>(`/checkin-assignments/${id}`),
+  responses: () => api.get<CheckinResponse[]>('/checkin-responses'),
+  submit: (body: { assignmentId: string; dueDate: string; answers: Record<string, CheckinAnswer> }) =>
+    api.post<CheckinResponse>('/checkin-responses', body),
+  review: (id: string, comment: string) => api.post<CheckinResponse>(`/checkin-responses/${id}/review`, { comment }),
+  upload: (clientId: string, file: Blob) => {
+    const form = new FormData();
+    form.append('clientId', clientId);
+    form.append('file', file, 'photo.jpg');
+    return api.request<{ id: string; url: string }>('/files', { method: 'POST', body: form });
+  },
+};
+
+// Autoflow Endpoints (coach only)
+export const autoflowsApi = {
+  list: () => api.get<Autoflow[]>('/autoflows'),
+  create: (f: Pick<Autoflow, 'title' | 'description' | 'steps'>) => api.post<Autoflow>('/autoflows', f),
+  update: (id: string, f: Pick<Autoflow, 'title' | 'description' | 'steps'>) => api.put<Autoflow>(`/autoflows/${id}`, f),
+  delete: (id: string) => api.delete<{ message: string }>(`/autoflows/${id}`),
+  assignments: () => api.get<AutoflowAssignment[]>('/autoflows/assignments'),
+  assign: (id: string, clientId: string, startDate: string) =>
+    api.post<AutoflowAssignment>(`/autoflows/${id}/assign`, { clientId, startDate }),
+  cancel: (assignmentId: string) => api.delete<{ message: string }>(`/autoflows/assignments/${assignmentId}`),
 };
 
 // Progress Photos Endpoints

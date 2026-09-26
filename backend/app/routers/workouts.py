@@ -20,6 +20,7 @@ from app.schemas.workout import (
 )
 from app.schemas.training import validate_workout_content
 from app.services.activity import new_id, log_activity
+from app.services.notify import notify
 
 router = APIRouter(prefix="/workouts", tags=["Workouts"])
 
@@ -149,6 +150,9 @@ async def complete_workout(
 
     await db.commit()
     await db.refresh(w)
+    if not already_completed and user.role == "client":
+        await notify(db, [client.coach_id], "workout_completed", f"{client.name} completed a workout",
+                     f"{w.workout_title} · {w.rating}/5", {"tab": "calendar", "clientId": client.id})
     return w
 
 

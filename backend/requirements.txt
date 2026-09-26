@@ -20,6 +20,7 @@ pydantic-settings>=2.8.0
 
 # HTTP client
 httpx>=0.28.0
+pywebpush>=2.0.0
 
 # Dev / Testing
 pytest>=8.3.0

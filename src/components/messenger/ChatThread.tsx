@@ -76,6 +76,7 @@ export const ChatThread: React.FC<ChatThreadProps> = ({ clientId, viewer, placeh
         />
         <button
           type="submit"
+          aria-label="Send"
           disabled={!draft.trim() || sending}
           className="h-10 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 text-slate-950 font-bold text-xs flex items-center gap-1.5"
         >

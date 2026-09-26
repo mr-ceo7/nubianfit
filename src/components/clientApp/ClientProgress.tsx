@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
 import { Trophy } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { useEngagement } from '../../context/EngagementContext';
+import { CheckinResponseView } from '../engagement/CheckinResponseView';
 import { Client } from '../../types';
 import { formatDay, localDateStr } from '../../utils/dates';
 
 export const ClientProgress: React.FC<{ client: Client }> = ({ client }) => {
   const { metrics, personalRecords, addMetricEntry } = useApp();
+  const { checkinResponses, forms } = useEngagement();
+  const [openResponse, setOpenResponse] = useState<string | null>(null);
   const [weight, setWeight] = useState('');
   const [bodyFat, setBodyFat] = useState('');
   const [waist, setWaist] = useState('');
@@ -87,7 +91,29 @@ export const ClientProgress: React.FC<{ client: Client }> = ({ client }) => {
         </section>
 
         <section>
-          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Check-in history</h2>
+          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Coach check-ins</h2>
+          <div className="rounded-2xl bg-slate-900 border border-slate-800 divide-y divide-slate-800">
+            {checkinResponses.length === 0 && <p className="p-4 text-sm text-slate-400">Check-ins you send your coach appear here.</p>}
+            {checkinResponses.map(r => (
+              <div key={r.id}>
+                <button onClick={() => setOpenResponse(openResponse === r.id ? null : r.id)} aria-expanded={openResponse === r.id}
+                  className="w-full p-3.5 flex items-center gap-3 text-left">
+                  <span className="flex-1 min-w-0">
+                    <span className="block text-sm font-semibold text-white truncate">{forms.find(f => f.id === r.formId)?.title ?? 'Check-in'}</span>
+                    <span className="block text-xs text-slate-400">{formatDay(r.dueDate)}</span>
+                  </span>
+                  {r.coachComment
+                    ? <span className="text-[11px] font-bold text-emerald-400 shrink-0">Coach replied</span>
+                    : <span className="text-[11px] text-slate-400 shrink-0">Sent</span>}
+                </button>
+                {openResponse === r.id && <div className="px-3.5 pb-4"><CheckinResponseView response={r} /></div>}
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section>
+          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Weight history</h2>
           <div className="rounded-2xl bg-slate-900 border border-slate-800 divide-y divide-slate-800">
             {history.length === 0 && <p className="p-4 text-sm text-slate-400">No check-ins yet.</p>}
             {history.map(m => (

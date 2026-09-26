@@ -2,6 +2,7 @@
 NubianFit FastAPI Backend Main Application
 """
 
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends, HTTPException, status
@@ -15,6 +16,7 @@ import app.models  # noqa: F401  (registers every model on Base.metadata)
 from app.dependencies import get_db
 from app.models.user import User
 from app.security import get_password_hash
+from app.services.scheduler import scheduler_loop
 
 from app.routers import (
     auth_router,
@@ -31,6 +33,10 @@ from app.routers import (
     workout_templates_router,
     foods_router,
     nutrition_router,
+    engagement_router,
+    community_router,
+    checkins_router,
+    autoflows_router,
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
@@ -73,8 +79,13 @@ async def lifespan(app: FastAPI):
         else:
             await seed_exercise_library()
 
+    # Autoflow steps, check-in reminders and email digests (not in tests; they call run_tick directly).
+    scheduler = None if settings.TESTING else asyncio.create_task(scheduler_loop())
+
     logger.info("NubianFit API ready (environment=%s).", settings.ENVIRONMENT)
     yield
+    if scheduler:
+        scheduler.cancel()
 
 
 app = FastAPI(
@@ -122,6 +133,10 @@ for router in (
     workout_templates_router,
     foods_router,
     nutrition_router,
+    engagement_router,
+    community_router,
+    checkins_router,
+    autoflows_router,
 ):
     app.include_router(router, prefix=settings.API_PREFIX)
 

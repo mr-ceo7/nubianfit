@@ -12,6 +12,7 @@ from app.models.client import Client
 from app.models.activity import ActivityFeedItem
 from app.models.habit import Habit, HabitCheckin
 from app.models.nutrition import ClientGoals, DailyMetric, FoodLogEntry, MealPlanAssignment
+from app.models.engagement import AutoflowAssignment, CheckinAssignment, CheckinResponse, GroupMember, StoredFile
 from app.models.message import ChatMessage
 from app.models.metric import MetricEntry
 from app.models.personal_record import PersonalRecord
@@ -26,6 +27,7 @@ from app.services.email import EmailDeliveryError, send_client_invite
 CLIENT_OWNED_MODELS = (
     ScheduledWorkout, MetricEntry, PersonalRecord, Habit, HabitCheckin,
     ProgressPhoto, ChatMessage, ActivityFeedItem, FoodLogEntry, DailyMetric, ClientGoals, MealPlanAssignment,
+    GroupMember, CheckinAssignment, CheckinResponse, StoredFile, AutoflowAssignment,
 )
 
 router = APIRouter(prefix="/clients", tags=["Clients"])

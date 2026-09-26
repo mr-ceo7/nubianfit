@@ -15,6 +15,8 @@ from app.models.message import ChatMessage
 from app.models.user import User
 from app.schemas.message import ChatMessageCreate, ChatMessageResponse
 from app.services.activity import new_id
+from app.services.events import broker
+from app.services.notify import client_user_ids, notify
 
 router = APIRouter(prefix="/messages", tags=["Messages"])
 
@@ -51,7 +53,17 @@ async def send_message(
     db.add(msg)
     await db.commit()
     await db.refresh(msg)
-    return msg
+
+    client = await get_accessible_client(msg_in.client_id, user, db)
+    client_users = await client_user_ids(db, client.id)
+    out = ChatMessageResponse.model_validate(msg)
+    broker.publish([client.coach_id, *client_users], "message", out.model_dump(by_alias=True, mode="json"))
+    if user.role == "coach":
+        await notify(db, client_users, "message", "New message from your coach", msg.text[:140], {"tab": "chat"})
+    else:
+        await notify(db, [client.coach_id], "message", f"New message from {client.name}", msg.text[:140],
+                     {"tab": "messenger", "clientId": client.id})
+    return out
 
 
 @router.post("/read")

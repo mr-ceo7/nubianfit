@@ -60,6 +60,19 @@ class Settings(BaseSettings):
     # development but is limited to ~30 requests/hour per IP; set a real key in production.
     FDC_API_KEY: str = "DEMO_KEY"
 
+    # Web push (VAPID). Generate with `python scripts/generate_vapid_keys.py`; push is off when unset.
+    VAPID_PUBLIC_KEY: str = ""
+    VAPID_PRIVATE_KEY: str = ""
+    VAPID_SUBJECT: str = "mailto:admin@nubianfit.com"
+
+    # Background jobs (Autoflow steps, check-in reminders, email digests) run every
+    # SCHEDULER_INTERVAL_SECONDS while the server is awake. A cron job can also call
+    # POST /api/internal/tick with header X-Cron-Token: CRON_TOKEN (e.g. when the host sleeps).
+    SCHEDULER_INTERVAL_SECONDS: int = 600
+    CRON_TOKEN: str = ""
+    # Unread notifications older than this are included in the next email digest.
+    DIGEST_DELAY_MINUTES: int = 30
+
     # Public URLs of the three portals, used in emails and CORS.
     LANDING_URL: str = "https://nubianfit.xn--jhb4c.com"
     COACH_URL: str = "https://coach.nubianfit.xn--jhb4c.com"

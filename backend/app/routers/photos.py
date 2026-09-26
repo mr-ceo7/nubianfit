@@ -8,10 +8,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.dependencies import get_db, get_current_user, get_accessible_client, resolve_client_filter
+from app.models.engagement import StoredFile
 from app.models.photo import ProgressPhoto
 from app.models.user import User
 from app.schemas.photo import ProgressPhotoCreate, ProgressPhotoResponse
 from app.services.activity import new_id
+from app.services.checkins import photo_url
 
 router = APIRouter(prefix="/photos", tags=["Photos"])
 
@@ -26,7 +28,11 @@ async def list_photos(
     result = await db.execute(
         select(ProgressPhoto).where(ProgressPhoto.client_id.in_(client_ids)).order_by(ProgressPhoto.date.desc())
     )
-    return result.scalars().all()
+    # Uploaded photos are stored as "file:<id>"; hand out short-lived signed URLs.
+    return [
+        ProgressPhotoResponse.model_validate(p).model_copy(update={"photo_url": photo_url(p.photo_url)})
+        for p in result.scalars().all()
+    ]
 
 
 @router.post("", response_model=ProgressPhotoResponse, status_code=status.HTTP_201_CREATED)
@@ -36,6 +42,10 @@ async def create_photo(
     db: AsyncSession = Depends(get_db),
 ):
     await get_accessible_client(photo_in.client_id, user, db)
+    if photo_in.photo_url.startswith("file:"):
+        stored = await db.get(StoredFile, photo_in.photo_url[5:])
+        if not stored or stored.client_id != photo_in.client_id:
+            raise HTTPException(status_code=404, detail="Photo file not found")
     photo = ProgressPhoto(**photo_in.model_dump(exclude_unset=True, exclude={"id"}), id=new_id("photo"))
     db.add(photo)
     await db.commit()

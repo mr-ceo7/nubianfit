@@ -11,9 +11,13 @@ import {
   ChevronRight,
   LogOut,
   ListChecks,
-  Apple
+  Apple,
+  UsersRound,
+  ClipboardCheck,
+  Sparkles
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useEngagement } from '../../context/EngagementContext';
 import { ClientAvatar } from '../common/ClientAvatar';
 import { localDateStr } from '../../utils/dates';
 import { useApp, NavigationTab } from '../../context/AppContext';
@@ -23,6 +27,8 @@ import { NubianFitLogo } from '../common/NubianFitLogo';
 export const Sidebar: React.FC = () => {
   const { activeTab, setActiveTab, clients, messages, scheduledWorkouts, setSelectedClientId } = useApp();
   const { user, logout } = useAuth();
+  const { checkinResponses } = useEngagement();
+  const unreviewedCheckins = checkinResponses.filter(r => !r.reviewedAt).length;
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   // Unread messages count
@@ -41,7 +47,10 @@ export const Sidebar: React.FC = () => {
     { id: 'calendar', label: 'Schedule', icon: CalendarDays, badge: todayPendingCount > 0 ? todayPendingCount : undefined, badgeColor: 'bg-emerald-500' },
     { id: 'nutrition', label: 'Nutrition & Habits', icon: Apple },
     { id: 'progress', label: 'Metric Tracker', icon: TrendingUp },
-    { id: 'messenger', label: '1-on-1 Messenger', icon: MessageSquare, badge: unreadCount > 0 ? unreadCount : undefined, badgeColor: 'bg-cyan-500' }
+    { id: 'messenger', label: '1-on-1 Messenger', icon: MessageSquare, badge: unreadCount > 0 ? unreadCount : undefined, badgeColor: 'bg-cyan-500' },
+    { id: 'community', label: 'Community', icon: UsersRound },
+    { id: 'checkins', label: 'Check-ins', icon: ClipboardCheck, badge: unreviewedCheckins > 0 ? unreviewedCheckins : undefined, badgeColor: 'bg-amber-500' },
+    { id: 'autoflow', label: 'Autoflow', icon: Sparkles }
   ];
 
   return (

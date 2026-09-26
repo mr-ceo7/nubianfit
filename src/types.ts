@@ -390,3 +390,136 @@ export interface ActivityFeedItem {
     compliance?: number;
   };
 }
+
+// --- Engagement ----------------------------------------------------------------
+
+export interface AppNotification {
+  id: string;
+  type: string;
+  title: string;
+  body: string;
+  /** Where to go when tapped, e.g. { tab: 'messenger', clientId: '…' }. */
+  link: { tab?: string; clientId?: string; groupId?: string; responseId?: string };
+  readAt?: string | null;
+  createdAt: string;
+}
+
+export interface CommunityGroup {
+  id: string;
+  name: string;
+  description: string;
+  clientIds: string[];
+  createdAt: string;
+}
+
+export interface PostComment {
+  id: string;
+  postId: string;
+  authorUserId: string;
+  authorName: string;
+  authorRole: 'coach' | 'client';
+  body: string;
+  createdAt: string;
+}
+
+export interface GroupPost {
+  id: string;
+  groupId: string;
+  authorUserId: string;
+  authorName: string;
+  authorRole: 'coach' | 'client';
+  body: string;
+  pinned: boolean;
+  createdAt: string;
+  likeCount: number;
+  likedByMe: boolean;
+  comments: PostComment[];
+}
+
+export interface GroupMessage {
+  id: string;
+  groupId: string;
+  authorUserId: string;
+  authorName: string;
+  authorRole: 'coach' | 'client';
+  text: string;
+  createdAt: string;
+}
+
+export type QuestionType = 'text' | 'long_text' | 'number' | 'scale' | 'single_choice' | 'multi_choice' | 'yes_no' | 'weight' | 'photo';
+
+export interface CheckinQuestion {
+  id: string;
+  type: QuestionType;
+  label: string;
+  required: boolean;
+  options: string[];
+  min?: number | null;
+  max?: number | null;
+  view?: 'Front' | 'Side' | 'Back' | null;
+}
+
+export interface CheckinForm {
+  id: string;
+  title: string;
+  description: string;
+  questions: CheckinQuestion[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CheckinAssignment {
+  id: string;
+  formId: string;
+  clientId: string;
+  frequency: 'once' | 'weekly';
+  startDate: string;
+  active: boolean;
+  pendingDueDate?: string | null;
+  nextDueDate?: string | null;
+}
+
+export type CheckinAnswer = string | number | boolean | string[] | { fileId: string };
+
+export interface CheckinResponse {
+  id: string;
+  assignmentId: string;
+  formId: string;
+  clientId: string;
+  dueDate: string;
+  questions: CheckinQuestion[];
+  answers: Record<string, CheckinAnswer>;
+  submittedAt: string;
+  coachComment: string;
+  reviewedAt?: string | null;
+  photoUrls: Record<string, string>;
+}
+
+export type AutoflowStepType = 'message' | 'checkin' | 'habit';
+
+export interface AutoflowStep {
+  id: string;
+  day: number;
+  type: AutoflowStepType;
+  text?: string;
+  formId?: string;
+  habit?: { title: string; targetValue?: number | null; unit?: string; daysOfWeek?: number[] };
+}
+
+export interface Autoflow {
+  id: string;
+  title: string;
+  description: string;
+  steps: AutoflowStep[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AutoflowAssignment {
+  id: string;
+  autoflowId: string;
+  clientId: string;
+  startDate: string;
+  active: boolean;
+  completedStepIds: string[];
+}

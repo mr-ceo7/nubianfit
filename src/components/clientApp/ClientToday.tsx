@@ -1,7 +1,9 @@
-import React from 'react';
-import { Dumbbell, MessageSquare, Play } from 'lucide-react';
+import React, { useState } from 'react';
+import { ClipboardCheck, Dumbbell, MessageSquare, Play } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
-import { Client } from '../../types';
+import { CheckinAssignment, CheckinForm, Client } from '../../types';
+import { useEngagement } from '../../context/EngagementContext';
+import { CheckinFormFill } from '../engagement/CheckinFormFill';
 import { localDateStr, formatDay } from '../../utils/dates';
 import { useNutrition } from '../../context/NutritionContext';
 import { isTrainingDay, sumNutrients, targetsFor } from '../../utils/nutrition';
@@ -16,6 +18,12 @@ export const ClientToday: React.FC<{
 }> = ({ client, onOpenWorkouts, onOpenChat, onOpenNutrition }) => {
   const { scheduledWorkouts, openWorkoutLogger, messages } = useApp();
   const { foodLog, goals } = useNutrition();
+  const { checkinAssignments, forms } = useEngagement();
+  const [filling, setFilling] = useState<{ assignment: CheckinAssignment; form: CheckinForm; dueDate: string } | null>(null);
+  const dueCheckins = checkinAssignments
+    .filter(a => a.clientId === client.id && a.pendingDueDate)
+    .map(a => ({ assignment: a, form: forms.find(f => f.id === a.formId), dueDate: a.pendingDueDate! }))
+    .filter((x): x is { assignment: CheckinAssignment; form: CheckinForm; dueDate: string } => !!x.form);
   const today = localDateStr();
 
   const upcoming = scheduledWorkouts
@@ -49,6 +57,18 @@ export const ClientToday: React.FC<{
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-3 lg:items-start">
         <div className="space-y-5 min-w-0 lg:col-span-2">
+          {dueCheckins.map(d => (
+            <section key={d.assignment.id} className="rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4 flex items-center gap-3">
+              <ClipboardCheck className="h-6 w-6 text-amber-400 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-white truncate">{d.form.title}</p>
+                <p className="text-xs text-slate-300">Due {d.dueDate === today ? 'today' : formatDay(d.dueDate)} · {d.form.questions.length} questions</p>
+              </div>
+              <button onClick={() => setFilling(d)} className="shrink-0 px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-sm font-bold">
+                Fill in
+              </button>
+            </section>
+          ))}
           <section className={card}>
             <h2 className={heading}>Next workout</h2>
             {next ? (
@@ -114,6 +134,7 @@ export const ClientToday: React.FC<{
           </section>
         </div>
       </div>
+      {filling && <CheckinFormFill form={filling.form} assignment={filling.assignment} dueDate={filling.dueDate} onClose={() => setFilling(null)} />}
     </div>
   );
 };

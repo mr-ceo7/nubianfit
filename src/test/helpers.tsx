@@ -4,6 +4,7 @@ import { vi } from 'vitest';
 import { AuthProvider } from '../context/AuthContext';
 import { AppProvider } from '../context/AppContext';
 import { NutritionProvider } from '../context/NutritionContext';
+import { EngagementProvider } from '../context/EngagementContext';
 
 type Handler = (body: unknown, url: URL) => { status?: number; json: unknown };
 
@@ -53,7 +54,9 @@ export function renderWithProviders(ui: React.ReactElement) {
   return render(
     <AuthProvider>
       <AppProvider>
-        <NutritionProvider>{ui}</NutritionProvider>
+        <NutritionProvider>
+          <EngagementProvider>{ui}</EngagementProvider>
+        </NutritionProvider>
       </AppProvider>
     </AuthProvider>
   );

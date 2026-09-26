@@ -44,7 +44,7 @@ async def send_email(to: str, subject: str, html_body: str, text_body: str) -> N
         raise EmailDeliveryError("Could not send email") from e
 
 
-def _layout(heading: str, body_html: str) -> str:
+def layout(heading: str, body_html: str) -> str:
     return f"""<!doctype html>
 <html><body style="margin:0;background:#0b1120;font-family:Helvetica,Arial,sans-serif;color:#e2e8f0">
 <table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:32px 16px">
@@ -60,7 +60,7 @@ async def send_login_code(to: str, code: str) -> None:
     await send_email(
         to,
         f"Your NubianFit login code: {code}",
-        _layout(
+        layout(
             "Your login code",
             f'<p>Enter this code to sign in:</p>'
             f'<p style="font-size:32px;font-weight:700;letter-spacing:8px;color:#fff">{code}</p>'
@@ -75,7 +75,7 @@ async def send_client_invite(to: str, client_name: str, coach_name: str) -> None
     await send_email(
         to,
         f"{coach_name} invited you to NubianFit",
-        _layout(
+        layout(
             f"Welcome, {html.escape(client_name)}",
             f"<p>{html.escape(coach_name)} has set up your coaching account on NubianFit.</p>"
             f'<p><a href="{url}" style="display:inline-block;background:#22d3ee;color:#0b1120;'

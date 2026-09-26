@@ -10,6 +10,10 @@ from app.models.workout import ScheduledWorkout
 from app.models.metric import MetricEntry
 from app.models.personal_record import PersonalRecord
 from app.models.habit import Habit, HabitCheckin
+from app.models.engagement import (
+    Autoflow, AutoflowAssignment, CheckinAssignment, CheckinForm, CheckinResponse, CommunityGroup, GroupMember,
+    GroupMessage, GroupPost, Notification, PostComment, PostLike, PushSubscription, StoredFile,
+)
 from app.models.nutrition import (
     ClientGoals, CustomFood, DailyMetric, FoodLogEntry, MealPlan, MealPlanAssignment,
 )
@@ -35,6 +39,20 @@ __all__ = [
     "DailyMetric",
     "MealPlan",
     "MealPlanAssignment",
+    "Notification",
+    "PushSubscription",
+    "CommunityGroup",
+    "GroupMember",
+    "GroupPost",
+    "PostComment",
+    "PostLike",
+    "GroupMessage",
+    "CheckinForm",
+    "CheckinAssignment",
+    "CheckinResponse",
+    "StoredFile",
+    "Autoflow",
+    "AutoflowAssignment",
     "ProgressPhoto",
     "ChatMessage",
     "ActivityFeedItem",

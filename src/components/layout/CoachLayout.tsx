@@ -1,5 +1,6 @@
-import React, { lazy, Suspense, useState } from 'react';
-import { useApp } from '../../context/AppContext';
+import React, { lazy, Suspense, useEffect, useState } from 'react';
+import { isNavigationTab, useApp } from '../../context/AppContext';
+import { consumeDeepLink } from '../../utils/deepLink';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { CoachDashboard } from '../dashboard/CoachDashboard';
@@ -8,6 +9,9 @@ const ClientRoster = lazy(() => import('../clients/ClientRoster').then(m => ({ d
 const ProgramBuilder = lazy(() => import('../programs/ProgramBuilder').then(m => ({ default: m.ProgramBuilder })));
 const WorkoutLibrary = lazy(() => import('../training/WorkoutLibrary').then(m => ({ default: m.WorkoutLibrary })));
 const NutritionHub = lazy(() => import('../nutrition/NutritionHub').then(m => ({ default: m.NutritionHub })));
+const CommunityView = lazy(() => import('../engagement/CommunityView').then(m => ({ default: m.CommunityView })));
+const CheckinsHub = lazy(() => import('../engagement/CheckinsHub').then(m => ({ default: m.CheckinsHub })));
+const AutoflowHub = lazy(() => import('../engagement/AutoflowHub').then(m => ({ default: m.AutoflowHub })));
 const ExerciseLibrary = lazy(() => import('../programs/ExerciseLibrary').then(m => ({ default: m.ExerciseLibrary })));
 const CalendarScheduler = lazy(() => import('../programs/CalendarScheduler').then(m => ({ default: m.CalendarScheduler })));
 const ProgressTracker = lazy(() => import('../progress/ProgressTracker').then(m => ({ default: m.ProgressTracker })));
@@ -20,7 +24,18 @@ import { Loader } from '../common/Loader';
 
 /** Coach OS, served at coach.<domain>. */
 export const CoachLayout: React.FC = () => {
-  const { activeTab, setActiveTab, isLoading, loadError, refreshData, clients } = useApp();
+  const { activeTab, setActiveTab, isLoading, loadError, refreshData, clients, setSelectedClientId } = useApp();
+  const [deepLinkGroup, setDeepLinkGroup] = useState<string | null>(null);
+
+  // Notification taps (push or email) open the app with ?open=<tab>&clientId=…&groupId=…
+  useEffect(() => {
+    const link = consumeDeepLink();
+    if (!link) return;
+    if (link.clientId) setSelectedClientId(link.clientId);
+    if (link.groupId) setDeepLinkGroup(link.groupId);
+    if (isNavigationTab(link.tab)) setActiveTab(link.tab);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [isAddClientModalOpen, setIsAddClientModalOpen] = useState(false);
   const [isAddExerciseModalOpen, setIsAddExerciseModalOpen] = useState(false);
   const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
@@ -89,6 +104,9 @@ export const CoachLayout: React.FC = () => {
                 {activeTab === 'nutrition' && <NutritionHub />}
                 {activeTab === 'progress' && <ProgressTracker />}
                 {activeTab === 'messenger' && <CoachMessenger />}
+                {activeTab === 'community' && <CommunityView initialGroupId={deepLinkGroup} />}
+                {activeTab === 'checkins' && <CheckinsHub />}
+                {activeTab === 'autoflow' && <AutoflowHub />}
               </Suspense>
             )}
           </div>

@@ -16,7 +16,9 @@ type GoalKey = Exclude<keyof ClientGoals, 'clientId' | 'notes'>;
 export const ClientNutritionPanel: React.FC<{ clientId: string }> = ({ clientId }) => {
   const today = localDateStr();
   const [date, setDate] = useState(today);
-  useEffect(() => setDate(today), [clientId, today]);
+  useEffect(() => {
+    setDate(today);
+  }, [clientId, today]);
 
   return (
     <div className="space-y-5">
@@ -47,7 +49,9 @@ const GoalsEditor: React.FC<{ clientId: string }> = ({ clientId }) => {
   };
   const [draft, setDraft] = useState(() => toDraft(current));
   const [saving, setSaving] = useState(false);
-  useEffect(() => setDraft(toDraft(current)), [clientId, current]);
+  useEffect(() => {
+    setDraft(toDraft(current));
+  }, [clientId, current]);
 
   const num = (v: string) => (v.trim() === '' ? null : Number(v));
   const kcalFromMacros = (p: string, c: string, f: string) =>

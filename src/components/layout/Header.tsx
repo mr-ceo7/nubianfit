@@ -14,7 +14,8 @@ import {
 } from 'lucide-react';
 
 import { localDateStr, timeAgo } from '../../utils/dates';
-import { useApp } from '../../context/AppContext';
+import { isNavigationTab, useApp } from '../../context/AppContext';
+import { NotificationBell } from '../engagement/NotificationBell';
 import { useAuth } from '../../context/AuthContext';
 import { ClientAvatar } from '../common/ClientAvatar';
 import { NubianFitLogo } from '../common/NubianFitLogo';
@@ -52,7 +53,6 @@ export const Header: React.FC<HeaderProps> = ({
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isQuickActionsOpen, setIsQuickActionsOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -70,7 +70,6 @@ export const Header: React.FC<HeaderProps> = ({
     ? programs.filter(p => p.title.toLowerCase().includes(searchQuery.toLowerCase()) || p.goal.toLowerCase().includes(searchQuery.toLowerCase()))
     : [];
 
-  const unreadActivity = activityFeed.slice(0, 5);
 
   const getBreadcrumbTitle = () => {
     switch (activeTab) {
@@ -83,6 +82,9 @@ export const Header: React.FC<HeaderProps> = ({
       case 'nutrition': return 'Nutrition & Habits';
       case 'progress': return 'Metric Tracking';
       case 'messenger': return 'Coach Messenger';
+      case 'community': return 'Community';
+      case 'checkins': return 'Check-ins';
+      case 'autoflow': return 'Autoflow';
       default: return 'NubianFit';
     }
   };
@@ -287,49 +289,13 @@ export const Header: React.FC<HeaderProps> = ({
           {theme === 'light' ? <Moon className="h-4.5 w-4.5 text-slate-400" /> : <Sun className="h-4.5 w-4.5 text-amber-500" />}
         </button>
 
-        {/* Notifications Popover (Visible on Mobile & Desktop) */}
-        <div className="relative">
-          <button
-            id="notifications-btn"
-            onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-            aria-label="Notifications"
-            className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
-          >
-            <Bell className="h-4 w-4" />
-            <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-slate-950" />
-          </button>
-
-          {isNotificationsOpen && (
-            <div className="absolute top-11 right-0 w-80 rounded-2xl bg-slate-900 border border-slate-700 shadow-2xl p-3 z-50 animate-in fade-in">
-              <div className="flex items-center justify-between pb-2 border-b border-slate-800 px-2">
-                <span className="text-xs font-bold text-white">Live Coaching Feed</span>
-                <span className="text-[10px] text-emerald-400 font-semibold">{unreadActivity.length} Recent</span>
-              </div>
-              <div className="divide-y divide-slate-800/60 max-h-80 overflow-y-auto">
-                {unreadActivity.map((act) => (
-                  <div 
-                    key={act.id} 
-                    className="py-2.5 px-2 flex items-start gap-2.5 hover:bg-slate-800/60 rounded-lg cursor-pointer transition-colors"
-                    onClick={() => {
-                      setSelectedClientId(act.clientId);
-                      if (act.type === 'new_message') setActiveTab('messenger');
-                      else if (act.type === 'workout_completed') setActiveTab('calendar');
-                      else setActiveTab('clients');
-                      setIsNotificationsOpen(false);
-                    }}
-                  >
-                    <ClientAvatar client={{ name: act.clientName, avatar: act.clientAvatar }} className="h-7 w-7 rounded-full shrink-0 mt-0.5 border border-slate-700" />
-                    <div className="flex-1 min-w-0 text-left">
-                      <div className="text-xs font-semibold text-slate-100 truncate">{act.title}</div>
-                      <div className="text-[11px] text-slate-400 line-clamp-1">{act.description}</div>
-                      <div className="text-[9px] text-slate-400 mt-0.5">{act.createdAt ? timeAgo(act.createdAt) : act.timestamp}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
+        {/* Notifications */}
+        <NotificationBell
+          onNavigate={link => {
+            if (link.clientId) setSelectedClientId(link.clientId);
+            if (link.tab && isNavigationTab(link.tab)) setActiveTab(link.tab);
+          }}
+        />
 
         {/* Quick Workout Logger Button (Desktop Only) */}
         <button

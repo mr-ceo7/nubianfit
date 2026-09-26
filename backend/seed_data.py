@@ -35,6 +35,15 @@ from app.models import (
     ProgressPhoto,
     ChatMessage,
     ActivityFeedItem,
+    CheckinForm,
+    CheckinAssignment,
+    CheckinResponse,
+    CommunityGroup,
+    GroupMember,
+    GroupPost,
+    PostComment,
+    GroupMessage,
+    Autoflow,
 )
 
 
@@ -217,6 +226,59 @@ def _seed_nutrition_and_habits(session, clients: list, today: date) -> None:
     print("-> Seeded custom foods, goals, habits, food diary and a meal plan")
 
 
+WEEKLY_CHECKIN_QUESTIONS = [
+    {"id": "q-weight", "type": "weight", "label": "Morning weight (kg)", "required": True, "options": []},
+    {"id": "q-energy", "type": "scale", "label": "Energy this week", "required": True, "options": [], "min": 1, "max": 10},
+    {"id": "q-sleep", "type": "number", "label": "Average sleep (hours)", "required": False, "options": [], "min": 0, "max": 14},
+    {"id": "q-adherence", "type": "single_choice", "label": "How closely did you follow the plan?", "required": True,
+     "options": ["Nailed it", "Mostly", "Struggled"]},
+    {"id": "q-wins", "type": "long_text", "label": "Wins and struggles this week", "required": False, "options": []},
+    {"id": "q-photo", "type": "photo", "label": "Front progress photo", "required": False, "options": [], "view": "Front"},
+]
+
+
+def _seed_engagement(session, today: date) -> None:
+    session.add(CheckinForm(id="form-weekly", coach_id=DEMO_COACH_ID, title="Weekly check-in",
+                            description="Takes two minutes. Be honest - it helps me adjust your plan.",
+                            questions=WEEKLY_CHECKIN_QUESTIONS))
+    # Started a week ago, so this week's check-in is due today.
+    session.add(CheckinAssignment(id="chk-assign-demo", form_id="form-weekly", client_id="client-1", frequency="weekly",
+                                  start_date=today - timedelta(days=7), active=True, last_notified_date=today))
+    session.add(CheckinResponse(
+        id="chk-resp-demo", assignment_id="chk-assign-demo", form_id="form-weekly", client_id="client-1",
+        due_date=today - timedelta(days=7), questions=WEEKLY_CHECKIN_QUESTIONS,
+        answers={"q-weight": 81.6, "q-energy": 7, "q-sleep": 7.2, "q-adherence": "Mostly", "q-wins": "Hit every session, weekends were harder."},
+        submitted_at=datetime.now(timezone.utc) - timedelta(days=7),
+        coach_comment="Great week. Let's plan Saturday meals ahead.", reviewed_at=datetime.now(timezone.utc) - timedelta(days=6),
+    ))
+
+    session.add(CommunityGroup(id="grp-challenge", coach_id=DEMO_COACH_ID, name="Fall Shred Challenge",
+                               description="Six weeks, one team. Share wins, ask questions, keep each other honest."))
+    for cid in ("client-1", "client-2", "client-3"):
+        session.add(GroupMember(id=f"gm-{cid}", group_id="grp-challenge", client_id=cid))
+    now = datetime.now(timezone.utc)
+    session.add(GroupPost(id="post-welcome", group_id="grp-challenge", author_user_id=DEMO_COACH_ID,
+                          author_name=settings.DEFAULT_COACH_NAME, author_role="coach", pinned=True, created_at=now - timedelta(days=2),
+                          body="Welcome to the challenge! Post one win every Friday - big or small."))
+    session.add(PostComment(id="cmt-demo-1", post_id="post-welcome", author_user_id="demo-client-2", author_name="Elena Rostova",
+                            author_role="client", body="Win #1: meal prepped for the whole week!", created_at=now - timedelta(days=1)))
+    for n, (name, text) in enumerate([("Damon Jackson", "Anyone else training at 6am tomorrow?"),
+                                       ("Elena Rostova", "Me! Leg day"),
+                                       (settings.DEFAULT_COACH_NAME, "Love it. Warm up properly, you two.")]):
+        session.add(GroupMessage(id=f"gmsg-demo-{n}", group_id="grp-challenge", author_user_id=DEMO_COACH_ID if n == 2 else f"demo-{n}",
+                                 author_name=name, author_role="coach" if n == 2 else "client", text=text,
+                                 created_at=now - timedelta(hours=5 - n)))
+
+    session.add(Autoflow(id="flow-onboarding", coach_id=DEMO_COACH_ID, title="New client onboarding",
+                         description="First two weeks for every new client.", steps=[
+        {"id": "s1", "day": 1, "type": "message", "text": "Welcome aboard! Your first workouts are on your calendar. Reply here any time."},
+        {"id": "s2", "day": 2, "type": "habit", "habit": {"title": "Drink 3 L of water", "targetValue": 3, "unit": "L", "daysOfWeek": []}},
+        {"id": "s3", "day": 7, "type": "checkin", "formId": "form-weekly"},
+        {"id": "s4", "day": 14, "type": "message", "text": "Two weeks in - how are you finding the program? Anything to adjust?"},
+    ]))
+    print("-> Seeded a check-in form, community group and onboarding Autoflow")
+
+
 async def seed_database(force: bool = False):
     """Seed demo data (dev and tests only): a demo coach, their clients and sample history.
     With force=True all tables are dropped and recreated first."""
@@ -367,6 +429,7 @@ async def seed_database(force: bool = False):
         print(f"-> Seeded {len(data.get('personalRecords', []))} personal records")
 
         _seed_nutrition_and_habits(session, data.get("clients", []), date.today())
+        _seed_engagement(session, date.today())
 
         # Photos
         for item in data.get("photos", []):

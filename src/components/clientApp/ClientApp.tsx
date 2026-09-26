@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { lazy, Suspense, useEffect, useState } from 'react';
 import { Apple, CalendarDays, Home, LogOut, MessageSquare, TrendingUp, User } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
@@ -11,6 +11,14 @@ import { ClientWorkouts } from './ClientWorkouts';
 import { ClientProgress } from './ClientProgress';
 import { ClientProfile } from './ClientProfile';
 import { ClientNutrition } from './ClientNutrition';
+import { NotificationBell } from '../engagement/NotificationBell';
+import { consumeDeepLink } from '../../utils/deepLink';
+import { AppNotification } from '../../types';
+
+const CommunityView = lazy(() => import('../engagement/CommunityView').then(m => ({ default: m.CommunityView })));
+
+/** Where a notification's link.tab should take a client. */
+const CLIENT_TAB_FOR: Record<string, ClientTab> = { chat: 'chat', messenger: 'chat', community: 'chat', today: 'today', progress: 'progress', nutrition: 'nutrition', workouts: 'workouts' };
 import { Toast } from '../common/Toast';
 
 type ClientTab = 'today' | 'workouts' | 'nutrition' | 'progress' | 'chat' | 'profile';
@@ -29,6 +37,24 @@ const SIDEBAR_TABS = [...TABS, { id: 'profile' as ClientTab, label: 'Profile', i
 export const ClientApp: React.FC = () => {
   const { clients, messages, isLoading, loadError, refreshData } = useApp();
   const [tab, setTab] = useState<ClientTab>('today');
+  const [chatView, setChatView] = useState<'coach' | 'groups'>('coach');
+  const [groupId, setGroupId] = useState<string | null>(null);
+
+  const navigate = (link: AppNotification['link']) => {
+    const target = link.tab ? CLIENT_TAB_FOR[link.tab] : undefined;
+    if (!target) return;
+    if (target === 'chat') {
+      setChatView(link.tab === 'community' || link.groupId ? 'groups' : 'coach');
+      if (link.groupId) setGroupId(link.groupId);
+    }
+    setTab(target);
+  };
+
+  useEffect(() => {
+    const link = consumeDeepLink();
+    if (link) navigate(link);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const me = clients[0];
   const unread = messages.filter(m => m.sender === 'coach' && !m.isRead).length;
 
@@ -53,7 +79,7 @@ export const ClientApp: React.FC = () => {
     workouts: 'Workouts',
     nutrition: 'Nutrition',
     progress: 'Progress',
-    chat: 'Messages with your coach',
+    chat: 'Messages & community',
     profile: 'Profile',
   };
 
@@ -90,7 +116,8 @@ export const ClientApp: React.FC = () => {
         <header className="md:hidden sticky top-0 z-20 bg-slate-950/90 backdrop-blur border-b border-slate-800">
           <div className="px-4 h-14 flex items-center gap-2">
             <Brand />
-            <button onClick={() => setTab('profile')} aria-label="Profile" className="ml-auto rounded-xl">
+            <div className="ml-auto"><NotificationBell onNavigate={navigate} /></div>
+            <button onClick={() => setTab('profile')} aria-label="Profile" className="rounded-xl">
               <ClientAvatar client={me} className="h-8 w-8 rounded-xl" />
             </button>
           </div>
@@ -98,6 +125,7 @@ export const ClientApp: React.FC = () => {
         {/* Desktop header */}
         <header className="hidden md:flex h-16 items-center px-8 border-b border-slate-800">
           <h1 className="text-lg font-bold text-white">{titles[tab]}</h1>
+          <div className="ml-auto"><NotificationBell onNavigate={navigate} /></div>
         </header>
 
         <main className={`w-full max-w-6xl mx-auto ${tab === 'chat' ? 'md:px-8 md:py-6' : 'px-4 md:px-8 py-5 md:py-8'} pb-28 md:pb-8`}>
@@ -108,8 +136,26 @@ export const ClientApp: React.FC = () => {
           {tab === 'nutrition' && <ClientNutrition clientId={me.id} />}
           {tab === 'progress' && <ClientProgress client={me} />}
           {tab === 'chat' && (
-            <div className="h-[calc(100dvh-56px-88px)] md:h-[calc(100vh-64px-48px)] flex flex-col md:rounded-3xl md:border md:border-slate-800 md:bg-slate-900/60 md:overflow-hidden">
-              <ChatThread clientId={me.id} viewer="client" placeholder="Message your coach…" />
+            <div className="space-y-3">
+              <div className="px-4 md:px-0 pt-3 md:pt-0">
+                <div className="inline-grid grid-cols-2 rounded-xl bg-slate-900 border border-slate-800 p-1 text-sm">
+                  {(['coach', 'groups'] as const).map(v => (
+                    <button key={v} onClick={() => setChatView(v)} aria-pressed={chatView === v}
+                      className={`px-4 py-1.5 rounded-lg font-bold ${chatView === v ? 'bg-emerald-500 text-slate-950' : 'text-slate-300'}`}>
+                      {v === 'coach' ? 'Coach' : 'Groups'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {chatView === 'coach' ? (
+                <div className="h-[calc(100dvh-56px-88px-56px)] md:h-[calc(100vh-64px-48px-56px)] flex flex-col md:rounded-3xl md:border md:border-slate-800 md:bg-slate-900/60 md:overflow-hidden">
+                  <ChatThread clientId={me.id} viewer="client" placeholder="Message your coach…" />
+                </div>
+              ) : (
+                <Suspense fallback={<p className="p-4 text-sm text-slate-400">Loading…</p>}>
+                  <CommunityView initialGroupId={groupId} />
+                </Suspense>
+              )}
             </div>
           )}
           {tab === 'profile' && <ClientProfile client={me} />}
