@@ -13,8 +13,19 @@ import { portalHref } from '../../config/portal';
 
 /*
  * Marketing site. Everything wrapped in <Placeholder> is copy the business still has to supply
- * (coach bio, pricing, contact details, photos) and renders with a dashed outline until replaced.
+ * (coach bio and portrait, pricing, contact details) and renders with a dashed outline until replaced.
  */
+
+/*
+ * Photos: Unsplash licence (free commercial use, no attribution required), self-hosted in
+ * public/images/landing as WebP. Sources: hero WiKEnlt6Z3U (Alora Griffiths), step-apply
+ * vf8WO2KlnmE (Sergio Kian), step-plan 5p8vhHUEEgY (Vitaly Gariev), step-train 2rZ4nhCdQNc
+ * (Rahul Gupta), break -8lajF7J8T0 (Gold's Gym Nepal), coach-backdrop pKze3waMYVw (Crosby Hinze).
+ */
+const img = (name: string, widths: number[]) => ({
+  src: `/images/landing/${name}-${widths[widths.length - 1]}.webp`,
+  srcSet: widths.map(w => `/images/landing/${name}-${w}.webp ${w}w`).join(', '),
+});
 
 const Placeholder: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
   <span className={`inline-block border border-dashed border-amber-500/60 bg-amber-500/5 rounded px-1.5 ${className}`}>
@@ -30,9 +41,9 @@ const FEATURES = [
 ];
 
 const STEPS = [
-  { title: 'Apply', body: 'Tell us your goals, schedule and training history.' },
-  { title: 'Get your plan', body: 'Your coach builds your program and habits.' },
-  { title: 'Train & check in', body: 'Log workouts in the app; your coach adjusts as you progress.' },
+  { title: 'Apply', body: 'Tell us your goals, schedule and training history.', photo: 'step-apply', alt: 'A coach going through a new client\'s details on his phone' },
+  { title: 'Get your plan', body: 'Your coach builds your program and habits.', photo: 'step-plan', alt: 'A coach walking a client through her plan on a tablet' },
+  { title: 'Train & check in', body: 'Log workouts in the app; your coach adjusts as you progress.', photo: 'step-train', alt: 'A man doing push-ups in his living room' },
 ];
 
 export const LandingPage: React.FC = () => (
@@ -80,11 +91,15 @@ export const LandingPage: React.FC = () => (
             </a>
           </div>
         </div>
-        <div className="aspect-[4/3] rounded-3xl border border-dashed border-amber-500/60 bg-slate-900 flex items-center justify-center text-center p-6">
-          <p className="text-sm text-slate-400">
-            <Placeholder>Hero photo: coach training a client (landscape, 1600×1200)</Placeholder>
-          </p>
-        </div>
+        <img
+          {...img('hero', [800, 1600])}
+          sizes="(min-width: 1152px) 552px, (min-width: 768px) 48vw, 100vw"
+          width={1600}
+          height={1200}
+          fetchPriority="high"
+          alt="A coach spotting a client through a heavy barbell squat"
+          className="w-full aspect-[4/3] object-cover rounded-3xl border border-slate-800 bg-slate-900"
+        />
       </section>
 
       {/* Features */}
@@ -111,6 +126,15 @@ export const LandingPage: React.FC = () => (
         <ol className="mt-10 grid grid-cols-3 gap-3 sm:gap-6">
           {STEPS.map((step, i) => (
             <li key={step.title} className="text-center">
+              <img
+                {...img(step.photo, [480, 800])}
+                sizes="(min-width: 1152px) 360px, 32vw"
+                width={800}
+                height={600}
+                loading="lazy"
+                alt={step.alt}
+                className="w-full aspect-[4/3] object-cover rounded-xl sm:rounded-2xl border border-slate-800 bg-slate-900 mb-3 sm:mb-4"
+              />
               <div className="mx-auto w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-emerald-500 text-slate-950 font-extrabold flex items-center justify-center">
                 {i + 1}
               </div>
@@ -121,9 +145,29 @@ export const LandingPage: React.FC = () => (
         </ol>
       </section>
 
+      {/* Section break */}
+      <img
+        {...img('break', [1200, 2400])}
+        sizes="100vw"
+        width={2400}
+        height={1000}
+        loading="lazy"
+        alt="Two people training side by side on bench presses in a bright gym"
+        className="w-full h-48 sm:h-72 lg:h-96 object-cover bg-slate-900"
+      />
+
       {/* Coach */}
-      <section className="bg-slate-900/60 border-y border-slate-800">
-        <div className="max-w-6xl mx-auto px-4 py-16 grid md:grid-cols-[280px_1fr] gap-8 items-center">
+      <section className="relative overflow-hidden bg-slate-900 border-b border-slate-800">
+        <img
+          src="/images/landing/coach-backdrop-1600.webp"
+          width={1600}
+          height={1067}
+          loading="lazy"
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-slate-950/90" aria-hidden="true" />
+        <div className="relative max-w-6xl mx-auto px-4 py-16 grid md:grid-cols-[280px_1fr] gap-8 items-center">
           <div className="aspect-square rounded-3xl border border-dashed border-amber-500/60 bg-slate-950 flex items-center justify-center p-6 text-center">
             <p className="text-sm text-slate-400"><Placeholder>Coach portrait (square)</Placeholder></p>
           </div>
