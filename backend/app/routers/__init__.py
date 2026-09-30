@@ -23,6 +23,7 @@ from app.routers.autoflows import router as autoflows_router
 from app.routers.billing import router as billing_router
 from app.routers.pay import router as pay_router
 from app.routers.admin import router as admin_router
+from app.routers.media import router as media_router
 
 __all__ = [
     "auth_router",
@@ -46,4 +47,5 @@ __all__ = [
     "billing_router",
     "pay_router",
     "admin_router",
+    "media_router",
 ]

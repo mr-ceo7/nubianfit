@@ -48,7 +48,17 @@ export function detectPortal(location: Pick<Location, 'hostname' | 'search'> = w
 }
 
 /** Link to another portal: its own domain in production, ?portal= locally. */
-export function portalHref(portal: Portal): string {
-  if (allowsPortalOverride()) return `${window.location.pathname}?portal=${portal}`;
-  return PORTAL_URLS[portal];
+export function portalHref(portal: Portal, params?: Record<string, string>): string {
+  const query = new URLSearchParams();
+  if (allowsPortalOverride()) {
+    query.set('portal', portal);
+  }
+  if (params) {
+    Object.entries(params).forEach(([k, v]) => {
+      if (v !== undefined && v !== null) query.set(k, v);
+    });
+  }
+  const qStr = query.toString();
+  const base = allowsPortalOverride() ? window.location.pathname : PORTAL_URLS[portal];
+  return qStr ? `${base}?${qStr}` : base;
 }

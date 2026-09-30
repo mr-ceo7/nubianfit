@@ -8,7 +8,7 @@ import {
   Smartphone,
   ArrowRight,
 } from 'lucide-react';
-import { NubianFitLogo } from '../common/NubianFitLogo';
+import { NubianFitBrand } from '../common/NubianFitBrand';
 import { portalHref } from '../../config/portal';
 
 /*
@@ -51,21 +51,18 @@ export const LandingPage: React.FC = () => (
     {/* Nav */}
     <header className="sticky top-0 z-30 bg-slate-950/85 backdrop-blur border-b border-slate-800">
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-        <a href="#top" className="flex items-center gap-2">
-          <NubianFitLogo className="h-8 w-8" />
-          <span className="font-logo text-lg tracking-wide">
-            <span className="text-logo-nubian">NUBIAN</span>
-            <span className="text-logo-fit">FIT</span>
-          </span>
+        <a href="#top" className="flex items-center">
+          <NubianFitBrand size="md" />
         </a>
         <nav className="flex items-center gap-2 sm:gap-4 text-sm">
           <a href="#how" className="hidden sm:inline text-slate-300 hover:text-white">How it works</a>
+          <a href="#coach" className="hidden sm:inline text-slate-300 hover:text-white">Meet Yusuf</a>
           <a href="#pricing" className="hidden sm:inline text-slate-300 hover:text-white">Pricing</a>
-          <a href={portalHref('client')} className="px-3 py-1.5 rounded-lg text-slate-200 hover:text-white font-semibold">
-            Client login
+          <a href={portalHref('client')} className="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white font-medium">
+            Sign in
           </a>
-          <a href={portalHref('coach')} className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-semibold">
-            Coaches
+          <a href={portalHref('client', { mode: 'join' })} className="px-3.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold transition">
+            Start Training
           </a>
         </nav>
       </div>
@@ -83,11 +80,11 @@ export const LandingPage: React.FC = () => (
             A personal training plan, a coach who checks your work, and an app that keeps you on track between sessions.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <a href="#pricing" className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold">
-              Start coaching <ArrowRight className="w-4 h-4" />
+            <a href={portalHref('client', { mode: 'join' })} className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold transition">
+              Start training <ArrowRight className="w-4 h-4" />
             </a>
-            <a href={portalHref('client')} className="inline-flex items-center gap-2 px-5 py-3 rounded-xl border border-slate-700 hover:border-slate-500 text-white font-semibold">
-              I already have a coach
+            <a href="#how" className="inline-flex items-center gap-2 px-5 py-3 rounded-xl border border-slate-700 hover:border-slate-500 text-white font-semibold transition">
+              How it works
             </a>
           </div>
         </div>
@@ -157,28 +154,44 @@ export const LandingPage: React.FC = () => (
       />
 
       {/* Coach */}
-      <section className="relative overflow-hidden bg-slate-900 border-b border-slate-800">
-        <img
-          src="/images/landing/coach-backdrop-1600.webp"
-          width={1600}
-          height={1067}
-          loading="lazy"
-          alt=""
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-slate-950/90" aria-hidden="true" />
-        <div className="relative max-w-6xl mx-auto px-4 py-16 grid md:grid-cols-[280px_1fr] gap-8 items-center">
-          <div className="aspect-square rounded-3xl border border-dashed border-amber-500/60 bg-slate-950 flex items-center justify-center p-6 text-center">
-            <p className="text-sm text-slate-400"><Placeholder>Coach portrait (square)</Placeholder></p>
+      <section id="coach" className="bg-slate-900/60 border-b border-slate-800">
+        <div className="max-w-6xl mx-auto px-4 py-16 sm:py-20 grid md:grid-cols-[300px_1fr] gap-8 sm:gap-12 items-center">
+          <div className="relative">
+            <img
+              {...img('coach-yusuf-hassan', [400, 800])}
+              sizes="(min-width: 768px) 300px, 80vw"
+              width={800}
+              height={800}
+              loading="lazy"
+              alt="Coach Yusuf Hassan in the gym"
+              className="w-full max-w-[300px] mx-auto aspect-square object-cover rounded-3xl border border-slate-700/80 shadow-2xl bg-slate-900 ring-1 ring-white/10"
+            />
           </div>
           <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-emerald-400">Meet your coach</p>
-            <h2 className="mt-2 text-2xl sm:text-3xl font-bold text-white"><Placeholder>Coach name</Placeholder></h2>
-            <p className="mt-4 text-slate-300 leading-relaxed">
-              <Placeholder className="block">
-                Two or three sentences about the coach: background, certifications, who they help and the results clients get.
-              </Placeholder>
+            <p className="text-[10px] font-mono tracking-widest uppercase text-emerald-400 font-bold">
+              Founder & Head Coach
             </p>
+            <h2 className="mt-2 text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+              Yusuf Hassan
+            </h2>
+            <p className="mt-4 text-slate-300 leading-relaxed text-sm sm:text-base max-w-2xl">
+              Coaching grounded in progressive strength, functional biomechanics, and relentless consistency.
+              Yusuf works directly with athletes to build raw strength, optimize recovery and nutrition, and eliminate guesswork from daily training.
+            </p>
+            <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 gap-3 pt-6 border-t border-slate-800/80">
+              <div>
+                <p className="text-[10px] font-mono tracking-wider uppercase text-slate-400">Focus</p>
+                <p className="text-xs sm:text-sm font-semibold text-white mt-1">Strength & Hypertrophy</p>
+              </div>
+              <div>
+                <p className="text-[10px] font-mono tracking-wider uppercase text-slate-400">Method</p>
+                <p className="text-xs sm:text-sm font-semibold text-white mt-1">Periodized Progression</p>
+              </div>
+              <div className="col-span-2 sm:col-span-1">
+                <p className="text-[10px] font-mono tracking-wider uppercase text-slate-400">Format</p>
+                <p className="text-xs sm:text-sm font-semibold text-white mt-1">Direct 1-on-1 Coaching</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -215,22 +228,25 @@ export const LandingPage: React.FC = () => (
           <div className="flex items-start gap-4">
             <Smartphone className="w-8 h-8 text-slate-950 shrink-0" />
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold text-slate-950">Already coached with us?</h2>
-              <p className="text-sm text-slate-950/80 mt-1">Open the app, sign in with your email, and add it to your home screen.</p>
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-950">Ready to train with NubianFit?</h2>
+              <p className="text-sm text-slate-950/80 mt-1">Open the athlete app, sign in or create your profile, and save it to your home screen.</p>
             </div>
           </div>
-          <a href={portalHref('client')} className="shrink-0 px-5 py-3 rounded-xl bg-slate-950 text-emerald-400 font-bold">
-            Open the app
+          <a href={portalHref('client', { mode: 'join' })} className="shrink-0 px-5 py-3 rounded-xl bg-slate-950 text-emerald-400 font-bold transition hover:bg-slate-900">
+            Open Athlete App
           </a>
         </div>
       </section>
     </main>
 
     <footer className="border-t border-slate-800">
-      <div className="max-w-6xl mx-auto px-4 py-8 flex flex-col sm:flex-row gap-3 justify-between text-xs text-slate-400">
-        <p>© {new Date().getFullYear()} NubianFit</p>
+      <div className="max-w-6xl mx-auto px-4 py-8 flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center text-xs text-slate-400">
+        <div className="flex flex-col gap-2">
+          <NubianFitBrand size="sm" />
+          <p>© {new Date().getFullYear()} NubianFit. All rights reserved.</p>
+        </div>
         <p>
-          Contact: <Placeholder>email@yourdomain</Placeholder> · <Placeholder>+254 …</Placeholder>
+          Head Coach: Yusuf Hassan · coach@nubianfit.com
         </p>
       </div>
     </footer>

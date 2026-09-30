@@ -20,4 +20,19 @@ class ChatMessage(Base):
     timestamp: Mapped[str] = mapped_column(String(64), default="")
     is_read: Mapped[bool] = mapped_column(Boolean, default=False)
     attachment: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON, nullable=True)
+    scheduled_for: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True, index=True)
+    is_delivered: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, index=True, default=lambda: datetime.now(timezone.utc))
+
+
+class CannedResponse(Base):
+    """Coach's reusable quick reply templates (e.g. /checkin, /welcome)."""
+    __tablename__ = "canned_responses"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True, index=True)
+    coach_id: Mapped[str] = mapped_column(String(64), index=True, nullable=False)
+    title: Mapped[str] = mapped_column(String(128), nullable=False)
+    shortcut: Mapped[str] = mapped_column(String(64), nullable=False)
+    text: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, index=True, default=lambda: datetime.now(timezone.utc))
+

@@ -154,6 +154,41 @@ async def send_email_digests(db: AsyncSession, now: Optional[datetime] = None) -
     return sent
 
 
+async def deliver_scheduled_messages(db: AsyncSession) -> int:
+    """Deliver any chat messages whose scheduled_for time has arrived."""
+    now_utc = datetime.now(timezone.utc)
+    result = await db.execute(
+        select(ChatMessage).where(
+            ChatMessage.is_delivered == False,  # noqa: E712
+            ChatMessage.scheduled_for <= now_utc,
+        )
+    )
+    due_messages = result.scalars().all()
+    if not due_messages:
+        return 0
+
+    from app.schemas.message import ChatMessageResponse
+
+    delivered_count = 0
+    for msg in due_messages:
+        msg.is_delivered = True
+        client_res = await db.execute(select(Client).where(Client.id == msg.client_id))
+        client = client_res.scalar_one_or_none()
+        if client:
+            client_users = await client_user_ids(db, client.id)
+            out = ChatMessageResponse.model_validate(msg)
+            broker.publish([client.coach_id, *client_users], "message", out.model_dump(by_alias=True, mode="json"))
+            preview = msg.text[:140] if msg.text else ("Voice note" if (msg.attachment and msg.attachment.get("type") == "voice") else "Attachment")
+            if msg.sender == "coach":
+                await notify(db, client_users, "message", "New message from your coach", preview, {"tab": "chat"})
+            else:
+                await notify(db, [client.coach_id], "message", f"New message from {client.name}", preview,
+                             {"tab": "messenger", "clientId": client.id})
+            delivered_count += 1
+    await db.commit()
+    return delivered_count
+
+
 async def run_tick(today: Optional[date] = None) -> Dict[str, int]:
     today = today or date.today()
     async with AsyncSessionLocal() as db:
@@ -162,7 +197,9 @@ async def run_tick(today: Optional[date] = None) -> Dict[str, int]:
             "checkinReminders": await send_checkin_reminders(db, today),
             "digests": await send_email_digests(db),
             "renewals": await run_renewals(db, today),
+            "scheduledMessages": await deliver_scheduled_messages(db),
         }
+
 
 
 async def scheduler_loop() -> None:

@@ -23,7 +23,7 @@ import { useEngagement } from '../../context/EngagementContext';
 import { ClientAvatar } from '../common/ClientAvatar';
 import { localDateStr } from '../../utils/dates';
 import { useApp, NavigationTab } from '../../context/AppContext';
-import { NubianFitLogo } from '../common/NubianFitLogo';
+import { NubianFitBrand, NubianFitMonogram } from '../common/NubianFitBrand';
 
 
 export const Sidebar: React.FC = () => {
@@ -69,28 +69,9 @@ export const Sidebar: React.FC = () => {
       <div className="flex items-center justify-between p-4 h-16 border-b border-slate-800/80">
         <div className="flex items-center gap-3 overflow-hidden cursor-pointer" onClick={() => setActiveTab('dashboard')}>
           {isCollapsed ? (
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center font-logo text-lg lowercase">
-              <span className="text-logo-nubian">n</span>
-              <span className="text-logo-fit">f</span>
-            </div>
+            <NubianFitMonogram />
           ) : (
-            <div className="flex items-center gap-2.5">
-              <div className="flex flex-col items-stretch">
-                <span className="font-logo text-[17px] tracking-wide text-logo-nubian lowercase block leading-none">
-                  nubian<span className="text-logo-fit">fit</span>
-                </span>
-                <div className="flex justify-between text-[8px] text-slate-400 font-bold tracking-normal lowercase mt-1.5 w-full leading-none">
-                  <span>strength</span>
-                  <span>and</span>
-                  <span>strategy</span>
-                </div>
-              </div>
-              <span className="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 leading-none self-start mt-0.5">
-                Coach
-              </span>
-            </div>
-
-
+            <NubianFitBrand size="md" badge="Coach" badgeColor="emerald" />
           )}
         </div>
 

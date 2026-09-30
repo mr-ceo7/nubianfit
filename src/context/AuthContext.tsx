@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
-import { authApi, AuthUser, SESSION_EXPIRED_EVENT, tokenStore } from '../services/apiClient';
+import { authApi, AuthUser, ClientRegisterPayload, SESSION_EXPIRED_EVENT, tokenStore } from '../services/apiClient';
 
 type AuthStatus = 'loading' | 'signed_out' | 'signed_in';
 
@@ -8,6 +8,8 @@ interface AuthContextType {
   user: AuthUser | null;
   login: (email: string, password: string) => Promise<AuthUser>;
   registerCoach: (payload: { email: string; password: string; fullName: string; inviteCode: string }) => Promise<AuthUser>;
+  registerClient: (payload: ClientRegisterPayload) => Promise<AuthUser>;
+  loginWithGoogle: (credential: string) => Promise<AuthUser>;
   requestCode: (email: string) => Promise<void>;
   verifyCode: (email: string, code: string) => Promise<AuthUser>;
   logout: () => void;
@@ -53,6 +55,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     user,
     login: async (email, password) => signIn(await authApi.login(email, password)),
     registerCoach: async payload => signIn(await authApi.registerCoach(payload)),
+    registerClient: async payload => signIn(await authApi.registerClient(payload)),
+    loginWithGoogle: async credential => signIn(await authApi.loginWithGoogle(credential)),
     requestCode: async email => { await authApi.requestCode(email); },
     verifyCode: async (email, code) => signIn(await authApi.verifyCode(email, code)),
     logout,

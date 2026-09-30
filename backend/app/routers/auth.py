@@ -12,6 +12,7 @@ import secrets
 import uuid
 from datetime import datetime, timedelta, timezone
 
+import httpx
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,12 +20,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings
 from app.dependencies import get_db, get_current_user
 from app.models.client import Client
+from app.models.habit import Habit
 from app.models.otp import EmailOTP
 from app.models.user import User
 from app.rate_limiter import rate_limit, rate_limiter
 from app.schemas.auth import (
     ChangePasswordRequest,
+    ClientRegisterRequest,
     CoachRegisterRequest,
+    GoogleAuthRequest,
     LoginRequest,
     OtpRequest,
     OtpVerifyRequest,
@@ -32,6 +36,7 @@ from app.schemas.auth import (
     UserResponse,
 )
 from app.security import create_access_token, get_password_hash, verify_password
+from app.services.activity import log_activity
 from app.services.email import EmailDeliveryError, send_login_code
 
 logger = logging.getLogger("nubianfit.auth")
@@ -127,14 +132,133 @@ async def register_coach(req: CoachRegisterRequest, db: AsyncSession = Depends(g
     return _token_response(user)
 
 
+@router.post(
+    "/register-client",
+    response_model=TokenResponse,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(rate_limit(10, 60, "register-client"))],
+)
+async def register_client(req: ClientRegisterRequest, db: AsyncSession = Depends(get_db)):
+    """Self-serve open registration for athletes joining NubianFit."""
+    email = _normalize_email(req.email)
+    existing_user = await db.execute(select(User).where(User.email == email))
+    user = existing_user.scalar_one_or_none()
+    if user and user.hashed_password and req.password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="An account with this email already exists. Please sign in.",
+        )
+
+    # Check for existing client profile
+    existing_client = await _find_client_for_email(db, email)
+
+    # Find the Coach to assign this athlete to
+    coach_res = await db.execute(
+        select(User).where(User.role == "coach").order_by(User.is_admin.desc(), User.id.asc())
+    )
+    coach = coach_res.scalars().first()
+    coach_id = coach.id if coach else "coach-1"
+
+    if not existing_client:
+        client_id = f"client-{uuid.uuid4().hex[:12]}"
+        client = Client(
+            id=client_id,
+            coach_id=coach_id,
+            name=req.full_name.strip(),
+            avatar="",
+            email=email,
+            phone="",
+            age=req.age,
+            gender=req.gender or "prefer_not_to_say",
+            status="Active",
+            goal=req.goal or "Strength & Strategy",
+            experience_level=req.experience_level or "Intermediate",
+            start_date=datetime.now().strftime("%Y-%m-%d"),
+            compliance_rate=100.0,
+            workouts_completed=0,
+            total_workouts_assigned=0,
+            starting_weight_kg=req.starting_weight_kg,
+            current_weight_kg=req.starting_weight_kg,
+            target_weight_kg=req.target_weight_kg,
+        )
+        db.add(client)
+
+        # Baseline habits
+        db.add(Habit(
+            id=f"habit-{uuid.uuid4().hex[:12]}",
+            client_id=client_id,
+            title="Daily Hydration (3L)",
+            target_value=3.0,
+            unit="L",
+            days_of_week=[],
+            active=True,
+            sort_order=1,
+        ))
+        db.add(Habit(
+            id=f"habit-{uuid.uuid4().hex[:12]}",
+            client_id=client_id,
+            title="Hit protein target",
+            target_value=None,
+            unit="",
+            days_of_week=[],
+            active=True,
+            sort_order=2,
+        ))
+        db.add(Habit(
+            id=f"habit-{uuid.uuid4().hex[:12]}",
+            client_id=client_id,
+            title="Daily Steps (10k)",
+            target_value=10000.0,
+            unit="steps",
+            days_of_week=[],
+            active=True,
+            sort_order=3,
+        ))
+
+        # Log activity feed item for the coach
+        log_activity(
+            db,
+            client,
+            type_="client_joined",
+            title="New Athlete Enrolled",
+            description=f"{client.name} joined NubianFit with goal: {client.goal}.",
+        )
+    else:
+        client = existing_client
+        client_id = client.id
+
+    if not user:
+        user = User(
+            id=f"user-{uuid.uuid4().hex[:12]}",
+            email=email,
+            hashed_password=get_password_hash(req.password) if req.password else None,
+            full_name=req.full_name.strip(),
+            role="client",
+            client_id=client_id,
+            avatar="",
+            is_active=True,
+        )
+        db.add(user)
+    else:
+        user.client_id = client_id
+        if req.password and not user.hashed_password:
+            user.hashed_password = get_password_hash(req.password)
+
+    await db.commit()
+    await db.refresh(user)
+    return _token_response(user)
+
+
 @router.post("/otp/request", dependencies=[Depends(rate_limit(5, 60, "otp-request"))])
 async def request_login_code(req: OtpRequest, db: AsyncSession = Depends(get_db)):
-    """Email a login code to a client. Always answers the same way so emails can't be enumerated."""
+    """Email a login code to an existing client or athlete."""
     email = _normalize_email(req.email)
     response = {"message": "If this email belongs to a NubianFit client, a login code is on its way."}
 
+    # Silently drop requests for unknown emails — an attacker shouldn't be able to enumerate our client list.
+    user = (await db.execute(select(User).where(User.email == email))).scalar_one_or_none()
     client = await _find_client_for_email(db, email)
-    if not client:
+    if not user and not client:
         return response
 
     # Per-address cap so rotating IPs can't keep minting fresh codes (each code allows a few guesses).
@@ -169,7 +293,7 @@ async def request_login_code(req: OtpRequest, db: AsyncSession = Depends(get_db)
     dependencies=[Depends(rate_limit(10, 60, "otp-verify"))],
 )
 async def verify_login_code(req: OtpVerifyRequest, db: AsyncSession = Depends(get_db)):
-    """Exchange a valid login code for a session, creating the client's login on first use."""
+    """Exchange a valid login code for a session, creating the athlete profile if new."""
     email = _normalize_email(req.email)
     invalid = HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired code")
 
@@ -196,7 +320,69 @@ async def verify_login_code(req: OtpVerifyRequest, db: AsyncSession = Depends(ge
 
     client = await _find_client_for_email(db, email)
     if not client:
-        raise invalid
+        # Auto-provision open athlete profile
+        coach_res = await db.execute(
+            select(User).where(User.role == "coach").order_by(User.is_admin.desc(), User.id.asc())
+        )
+        coach = coach_res.scalars().first()
+        coach_id = coach.id if coach else "coach-1"
+
+        client_id = f"client-{uuid.uuid4().hex[:12]}"
+        athlete_name = email.split("@")[0].replace(".", " ").title()
+        client = Client(
+            id=client_id,
+            coach_id=coach_id,
+            name=athlete_name,
+            avatar="",
+            email=email,
+            phone="",
+            status="Active",
+            goal="Strength & Strategy",
+            experience_level="Intermediate",
+            start_date=datetime.now().strftime("%Y-%m-%d"),
+            compliance_rate=100.0,
+            workouts_completed=0,
+            total_workouts_assigned=0,
+        )
+        db.add(client)
+
+        db.add(Habit(
+            id=f"habit-{uuid.uuid4().hex[:12]}",
+            client_id=client_id,
+            title="Daily Hydration (3L)",
+            target_value=3.0,
+            unit="L",
+            days_of_week=[],
+            active=True,
+            sort_order=1,
+        ))
+        db.add(Habit(
+            id=f"habit-{uuid.uuid4().hex[:12]}",
+            client_id=client_id,
+            title="Hit protein target",
+            target_value=None,
+            unit="",
+            days_of_week=[],
+            active=True,
+            sort_order=2,
+        ))
+        db.add(Habit(
+            id=f"habit-{uuid.uuid4().hex[:12]}",
+            client_id=client_id,
+            title="Daily Steps (10k)",
+            target_value=10000.0,
+            unit="steps",
+            days_of_week=[],
+            active=True,
+            sort_order=3,
+        ))
+        log_activity(
+            db,
+            client,
+            type_="client_joined",
+            title="New Athlete Enrolled",
+            description=f"{client.name} signed in with email: {email}.",
+        )
 
     if not user:
         user = User(
@@ -210,7 +396,6 @@ async def verify_login_code(req: OtpVerifyRequest, db: AsyncSession = Depends(ge
         )
         db.add(user)
     elif user.client_id != client.id:
-        # Keep an existing link: another coach adding the same email must not take over this login.
         current = await db.get(Client, user.client_id) if user.client_id else None
         if current is None:
             user.client_id = client.id
@@ -218,6 +403,179 @@ async def verify_login_code(req: OtpVerifyRequest, db: AsyncSession = Depends(ge
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="This account has been deactivated")
 
     await db.commit()
+    return _token_response(user)
+
+
+async def verify_google_token(credential: str) -> dict:
+    """Verifies a Google ID token via Google's tokeninfo endpoint, checking aud, iss, and email_verified."""
+    if (settings.TESTING or not settings.is_production) and credential.startswith("mock-google-"):
+        email = credential.replace("mock-google-", "")
+        return {
+            "email": email,
+            "name": "Google Athlete",
+            "picture": "https://lh3.googleusercontent.com/a/mock",
+            "email_verified": True,
+            "sub": "mock-sub-12345",
+        }
+
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        try:
+            resp = await client.get(
+                "https://oauth2.googleapis.com/tokeninfo",
+                params={"id_token": credential},
+            )
+        except httpx.RequestError as exc:
+            logger.error("Failed to connect to Google tokeninfo: %s", exc)
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="Unable to connect to Google Identity Services. Please try again.",
+            )
+
+        if resp.status_code != 200:
+            logger.warning("Google tokeninfo returned %d: %s", resp.status_code, resp.text)
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid or expired Google credential.",
+            )
+
+        data = resp.json()
+        token_aud = data.get("aud")
+        if token_aud != settings.GOOGLE_CLIENT_ID:
+            logger.warning("Google token aud mismatch: expected %s, got %s", settings.GOOGLE_CLIENT_ID, token_aud)
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Google token was not issued for NubianFit.",
+            )
+
+        token_iss = data.get("iss")
+        if token_iss not in ("accounts.google.com", "https://accounts.google.com"):
+            logger.warning("Google token invalid iss: %s", token_iss)
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid Google token issuer.",
+            )
+
+        email_verified = data.get("email_verified")
+        if not (email_verified is True or email_verified == "true"):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Google account email is not verified.",
+            )
+
+        return data
+
+
+@router.post(
+    "/google",
+    response_model=TokenResponse,
+    dependencies=[Depends(rate_limit(15, 60, "google-auth"))],
+)
+async def login_with_google(req: GoogleAuthRequest, db: AsyncSession = Depends(get_db)):
+    """Authenticate with Google Quick One Tap or Sign In with Google.
+    Signs in existing athletes/users, or provisions a new athlete profile with baseline habits.
+    """
+    token_data = await verify_google_token(req.credential)
+    email = _normalize_email(token_data["email"])
+    full_name = token_data.get("name") or email.split("@")[0].replace(".", " ").title()
+    avatar = token_data.get("picture") or ""
+
+    user_res = await db.execute(select(User).where(User.email == email))
+    user = user_res.scalar_one_or_none()
+
+    if user:
+        if not user.is_active:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="This account has been deactivated")
+        if avatar and not user.avatar:
+            user.avatar = avatar
+        if full_name and not user.full_name:
+            user.full_name = full_name
+        await db.commit()
+        await db.refresh(user)
+        return _token_response(user)
+
+    # Find coach to assign this athlete to
+    coach_res = await db.execute(
+        select(User).where(User.role == "coach").order_by(User.is_admin.desc(), User.id.asc())
+    )
+    coach = coach_res.scalars().first()
+    coach_id = coach.id if coach else "coach-1"
+
+    existing_client = await _find_client_for_email(db, email)
+    if not existing_client:
+        client_id = f"client-{uuid.uuid4().hex[:12]}"
+        client = Client(
+            id=client_id,
+            coach_id=coach_id,
+            name=full_name.strip(),
+            avatar=avatar,
+            email=email,
+            phone="",
+            status="Active",
+            goal="Strength & Strategy",
+            experience_level="Intermediate",
+            start_date=datetime.now().strftime("%Y-%m-%d"),
+            compliance_rate=100.0,
+            workouts_completed=0,
+            total_workouts_assigned=0,
+        )
+        db.add(client)
+
+        db.add(Habit(
+            id=f"habit-{uuid.uuid4().hex[:12]}",
+            client_id=client_id,
+            title="Daily Hydration (3L)",
+            target_value=3.0,
+            unit="liters",
+            days_of_week=[],
+            active=True,
+            sort_order=1,
+        ))
+        db.add(Habit(
+            id=f"habit-{uuid.uuid4().hex[:12]}",
+            client_id=client_id,
+            title="Hit protein target",
+            target_value=1.0,
+            unit="",
+            days_of_week=[],
+            active=True,
+            sort_order=2,
+        ))
+        db.add(Habit(
+            id=f"habit-{uuid.uuid4().hex[:12]}",
+            client_id=client_id,
+            title="Daily Steps (10k)",
+            target_value=10000.0,
+            unit="steps",
+            days_of_week=[],
+            active=True,
+            sort_order=3,
+        ))
+
+        log_activity(
+            db,
+            client,
+            type_="client_joined",
+            title="New Athlete Enrolled",
+            description=f"{client.name} joined NubianFit via Google.",
+        )
+    else:
+        client = existing_client
+        client_id = client.id
+        if avatar and not client.avatar:
+            client.avatar = avatar
+
+    user = User(
+        id=f"user-{uuid.uuid4().hex[:12]}",
+        email=email,
+        full_name=full_name.strip(),
+        role="client",
+        client_id=client_id,
+        avatar=avatar,
+        is_active=True,
+    )
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
     return _token_response(user)
 
 

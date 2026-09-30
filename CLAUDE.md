@@ -20,7 +20,7 @@ Backend (run from `backend/`, venv at `backend/venv`):
 - `./venv/bin/python seed_data.py --force` — drop all tables and reseed demo data
 - Migrations: `./venv/bin/alembic revision --autogenerate -m "..."`, then `./venv/bin/alembic upgrade head`
 
-`./start.sh` runs both servers (frontend :3010, backend :8010; override with `FRONTEND_PORT`/`BACKEND_PORT`). It kills whatever holds those ports, creates the venv, and reseeds `backend/nubianfit.db` when the schema is out of date.
+`./start.sh` runs both servers (frontend :3010, backend :8010; override with `FRONTEND_PORT`/`BACKEND_PORT`), establishes an automatic Cloudflare Quick Tunnel with public preview links, kills whatever holds those ports/tunnel, creates the venv, and reseeds `backend/nubianfit.db` when the schema is out of date.
 
 ## Architecture
 

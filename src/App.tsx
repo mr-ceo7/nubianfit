@@ -10,6 +10,7 @@ import { NutritionProvider } from './context/NutritionContext';
 import { EngagementProvider } from './context/EngagementContext';
 import { allowsPortalOverride, detectPortal, Portal, portalHref } from './config/portal';
 import { Loader } from './components/common/Loader';
+import { NubianFitBrand } from './components/common/NubianFitBrand';
 import { CoachLogin } from './components/auth/CoachLogin';
 import { ClientLogin } from './components/auth/ClientLogin';
 import { AuthShell } from './components/auth/AuthShell';
@@ -35,8 +36,9 @@ const WrongPortal: React.FC<{ target: Portal; message: string }> = ({ target, me
 };
 
 const FullScreenLoader: React.FC = () => (
-  <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-    <Loader text="NubianFit" size="md" />
+  <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center gap-6">
+    <NubianFitBrand size="lg" />
+    <Loader text="Loading" size="sm" />
   </div>
 );
 
@@ -54,9 +56,6 @@ const PayPage = lazy(() => import('./components/business/PayPage').then(m => ({ 
 
 const ClientPortal: React.FC = () => {
   const { status, user } = useAuth();
-  // Payment links work without signing in.
-  const payToken = new URLSearchParams(window.location.search).get('pay');
-  if (payToken) return <PayPage token={payToken} />;
   if (status === 'loading') return <FullScreenLoader />;
   if (status === 'signed_out') return <ClientLogin />;
   if (user?.role !== 'client') {
@@ -78,16 +77,17 @@ const DevPortalSwitcher: React.FC<{ current: Portal }> = ({ current }) => (
 
 export default function App() {
   const [portal] = useState(detectPortal);
+  const payToken = new URLSearchParams(window.location.search).get('pay');
 
   // Only the marketing site should be indexed by search engines.
   useEffect(() => {
-    if (portal === 'landing') return;
+    if (portal === 'landing' && !payToken) return;
     const meta = document.createElement('meta');
     meta.name = 'robots';
     meta.content = 'noindex, nofollow';
     document.head.appendChild(meta);
     return () => meta.remove();
-  }, [portal]);
+  }, [portal, payToken]);
 
   return (
     <AuthProvider>
@@ -95,11 +95,17 @@ export default function App() {
         <NutritionProvider>
           <EngagementProvider>
             <Suspense fallback={<FullScreenLoader />}>
-              {portal === 'landing' && <LandingPage />}
-              {portal === 'coach' && <CoachPortal />}
-              {portal === 'client' && <ClientPortal />}
+              {payToken ? (
+                <PayPage token={payToken} />
+              ) : (
+                <>
+                  {portal === 'landing' && <LandingPage />}
+                  {portal === 'coach' && <CoachPortal />}
+                  {portal === 'client' && <ClientPortal />}
+                </>
+              )}
             </Suspense>
-            {allowsPortalOverride() && <DevPortalSwitcher current={portal} />}
+            {allowsPortalOverride() && !payToken && <DevPortalSwitcher current={portal} />}
           </EngagementProvider>
         </NutritionProvider>
       </AppProvider>

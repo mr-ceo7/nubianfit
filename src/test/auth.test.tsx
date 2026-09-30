@@ -82,4 +82,54 @@ describe('authentication', () => {
     mockApi({ 'GET /boom': () => ({ status: 400, json: { detail: 'You already have a client with this email' } }) });
     await expect(api.get('/boom')).rejects.toThrow('You already have a client with this email');
   });
+
+  test('global pay link renders PayPage without portal parameter or sign-in', async () => {
+    mockApi({
+      'GET /pay/tok-123': () => ({
+        json: {
+          status: 'pending',
+          purpose: 'purchase',
+          coachName: 'Coach Carter',
+          clientFirstName: 'Sarah',
+          packageTitle: 'Monthly 1:1 Coaching',
+          packageDescription: 'Full coaching access',
+          billing: 'recurring',
+          interval: 'monthly',
+          amount: 5000,
+          currency: 'KES',
+          paymentsEnabled: true,
+        },
+      }),
+    });
+    window.history.replaceState(null, '', '/?pay=tok-123');
+    render(<App />);
+    expect(await screen.findByText('Complete your payment', {}, { timeout: 8000 })).toBeInTheDocument();
+    expect(screen.getByText(/Coach Carter · Monthly 1:1 Coaching/)).toBeInTheDocument();
+  });
+
+  test('athlete self-registers through open onboarding', async () => {
+    const { calls } = mockApi({
+      'POST /auth/register-client': () => ({
+        json: { accessToken: 'tok-new-athlete', tokenType: 'bearer', user: { ...clientUser, id: 'user-new', fullName: 'Jane Doe', email: 'jane@example.com' } }
+      }),
+      'GET /clients': () => ({ json: [{ id: 'client-1', name: 'Jane Doe', email: 'jane@example.com', complianceRate: 100, currentWeightKg: 65, startingWeightKg: 65, targetWeightKg: 60 }] }),
+    });
+    renderPortal('client');
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole('button', { name: 'Join NubianFit' }));
+    expect(await screen.findByText('Join NubianFit')).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText('Full name'), 'Jane Doe');
+    await user.type(screen.getByLabelText('Email address'), 'jane@example.com');
+    await user.click(screen.getByRole('button', { name: 'Start Training' }));
+
+    await waitFor(() => expect(calls.some(c => c.path === '/auth/register-client')).toBe(true));
+    expect(tokenStore.get()).toBe('tok-new-athlete');
+  });
+
+  test('athlete renders Google One Tap and sign-in button', async () => {
+    renderPortal('client');
+    expect(await screen.findByRole('button', { name: /continue with google/i })).toBeInTheDocument();
+  });
 });

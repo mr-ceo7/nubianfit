@@ -135,3 +135,41 @@ async def test_another_coach_cannot_take_over_a_client_login(api, other_coach, c
 async def test_admin_is_a_flag_not_an_email(api, other_coach):
     assert (await api.get("/api/auth/me", headers=other_coach)).json()["isAdmin"] is False
     assert (await api.get("/api/admin/summary", headers=other_coach)).status_code == 403
+
+
+async def test_register_client_self_serve(api):
+    res = await api.post("/api/auth/register-client", json={
+        "email": "fresh.athlete@example.com",
+        "fullName": "Fresh Athlete",
+        "goal": "Hypertrophy",
+        "experienceLevel": "Intermediate",
+    })
+    assert res.status_code == 201
+    data = res.json()
+    assert data["accessToken"]
+    assert data["user"]["role"] == "client"
+    assert data["user"]["email"] == "fresh.athlete@example.com"
+    assert data["user"]["fullName"] == "Fresh Athlete"
+    assert data["user"]["clientId"].startswith("client-")
+
+
+async def test_google_auth_new_athlete_and_returning(api):
+    # 1. New athlete sign-in via Google One Tap
+    res = await api.post("/api/auth/google", json={
+        "credential": "mock-google-google.runner@example.com",
+    })
+    assert res.status_code == 200
+    data = res.json()
+    assert data["accessToken"]
+    assert data["user"]["role"] == "client"
+    assert data["user"]["email"] == "google.runner@example.com"
+    client_id = data["user"]["clientId"]
+    assert client_id.startswith("client-")
+
+    # 2. Returning athlete sign-in via Google One Tap
+    res2 = await api.post("/api/auth/google", json={
+        "credential": "mock-google-google.runner@example.com",
+    })
+    assert res2.status_code == 200
+    data2 = res2.json()
+    assert data2["user"]["clientId"] == client_id

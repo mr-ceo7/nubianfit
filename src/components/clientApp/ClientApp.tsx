@@ -3,7 +3,7 @@ import { Apple, CalendarDays, Home, LogOut, MessageSquare, TrendingUp, User } fr
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { ClientAvatar } from '../common/ClientAvatar';
-import { NubianFitLogo } from '../common/NubianFitLogo';
+import { NubianFitBrand } from '../common/NubianFitBrand';
 import { WorkoutLoggerModal } from '../programs/WorkoutLoggerModal';
 import { ChatThread } from '../messenger/ChatThread';
 import { ClientToday } from './ClientToday';
@@ -61,7 +61,7 @@ export const ClientApp: React.FC = () => {
   if (!me) {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center gap-3 p-6 text-center">
-        <NubianFitLogo className="h-10 w-10" />
+        <NubianFitBrand size="lg" />
         {loadError ? (
           <>
             <p className="text-sm text-slate-300">{loadError}</p>
@@ -115,7 +115,7 @@ export const ClientApp: React.FC = () => {
         {/* Mobile header */}
         <header className="md:hidden sticky top-0 z-20 bg-slate-950/90 backdrop-blur border-b border-slate-800">
           <div className="px-4 h-14 flex items-center gap-2">
-            <Brand />
+            <Brand size="sm" />
             <div className="ml-auto"><NotificationBell onNavigate={navigate} /></div>
             <button onClick={() => setTab('profile')} aria-label="Profile" className="rounded-xl">
               <ClientAvatar client={me} className="h-8 w-8 rounded-xl" />
@@ -188,14 +188,8 @@ export const ClientApp: React.FC = () => {
   );
 };
 
-const Brand: React.FC = () => (
-  <>
-    <NubianFitLogo className="h-7 w-7" />
-    <span className="font-logo text-base tracking-wide">
-      <span className="text-logo-nubian">NUBIAN</span>
-      <span className="text-logo-fit">FIT</span>
-    </span>
-  </>
+const Brand: React.FC<{ size?: 'sm' | 'md' }> = ({ size = 'md' }) => (
+  <NubianFitBrand size={size} />
 );
 
 const SidebarUser: React.FC<{ name: string; avatar: string }> = ({ name, avatar }) => {

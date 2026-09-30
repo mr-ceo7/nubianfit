@@ -19,6 +19,18 @@ class CoachRegisterRequest(CamelModel):
     invite_code: str
 
 
+class ClientRegisterRequest(CamelModel):
+    email: str
+    full_name: str = Field(min_length=1)
+    password: Optional[str] = None
+    goal: Optional[str] = "Strength & Strategy"
+    experience_level: Optional[str] = "Intermediate"
+    starting_weight_kg: Optional[float] = None
+    target_weight_kg: Optional[float] = None
+    age: Optional[int] = None
+    gender: Optional[str] = None
+
+
 class OtpRequest(CamelModel):
     email: str
 
@@ -26,6 +38,10 @@ class OtpRequest(CamelModel):
 class OtpVerifyRequest(CamelModel):
     email: str
     code: str
+
+
+class GoogleAuthRequest(CamelModel):
+    credential: str
 
 
 class ChangePasswordRequest(CamelModel):

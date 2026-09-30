@@ -42,7 +42,7 @@ class Settings(BaseSettings):
 
     # Head coach account. Seeded in dev; in production only created when BOOTSTRAP_INITIAL_ADMIN=true.
     BOOTSTRAP_INITIAL_ADMIN: bool = False
-    DEFAULT_COACH_NAME: str = "Head Coach"
+    DEFAULT_COACH_NAME: str = "Yusuf Hassan"
     DEFAULT_COACH_EMAIL: str = "coach@nubianfit.com"
     DEFAULT_COACH_PASSWORD: str = "Coach@123"
     # Required to self-register a new coach account.
@@ -55,6 +55,9 @@ class Settings(BaseSettings):
     # Transactional email (Resend). Without a key, emails are logged instead of sent (dev only).
     RESEND_API_KEY: Optional[str] = None
     FROM_EMAIL: str = "NubianFit <no-reply@nubianfit.com>"
+
+    # Google OAuth / One Tap
+    GOOGLE_CLIENT_ID: str = "362855101903-ncu3jd9sa2vv3v613uick1llf8qikl28.apps.googleusercontent.com"
 
     # USDA FoodData Central (https://fdc.nal.usda.gov/api-key-signup). DEMO_KEY works for
     # development but is limited to ~30 requests/hour per IP; set a real key in production.
@@ -87,6 +90,10 @@ class Settings(BaseSettings):
     CLIENT_URL: str = "https://app.nubianfit.xn--jhb4c.com"
     # Comma-separated extra origins (e.g. Vercel preview URLs).
     EXTRA_CORS_ORIGINS: str = ""
+
+    # Media uploads (voice notes, form-check videos, photos)
+    MEDIA_DIR: str = os.path.join(_backend_dir, "media")
+    MAX_UPLOAD_BYTES: int = 50 * 1024 * 1024  # 50 MB
 
     model_config = SettingsConfigDict(
         env_file=(os.path.join(_backend_dir, ".env"), ".env"),

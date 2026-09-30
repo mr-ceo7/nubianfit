@@ -17,7 +17,6 @@ import {
   Dumbbell
 } from 'lucide-react';
 import { promptInstall, isPwaInstalled, isIosDevice, subscribeToInstallPrompt, BeforeInstallPromptEvent } from '../../utils/pwa';
-import { NubianFitLogo } from './NubianFitLogo';
 
 
 interface PwaInstallPromptProps {

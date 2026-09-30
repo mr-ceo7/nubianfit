@@ -178,11 +178,27 @@ const storeSession = (data: TokenResponse) => {
   return data.user;
 };
 
+export interface ClientRegisterPayload {
+  email: string;
+  fullName: string;
+  password?: string;
+  goal?: string;
+  experienceLevel?: string;
+  startingWeightKg?: number;
+  targetWeightKg?: number;
+  age?: number;
+  gender?: string;
+}
+
 export const authApi = {
   login: async (email: string, password: string) =>
     storeSession(await api.post<TokenResponse>('/auth/login', { email, password })),
   registerCoach: async (payload: { email: string; password: string; fullName: string; inviteCode: string }) =>
     storeSession(await api.post<TokenResponse>('/auth/register-coach', payload)),
+  registerClient: async (payload: ClientRegisterPayload) =>
+    storeSession(await api.post<TokenResponse>('/auth/register-client', payload)),
+  loginWithGoogle: async (credential: string) =>
+    storeSession(await api.post<TokenResponse>('/auth/google', { credential })),
   requestCode: (email: string) => api.post<{ message: string }>('/auth/otp/request', { email }),
   verifyCode: async (email: string, code: string) =>
     storeSession(await api.post<TokenResponse>('/auth/otp/verify', { email, code })),

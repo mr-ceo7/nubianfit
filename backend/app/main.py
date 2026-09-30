@@ -2,11 +2,13 @@
 NubianFit FastAPI Backend Main Application
 """
 
+import os
 import asyncio
 import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -40,6 +42,7 @@ from app.routers import (
     billing_router,
     pay_router,
     admin_router,
+    media_router,
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
@@ -144,8 +147,12 @@ for router in (
     billing_router,
     pay_router,
     admin_router,
+    media_router,
 ):
     app.include_router(router, prefix=settings.API_PREFIX)
+
+os.makedirs(settings.MEDIA_DIR, exist_ok=True)
+app.mount("/api/media", StaticFiles(directory=settings.MEDIA_DIR), name="media")
 
 
 if __name__ == "__main__":

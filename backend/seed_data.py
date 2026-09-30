@@ -287,7 +287,7 @@ def _seed_engagement(session, today: date) -> None:
 def _seed_billing(session, today: date) -> None:
     """Demo packages, a subscription with payment history, and an open payment link.
     The payout account is fake: real checkouts need PAYSTACK_SECRET_KEY and a real subaccount."""
-    session.add(PayoutAccount(coach_id=DEMO_COACH_ID, business_name="Head Coach Fitness", bank_code="DEMO",
+    session.add(PayoutAccount(coach_id=DEMO_COACH_ID, business_name="Yusuf Hassan Coaching", bank_code="DEMO",
                               bank_name="Demo Bank", account_last4="4321", subaccount_code="ACCT_demo", active=True))
     session.add(Package(id="pkg-monthly", coach_id=DEMO_COACH_ID, title="Monthly Coaching",
                         description="Custom program, weekly check-ins and unlimited messaging.",

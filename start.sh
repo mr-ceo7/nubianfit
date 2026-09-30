@@ -35,6 +35,7 @@ free_port() {
 # Free ports first to avoid address-already-in-use errors
 free_port $FRONTEND_PORT
 free_port $BACKEND_PORT
+pkill -f "cloudflared tunnel --url http://localhost:$FRONTEND_PORT" 2>/dev/null || true
 
 # Setup cleanup function to terminate servers on Ctrl+C (SIGINT/SIGTERM)
 cleanup() {
@@ -44,6 +45,7 @@ cleanup() {
   echo "=================================================="
   kill "$BACKEND_PID" 2>/dev/null || true
   kill "$FRONTEND_PID" 2>/dev/null || true
+  kill "$TUNNEL_PID" 2>/dev/null || true
   exit 0
 }
 trap cleanup SIGINT SIGTERM
@@ -89,11 +91,47 @@ echo "Starting Vite Frontend Server..."
 API_PROXY_TARGET="http://127.0.0.1:$BACKEND_PORT" npx vite --port $FRONTEND_PORT --strictPort --host 0.0.0.0 > /dev/null 2>&1 &
 FRONTEND_PID=$!
 
+# Ensure cloudflared is available
+if ! command -v cloudflared >/dev/null 2>&1 && [ ! -x "$HOME/.local/bin/cloudflared" ]; then
+  echo "Installing cloudflared into $HOME/.local/bin..."
+  mkdir -p "$HOME/.local/bin"
+  curl -L --fail -s -o "$HOME/.local/bin/cloudflared" https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 && chmod +x "$HOME/.local/bin/cloudflared"
+fi
+
+CLOUDFLARED=$(command -v cloudflared 2>/dev/null || echo "$HOME/.local/bin/cloudflared")
+
+# Start Cloudflare Quick Tunnel
+TUNNEL_URL=""
+if [ -x "$CLOUDFLARED" ]; then
+  echo "Starting Cloudflare Quick Tunnel..."
+  TUNNEL_LOG="/tmp/cloudflared.log"
+  rm -f "$TUNNEL_LOG"
+  "$CLOUDFLARED" tunnel --url "http://localhost:$FRONTEND_PORT" --http-host-header localhost --logfile "$TUNNEL_LOG" > /dev/null 2>&1 &
+  TUNNEL_PID=$!
+
+  # Wait up to 15 seconds for tunnel URL to appear in logs
+  for i in {1..30}; do
+    if [ -f "$TUNNEL_LOG" ]; then
+      TUNNEL_URL=$(grep -o 'https://[-a-zA-Z0-9@:%._\+~#=]\+\.trycloudflare\.com' "$TUNNEL_LOG" | head -n 1)
+      if [ -n "$TUNNEL_URL" ]; then
+        break
+      fi
+    fi
+    sleep 0.5
+  done
+fi
+
 echo "=================================================="
 echo " 🏋️ NubianFit Services successfully started!"
 echo " - Frontend: http://localhost:$FRONTEND_PORT"
 echo " - Backend:  http://localhost:$BACKEND_PORT"
 echo " - API Docs: http://localhost:$BACKEND_PORT/docs"
+if [ -n "$TUNNEL_URL" ]; then
+  echo " - Public Tunnel: $TUNNEL_URL"
+  echo "   * Landing:  $TUNNEL_URL?portal=landing"
+  echo "   * Coach OS: $TUNNEL_URL?portal=coach"
+  echo "   * Client:   $TUNNEL_URL?portal=client"
+fi
 echo " - Portals:  ?portal=landing | coach | client (demo coach: coach@nubianfit.com / Coach@123)"
 echo "=================================================="
 echo "Tailing backend logs directly (Press Ctrl+C to stop servers)..."

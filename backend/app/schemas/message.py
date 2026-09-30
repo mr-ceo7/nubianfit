@@ -22,6 +22,8 @@ class ChatMessageBase(CamelModel):
     timestamp: str = ""
     is_read: bool = False
     attachment: Optional[Dict[str, Any]] = None
+    scheduled_for: Optional[UtcDatetime] = None
+    is_delivered: bool = True
 
 
 class ChatMessageCreate(CamelModel):
@@ -29,8 +31,25 @@ class ChatMessageCreate(CamelModel):
     sender: str = "coach"
     text: str = ""
     attachment: Optional[Dict[str, Any]] = None
+    scheduled_for: Optional[UtcDatetime] = None
 
 
 class ChatMessageResponse(ChatMessageBase):
     id: str
     created_at: UtcDatetime
+
+
+class CannedResponseCreate(CamelModel):
+    title: str
+    shortcut: str
+    text: str
+
+
+class CannedResponseResponse(CamelModel):
+    id: str
+    coach_id: str
+    title: str
+    shortcut: str
+    text: str
+    created_at: UtcDatetime
+

@@ -18,7 +18,7 @@ import { isNavigationTab, useApp } from '../../context/AppContext';
 import { NotificationBell } from '../engagement/NotificationBell';
 import { useAuth } from '../../context/AuthContext';
 import { ClientAvatar } from '../common/ClientAvatar';
-import { NubianFitLogo } from '../common/NubianFitLogo';
+import { NubianFitBrand } from '../common/NubianFitBrand';
 
 
 interface HeaderProps {
@@ -116,17 +116,10 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="flex items-center">
         <button
           onClick={() => setActiveTab('dashboard')}
-          className="md:hidden shrink-0 active:scale-95 transition-transform text-left flex flex-col items-stretch"
+          className="md:hidden shrink-0 active:scale-95 transition-transform text-left flex items-center"
           title="Go to Dashboard"
         >
-          <span className="font-logo text-[15px] tracking-wide text-logo-nubian lowercase block leading-none">
-            nubian<span className="text-logo-fit">fit</span>
-          </span>
-          <div className="flex justify-between text-[7px] text-slate-400 font-bold tracking-normal lowercase mt-1.5 w-full leading-none">
-            <span>strength</span>
-            <span>and</span>
-            <span>strategy</span>
-          </div>
+          <NubianFitBrand size="sm" />
         </button>
       </div>
 

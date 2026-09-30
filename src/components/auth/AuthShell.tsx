@@ -1,5 +1,5 @@
 import React from 'react';
-import { NubianFitLogo } from '../common/NubianFitLogo';
+import { NubianFitBrand } from '../common/NubianFitBrand';
 import { useAuth } from '../../context/AuthContext';
 
 interface AuthShellProps {
@@ -13,12 +13,8 @@ interface AuthShellProps {
 export const AuthShell: React.FC<AuthShellProps> = ({ title, subtitle, children, footer }) => (
   <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center px-4 py-10">
     <div className="w-full max-w-sm">
-      <div className="flex items-center gap-2.5 mb-8 justify-center">
-        <NubianFitLogo className="h-10 w-10" />
-        <span className="font-logo text-xl tracking-wide">
-          <span className="text-logo-nubian">NUBIAN</span>
-          <span className="text-logo-fit">FIT</span>
-        </span>
+      <div className="flex items-center justify-center mb-8">
+        <NubianFitBrand size="lg" />
       </div>
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
         <h1 className="text-lg font-bold text-white">{title}</h1>
