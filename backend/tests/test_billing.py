@@ -39,13 +39,13 @@ class FakePaystack:
         self.calls.append(("update_subaccount", code))
         return {}
 
-    async def initialize_transaction(self, *, email, amount, reference, callback_url, subaccount, metadata):
+    async def initialize_transaction(self, *, email, amount, reference, callback_url, subaccount, metadata, currency="KES"):
         self.calls.append(("initialize", amount, subaccount))
         self.pending[reference] = amount
         return {"authorization_url": f"https://checkout.paystack.com/{reference}", "reference": reference}
 
-    def _tx(self, reference, amount, status):
-        return {"reference": reference, "status": status, "amount": self.amount_override or amount, "currency": "KES",
+    def _tx(self, reference, amount, status, currency="KES"):
+        return {"reference": reference, "status": status, "amount": self.amount_override or amount, "currency": currency,
                 "channel": "card", "fees": 12000, "customer": {"email": "marcus.vance@example.com"},
                 "authorization": {"authorization_code": "AUTH_new", "reusable": True, "brand": "visa", "last4": "4242"}}
 
@@ -53,9 +53,9 @@ class FakePaystack:
         self.calls.append(("verify", reference))
         return self._tx(reference, self.pending.get(reference, 0), self.outcome)
 
-    async def charge_authorization(self, *, email, amount, authorization_code, reference, subaccount, metadata):
+    async def charge_authorization(self, *, email, amount, authorization_code, reference, subaccount, metadata, currency="KES"):
         self.calls.append(("charge", amount, authorization_code, subaccount))
-        return self._tx(reference, amount, self.charge_outcome)
+        return self._tx(reference, amount, self.charge_outcome, currency=currency)
 
 
 @pytest.fixture
@@ -103,6 +103,42 @@ async def test_package_validation(api, coach, other_coach):
     assert (await api.post("/api/billing/packages", headers=other_coach, json=foreign)).status_code == 422
     ok = (await api.post("/api/billing/packages", headers=coach, json={**base, "interval": "quarterly"})).json()
     assert ok["price"] == 5000 and ok["currency"] == "KES"
+
+
+async def test_package_currency_and_public_packages(api, coach):
+    # Test setting custom currency
+    pkg_usd = (await api.post("/api/billing/packages", headers=coach, json={
+        "title": "International Coaching",
+        "description": "Full remote coaching worldwide",
+        "price": 150,
+        "currency": "USD",
+        "billing": "recurring",
+        "interval": "monthly",
+    })).json()
+    assert pkg_usd["price"] == 150
+    assert pkg_usd["currency"] == "USD"
+
+    # Test update currency and price
+    updated = (await api.put(f"/api/billing/packages/{pkg_usd['id']}", headers=coach, json={
+        "title": "International Coaching VIP",
+        "description": "Full remote coaching worldwide with VIP support",
+        "price": 200,
+        "currency": "usd",
+        "billing": "recurring",
+        "interval": "monthly",
+    })).json()
+    assert updated["price"] == 200
+    assert updated["currency"] == "USD"
+
+    # Test public packages endpoint without authentication
+    public_res = await api.get("/api/billing/public/packages")
+    assert public_res.status_code == 200
+    packages = public_res.json()
+    assert len(packages) >= 1
+    found = next((p for p in packages if p["id"] == pkg_usd["id"]), None)
+    assert found is not None
+    assert found["currency"] == "USD"
+    assert found["price"] == 200
 
 
 # --- Pay flow ----------------------------------------------------------------------

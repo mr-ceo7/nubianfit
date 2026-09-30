@@ -228,6 +228,7 @@ async def start_checkout(db: AsyncSession, request: PaymentRequest) -> str:
     data = await paystack.initialize_transaction(
         email=client.email, amount=request.amount_minor, reference=reference, callback_url=pay_url(request.token),
         subaccount=account.subaccount_code, metadata={"payment_request_id": request.id, "client_id": client.id},
+        currency=request.currency,
     )
     return data["authorization_url"]
 
@@ -282,6 +283,7 @@ async def run_renewals(db: AsyncSession, today: date) -> int:
                 data = await paystack.charge_authorization(
                     email=sub.email or client.email, amount=package.price_minor, authorization_code=sub.authorization_code,
                     reference=reference, subaccount=account.subaccount_code, metadata={"subscription_id": sub.id},
+                    currency=package.currency,
                 )
                 data.setdefault("reference", reference)
                 payment = await fulfil(db, data, today)

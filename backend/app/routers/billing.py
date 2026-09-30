@@ -123,7 +123,7 @@ def _apply(p: Package, body: PackageBody) -> None:
     p.title = body.title.strip()
     p.description = body.description
     p.price_minor = to_minor(body.price)
-    p.currency = settings.PAYMENT_CURRENCY
+    p.currency = (body.currency or settings.PAYMENT_CURRENCY).strip().upper()
     p.billing = body.billing
     p.interval = body.interval if body.billing == "recurring" else None
     p.duration_weeks = body.duration_weeks if body.billing == "one_time" else None
@@ -136,6 +136,25 @@ async def _get_package(package_id: str, coach: User, db: AsyncSession) -> Packag
     if not p or p.coach_id != coach.id:
         raise HTTPException(status_code=404, detail="Package not found")
     return p
+
+
+@router.get("/public/packages", response_model=List[PackageResponse])
+async def list_public_packages(db: AsyncSession = Depends(get_db)):
+    """Public active packages displayed on the landing page."""
+    head_coach = (await db.execute(
+        select(User).where(func.lower(User.email) == settings.DEFAULT_COACH_EMAIL.lower())
+    )).scalar_one_or_none()
+    coach_id = head_coach.id if head_coach else None
+    rows = []
+    if coach_id:
+        rows = (await db.execute(
+            select(Package).where(Package.coach_id == coach_id, Package.active == True).order_by(Package.price_minor.asc())
+        )).scalars().all()
+    if not rows:
+        rows = (await db.execute(
+            select(Package).where(Package.active == True).order_by(Package.price_minor.asc())
+        )).scalars().all()
+    return [_package_out(p) for p in rows]
 
 
 @router.get("/packages", response_model=List[PackageResponse])

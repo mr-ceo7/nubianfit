@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Dumbbell,
   CalendarDays,
@@ -10,6 +10,48 @@ import {
 } from 'lucide-react';
 import { NubianFitBrand } from '../common/NubianFitBrand';
 import { portalHref } from '../../config/portal';
+import { billingApi } from '../../services/apiClient';
+import { Package } from '../../types';
+import { describeBilling, formatMoney } from '../../utils/money';
+
+const DEFAULT_PACKAGES: Package[] = [
+  {
+    id: 'pkg-monthly',
+    title: 'Monthly Coaching',
+    description: 'Custom programming tailored to your goals\nWeekly video check-in & progress audit\nDirect messaging access with Coach Yusuf',
+    price: 8000,
+    currency: 'KES',
+    billing: 'recurring',
+    interval: 'monthly',
+    durationWeeks: null,
+    active: true,
+    createdAt: '',
+  },
+  {
+    id: 'pkg-12wk',
+    title: '12-Week Transformation',
+    description: 'Periodized 12-week hypertrophy & strength block\nMacro targets & nutritional guidelines\nBi-weekly biometric & form reviews',
+    price: 20000,
+    currency: 'KES',
+    billing: 'one_time',
+    interval: null,
+    durationWeeks: 12,
+    active: true,
+    createdAt: '',
+  },
+  {
+    id: 'pkg-elite',
+    title: 'Elite 1-on-1 Performance',
+    description: 'Fully customized high-performance system\nDaily biofeedback analysis & exercise cues\nPriority communication with Coach Yusuf',
+    price: 35000,
+    currency: 'KES',
+    billing: 'one_time',
+    interval: null,
+    durationWeeks: 12,
+    active: true,
+    createdAt: '',
+  },
+];
 
 /*
  * Marketing site. Everything wrapped in <Placeholder> is copy the business still has to supply
@@ -46,8 +88,25 @@ const STEPS = [
   { title: 'Train & check in', body: 'Log workouts in the app; your coach adjusts as you progress.', photo: 'step-train', alt: 'A man doing push-ups in his living room' },
 ];
 
-export const LandingPage: React.FC = () => (
-  <div className="min-h-screen bg-slate-950 text-slate-100 font-sans antialiased">
+export const LandingPage: React.FC = () => {
+  const [packages, setPackages] = useState<Package[]>(DEFAULT_PACKAGES);
+
+  useEffect(() => {
+    let active = true;
+    billingApi.publicPackages().then(res => {
+      if (active && Array.isArray(res) && res.length > 0) {
+        setPackages(res);
+      }
+    }).catch(() => {
+      // Fallback to seeded packages
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans antialiased">
     {/* Nav */}
     <header className="sticky top-0 z-30 bg-slate-950/85 backdrop-blur border-b border-slate-800">
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
@@ -154,8 +213,17 @@ export const LandingPage: React.FC = () => (
       />
 
       {/* Coach */}
-      <section id="coach" className="bg-slate-900/60 border-b border-slate-800">
-        <div className="max-w-6xl mx-auto px-4 py-16 sm:py-20 grid md:grid-cols-[300px_1fr] gap-8 sm:gap-12 items-center">
+      <section id="coach" className="relative overflow-hidden bg-slate-900 border-b border-slate-800">
+        <img
+          src="/images/landing/coach-backdrop-1600.webp"
+          width={1600}
+          height={1067}
+          loading="lazy"
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-slate-950/85 backdrop-blur-[1px]" aria-hidden="true" />
+        <div className="relative max-w-6xl mx-auto px-4 py-16 sm:py-20 grid md:grid-cols-[300px_1fr] gap-8 sm:gap-12 items-center">
           <div className="relative">
             <img
               {...img('coach-yusuf-hassan', [400, 800])}
@@ -198,27 +266,85 @@ export const LandingPage: React.FC = () => (
 
       {/* Pricing */}
       <section id="pricing" className="max-w-6xl mx-auto px-4 py-16">
-        <h2 className="text-2xl sm:text-3xl font-bold text-white text-center">Coaching plans</h2>
-        <p className="mt-2 text-center text-slate-400 text-sm">Online payment is coming soon. For now, contact us to join.</p>
+        <div className="text-center max-w-2xl mx-auto">
+          <p className="text-[10px] font-mono tracking-widest uppercase text-emerald-400 font-bold">
+            Transparent Investment
+          </p>
+          <h2 className="mt-2 text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Coaching plans</h2>
+          <p className="mt-2 text-slate-400 text-sm">
+            Select a coaching plan tailored to your training phase and athletic goals.
+          </p>
+        </div>
+
         <div className="mt-10 grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
-          {['Plan one', 'Plan two', 'Plan three'].map((plan, i) => (
-            <div
-              key={plan}
-              className={`rounded-2xl border p-4 sm:p-6 bg-slate-900 ${i === 1 ? 'border-emerald-500' : 'border-slate-800'} ${i === 2 ? 'col-span-2 lg:col-span-1' : ''}`}
-            >
-              <h3 className="text-sm sm:text-base font-bold text-white"><Placeholder>{plan} name</Placeholder></h3>
-              <p className="mt-3 text-2xl sm:text-3xl font-extrabold text-white"><Placeholder>KES —</Placeholder></p>
-              <p className="text-xs text-slate-400">per month</p>
-              <ul className="mt-4 space-y-2 text-xs sm:text-sm text-slate-300">
-                {['What is included', 'Check-in frequency', 'Support level'].map(item => (
-                  <li key={item} className="flex gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                    <Placeholder>{item}</Placeholder>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          {packages.map((pkg, i) => {
+            const isFeatured = pkg.billing === 'recurring' || i === 0;
+            const features = pkg.description
+              ? pkg.description.split(/\n|\.\s+/).map(s => s.trim()).filter(Boolean)
+              : ['Custom training program', 'Weekly check-in & review', 'Direct messaging with Coach Yusuf'];
+
+            return (
+              <div
+                key={pkg.id}
+                className={`rounded-2xl border p-4 sm:p-6 flex flex-col justify-between transition ${
+                  isFeatured
+                    ? 'border-emerald-500 bg-slate-900/90 ring-1 ring-emerald-500/30'
+                    : 'border-slate-800 bg-slate-900/70 hover:border-slate-700'
+                } ${i === 2 && packages.length === 3 ? 'col-span-2 lg:col-span-1' : ''}`}
+              >
+                <div>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[10px] font-mono tracking-widest uppercase text-emerald-400 font-bold">
+                      {pkg.billing === 'recurring' ? 'Recurring membership' : `${pkg.durationWeeks || 12}-week block`}
+                    </span>
+                    {isFeatured && (
+                      <span className="text-[9px] font-mono tracking-wider uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 rounded">
+                        Most popular
+                      </span>
+                    )}
+                  </div>
+                  <h3 className="mt-2 text-base sm:text-lg font-bold text-white tracking-tight">{pkg.title}</h3>
+                  <div className="mt-3 flex items-baseline gap-1.5 flex-wrap">
+                    <p className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                      {formatMoney(pkg.price, pkg.currency)}
+                    </p>
+                    <span className="text-xs text-slate-400 font-normal">
+                      {pkg.billing === 'recurring'
+                        ? `/${pkg.interval === 'yearly' ? 'yr' : pkg.interval === 'quarterly' ? 'quarter' : 'mo'}`
+                        : `(${pkg.durationWeeks || 12} wks)`}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-[11px] text-slate-400">
+                    {describeBilling(pkg)}
+                  </p>
+
+                  <div className="my-4 border-t border-slate-800/80" />
+
+                  <ul className="space-y-2 text-xs text-slate-300">
+                    {features.map((feature, idx) => (
+                      <li key={idx} className="flex items-start gap-2">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="mt-6 pt-2">
+                  <a
+                    href={portalHref('client', { mode: 'join', plan: pkg.id })}
+                    className={`block w-full py-2.5 px-4 rounded-xl text-center text-xs sm:text-sm font-bold transition ${
+                      isFeatured
+                        ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950'
+                        : 'bg-slate-800 hover:bg-slate-700 text-white'
+                    }`}
+                  >
+                    Select Plan
+                  </a>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </section>
 
@@ -251,4 +377,5 @@ export const LandingPage: React.FC = () => (
       </div>
     </footer>
   </div>
-);
+  );
+};

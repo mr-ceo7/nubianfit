@@ -27,8 +27,9 @@ class PayoutAccountResponse(CamelModel):
 class PackageBody(CamelModel):
     title: str = Field(min_length=1, max_length=255)
     description: str = Field(default="", max_length=4000)
-    # Major units (KES) in the API; stored in cents.
+    # Major units in the API; stored in cents.
     price: float = Field(gt=0, le=10_000_000)
+    currency: Optional[str] = Field(default="KES", min_length=2, max_length=8)
     billing: Literal["one_time", "recurring"]
     interval: Optional[Literal["monthly", "quarterly", "yearly"]] = None
     duration_weeks: Optional[int] = Field(default=None, ge=1, le=104)
@@ -39,6 +40,8 @@ class PackageBody(CamelModel):
 
     @model_validator(mode="after")
     def check_billing(self):
+        if self.currency:
+            self.currency = self.currency.strip().upper()
         if self.billing == "recurring" and not self.interval:
             raise ValueError("Recurring packages need an interval")
         if self.billing == "one_time" and not self.duration_weeks:

@@ -404,13 +404,14 @@ export const autoflowsApi = {
 };
 
 // Billing Endpoints
-type PackageBody = Omit<Package, 'id' | 'currency' | 'createdAt'>;
+export type PackageBody = Omit<Package, 'id' | 'createdAt'> & { currency?: string };
 export const billingApi = {
   banks: () => api.get<{ name: string; code: string; type: string }[]>('/billing/banks'),
   payoutAccount: () => api.get<PayoutAccount | null>('/billing/payout-account'),
   setPayoutAccount: (body: { businessName: string; bankCode: string; accountNumber: string }) =>
     api.put<PayoutAccount>('/billing/payout-account', body),
   packages: () => api.get<Package[]>('/billing/packages'),
+  publicPackages: () => api.get<Package[]>('/billing/public/packages'),
   createPackage: (p: PackageBody) => api.post<Package>('/billing/packages', p),
   updatePackage: (id: string, p: PackageBody) => api.put<Package>(`/billing/packages/${id}`, p),
   paymentRequests: () => api.get<PaymentRequest[]>('/billing/payment-requests'),

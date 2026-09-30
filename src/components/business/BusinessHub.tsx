@@ -126,7 +126,7 @@ const Overview: React.FC<{ a: BusinessAnalytics }> = ({ a }) => {
 };
 
 type Run = <T,>(action: () => Promise<T>, success?: string) => Promise<T | null>;
-type PackageDraft = Omit<Package, 'id' | 'currency' | 'createdAt'> & { id?: string };
+type PackageDraft = Omit<Package, 'id' | 'createdAt'> & { id?: string; currency?: string };
 
 const Packages: React.FC<{ packages: Package[]; run: Run }> = ({ packages, run }) => {
   const { programs } = useApp();
@@ -139,6 +139,7 @@ const Packages: React.FC<{ packages: Package[]; run: Run }> = ({ packages, run }
     const { id, ...body } = draft;
     const clean = {
       ...body,
+      currency: (body.currency || 'KES').toUpperCase(),
       interval: body.billing === 'recurring' ? body.interval ?? 'monthly' : null,
       durationWeeks: body.billing === 'one_time' ? body.durationWeeks ?? 12 : null,
       programId: body.programId || null, autoflowId: body.autoflowId || null, onboardingFormId: body.onboardingFormId || null,
@@ -150,7 +151,7 @@ const Packages: React.FC<{ packages: Package[]; run: Run }> = ({ packages, run }
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <button onClick={() => setDraft({ title: '', description: '', price: 5000, billing: 'recurring', interval: 'monthly', durationWeeks: null, active: true })}
+        <button onClick={() => setDraft({ title: '', description: '', price: 5000, currency: 'KES', billing: 'recurring', interval: 'monthly', durationWeeks: null, active: true })}
           className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-sm font-bold">
           <Plus className="h-4 w-4" /> New package
         </button>
@@ -182,11 +183,19 @@ const Packages: React.FC<{ packages: Package[]; run: Run }> = ({ packages, run }
               <textarea rows={2} value={draft.description} onChange={e => setDraft({ ...draft, description: e.target.value })}
                 className="mt-1 w-full p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-white" />
             </label>
-            <div className="grid grid-cols-2 gap-2">
-              <label className="text-xs font-semibold text-slate-300">Price (KES)
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              <label className="text-xs font-semibold text-slate-300">Price
                 <input required type="number" min={1} step="any" value={draft.price} onChange={e => setDraft({ ...draft, price: Number(e.target.value) })} className={`${field} mt-1`} />
               </label>
-              <label className="text-xs font-semibold text-slate-300">Billing
+              <label className="text-xs font-semibold text-slate-300">Currency
+                <select value={draft.currency || 'KES'} onChange={e => setDraft({ ...draft, currency: e.target.value })} className={`${field} mt-1`}>
+                  <option value="KES">KES (KSh)</option>
+                  <option value="USD">USD ($)</option>
+                  <option value="EUR">EUR (€)</option>
+                  <option value="GBP">GBP (£)</option>
+                </select>
+              </label>
+              <label className="col-span-2 sm:col-span-1 text-xs font-semibold text-slate-300">Billing
                 <select value={draft.billing} onChange={e => setDraft({ ...draft, billing: e.target.value as Package['billing'] })} className={`${field} mt-1`}>
                   <option value="recurring">Recurring</option>
                   <option value="one_time">One-time</option>

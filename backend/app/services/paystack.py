@@ -81,14 +81,14 @@ async def update_subaccount(code: str, **fields) -> Dict[str, Any]:
 
 
 async def initialize_transaction(
-    *, email: str, amount: int, reference: str, callback_url: str, subaccount: str, metadata: Dict[str, Any]
+    *, email: str, amount: int, reference: str, callback_url: str, subaccount: str, metadata: Dict[str, Any], currency: str = "KES"
 ) -> Dict[str, Any]:
     """Returns {authorization_url, access_code, reference}. The coach's subaccount bears Paystack's fee."""
 
     return await _request("POST", "/transaction/initialize", json={
         "email": email,
         "amount": str(amount),
-        "currency": settings.PAYMENT_CURRENCY,
+        "currency": currency or settings.PAYMENT_CURRENCY,
         "reference": reference,
         "callback_url": callback_url,
         "subaccount": subaccount,
@@ -102,14 +102,14 @@ async def verify_transaction(reference: str) -> Dict[str, Any]:
 
 
 async def charge_authorization(
-    *, email: str, amount: int, authorization_code: str, reference: str, subaccount: str, metadata: Dict[str, Any]
+    *, email: str, amount: int, authorization_code: str, reference: str, subaccount: str, metadata: Dict[str, Any], currency: str = "KES"
 ) -> Dict[str, Any]:
     """Charge a saved card for a renewal; same split as the original payment."""
 
     return await _request("POST", "/transaction/charge_authorization", json={
         "email": email,
         "amount": str(amount),
-        "currency": settings.PAYMENT_CURRENCY,
+        "currency": currency or settings.PAYMENT_CURRENCY,
         "authorization_code": authorization_code,
         "reference": reference,
         "subaccount": subaccount,

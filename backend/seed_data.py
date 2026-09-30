@@ -296,6 +296,9 @@ def _seed_billing(session, today: date) -> None:
     session.add(Package(id="pkg-12wk", coach_id=DEMO_COACH_ID, title="12-Week Transformation",
                         description="A complete 12-week block with nutrition targets.",
                         price_minor=2000000, currency="KES", billing="one_time", duration_weeks=12, program_id="prog-1", active=True))
+    session.add(Package(id="pkg-elite", coach_id=DEMO_COACH_ID, title="Elite 1-on-1 Performance",
+                        description="Fully customized high-performance system, daily biofeedback analysis, video form audits and priority messaging.",
+                        price_minor=3500000, currency="KES", billing="recurring", interval="quarterly", active=True))
     period_start = today - timedelta(days=10)
     session.add(Subscription(id="sub-demo", coach_id=DEMO_COACH_ID, client_id="client-1", package_id="pkg-monthly",
                              status="active", current_period_start=period_start,
